@@ -12,6 +12,7 @@ fs.mkdirSync(outDir, { recursive: true });
   page.setDefaultTimeout(600000);
   await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&at=8,52,180,0&p=0.45', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true && window.__game?.state === 'play');
+  await page.evaluate(() => window.__game.stars.placeAll());
   await page.evaluate(() => {
     document.getElementById('crosshair')?.classList.add('hidden');
     for (const id of ['area-title', 'toasts']) { const e = document.getElementById(id); if (e) e.style.display = 'none'; }
@@ -23,7 +24,7 @@ fs.mkdirSync(outDir, { recursive: true });
     return areas.map((a) => {
       const cands = items.map((it, i) => ({ it, i })).filter(({ it }) => it.area === a && it.def.stars.length >= 5);
       cands.sort((x, y) => {
-        const score = ({ it }) => new Set(it.vis.map((v) => v.kind)).size * 10 + it.def.stars.length;
+        const score = ({ it }) => it.def.stars.length;
         return score(y) - score(x);
       });
       return cands.length ? cands[0].i : -1;
@@ -37,7 +38,7 @@ fs.mkdirSync(outDir, { recursive: true });
       // aside: same distance, a few steps to the side, still facing the figure's middle
       g.teleport(it.view.spot.x + dx, it.view.spot.z + dz, Math.atan2(-d.x, -d.z));
       g.player.pitch = Math.asin(d.y);
-      return { id: it.def.id, en: it.def.name?.en, pt: it.def.name?.pt, area: it.area, n: it.def.stars.length, kinds: it.vis.map((v) => v.kind).join(','), dists: it.starPos.map((p) => p.distanceTo(it.view.eye).toFixed(0)).join(',') };
+      return { id: it.def.id, en: it.def.name?.en, pt: it.def.name?.pt, area: it.area, n: it.def.stars.length, dists: it.starPos.map((p) => p.distanceTo(it.view.eye).toFixed(0)).join(',') };
     }, { idx, dx, dz });
     const info = await place(2.6, -2.2);
     console.log('figure', JSON.stringify(info));

@@ -9,6 +9,7 @@ const { chromium } = require('playwright');
   page.on('console', (m) => { const t = m.text(); if (/^(spot|star) /.test(t) || (m.type() === 'warning' && !t.includes('GPU'))) console.log('[page]', t.slice(0, 160)); });
   await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&at=0,279.5,180,0', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 240000 });
+  await page.evaluate(() => window.__game.stars.placeAll());
   const report = await page.evaluate(() => {
     const g = window.__game;
     g.engine.paused = true;

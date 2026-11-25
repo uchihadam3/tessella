@@ -18,6 +18,8 @@ fs.mkdirSync(outDir, { recursive: true });
   });
   const picks = await page.evaluate((areas) => {
     const items = window.__game.stars.items;
+    // names (e.g. "Owl,Whale") pick those figures; area ids pick a big one from each area
+    if (areas.some((a) => /[A-Z]/.test(a))) return areas.map((n) => items.findIndex((it) => it.def.name?.en === n)).filter((i) => i >= 0);
     return areas.map((a) => {
       const cands = items.map((it, i) => ({ it, i })).filter(({ it }) => it.area === a && it.def.stars.length >= 5);
       cands.sort((x, y) => {
@@ -35,11 +37,11 @@ fs.mkdirSync(outDir, { recursive: true });
       // aside: same distance, a few steps to the side, still facing the figure's middle
       g.teleport(it.view.spot.x + dx, it.view.spot.z + dz, Math.atan2(-d.x, -d.z));
       g.player.pitch = Math.asin(d.y);
-      return { id: it.def.id, area: it.area, n: it.def.stars.length, kinds: it.vis.map((v) => v.kind).join(','), dists: it.starPos.map((p) => p.distanceTo(it.view.eye).toFixed(0)).join(',') };
+      return { id: it.def.id, en: it.def.name?.en, pt: it.def.name?.pt, area: it.area, n: it.def.stars.length, kinds: it.vis.map((v) => v.kind).join(','), dists: it.starPos.map((p) => p.distanceTo(it.view.eye).toFixed(0)).join(',') };
     }, { idx, dx, dz });
     const info = await place(2.6, -2.2);
     console.log('figure', JSON.stringify(info));
-    const name = `${outDir}/${info.area}-${info.id.split('.').pop()}`;
+    const name = `${outDir}/${info.area}-${info.id.split('.').pop()}-${(info.en || '').toLowerCase().replace(/[^a-z]+/g, '-')}`;
     await page.waitForTimeout(6000);
     await page.screenshot({ path: `${name}-1-de-lado.png` });
     await place(0, 0);

@@ -1,17 +1,19 @@
 /**
  * Generates the 150 secret constellations → src/data/constellations.ts
  *
- *   npx tsx tools/gen-constellations.ts            (writes the data file)
+ *   npx tsx tools/gen-constellations.ts            (writes data, fixtures and docs)
  *   npx tsx tools/gen-constellations.ts --dry      (prints stats only)
+ *   npx tsx tools/gen-constellations.ts --dry --area=kinship --verbose
  *
- * Every non-trivial constellation is built around ONE named insight that comes from the network's
- * topology (bridges / cut stars, hubs, leaves, odd rings, triangles, loop parity of cut threads,
- * chains of knots, interleaved families, overlapping windows, echo trees / rings / reachability).
- * Pipeline per slot: insight template (topology + intended solution + core clues) → extra clues of
- * the area's languages until the solution is unique → minimise (core clues only if the insight
- * witness still holds) → fairness check (a careful human solves it with deductions and
- * contradiction lookahead, never by guessing) → minimum reasoning depth (size alone never counts)
- * → keep the deepest/smallest/most varied candidate. Deterministic (seeded).
+ * Every constellation is a LINE DRAWING (tools/lib/constellation-art.ts: a swan, an anchor, a fox…):
+ * the stars and threads are the drawing and never change. The puzzle is generated ON that fixed
+ * graph, around ONE named insight that comes from the drawing's topology (a bridge star, a hub,
+ * leaves, an odd ring, triangles, loop parity of cut threads, chains of knots, overlapping windows,
+ * echo trees / reachability): template (intended solution + core clues found in the drawing) →
+ * extra clues of the area's languages until the solution is unique → minimise (core clues only if
+ * the insight still holds) → fairness check (a careful human solves it with deductions and
+ * contradiction lookahead, never by guessing) → keep the candidate closest to the slot's target
+ * reasoning depth. Deterministic (seeded).
  */
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -19,8 +21,10 @@ import { fileURLToPath } from 'node:url';
 import type { ConstellationDef, Star, StarGlyph, Thread } from '../src/secret/types';
 import type { AreaId } from '../src/data/areas';
 import type { GemColor } from '../src/puzzle/types';
-import { checkConstellation, constellationKinds, initialState, isInversionSymmetric, press, regionsOf, contourCount, mosaicCount, stateString, wantsAllLit } from '../src/secret/graph';
+import { checkConstellation, constellationKinds, contourCount, initialState, mosaicCount, press, regionsOf, stateString, wantsAllLit } from '../src/secret/graph';
 import { distinctSolutions, estimateDifficulty, parityChecks, pressesFor, reachable, solveConstellation } from '../src/secret/solver';
+import { ART, artDrawing, type Art } from './lib/constellation-art';
+import { drawingProblems, size, type P } from './lib/drawing-rules';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DRY = process.argv.includes('--dry');
@@ -46,340 +50,112 @@ function shuffle<T>(r: Rng, a: T[]): T[] {
   return b;
 }
 
-// ───────────────────────── geometry ─────────────────────────
-type P = [number, number];
+// ───────────────────────── drawings → networks ─────────────────────────
 interface Net {
   pts: P[];
   edges: [number, number][];
+  /** the drawing's name (pt) */
   shape: string;
+  bell: P;
+  name: { pt: string; en: string };
 }
 
-function segInter(a: P, b: P, c: P, d: P): boolean {
-  const o = (p: P, q: P, r: P) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
-  const o1 = o(a, b, c), o2 = o(a, b, d), o3 = o(c, d, a), o4 = o(c, d, b);
-  return o1 * o2 < 0 && o3 * o4 < 0;
-}
-function pointSegDist(p: P, a: P, b: P): number {
-  const dx = b[0] - a[0], dz = b[1] - a[1];
-  const l2 = dx * dx + dz * dz;
-  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l2));
-  return Math.hypot(p[0] - (a[0] + dx * t), p[1] - (a[1] + dz * t));
-}
-const dist = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-
-export function netProblems(pts: P[], edges: [number, number][], minDist = 1.6, maxR = 7): string[] {
-  const errs: string[] = [];
-  for (let i = 0; i < pts.length; i++) {
-    if (Math.hypot(pts[i][0], pts[i][1]) > maxR + 1e-6) errs.push(`star ${i} outside radius`);
-    for (let j = i + 1; j < pts.length; j++) if (dist(pts[i], pts[j]) < minDist - 1e-6) errs.push(`stars ${i},${j} too close`);
-  }
-  const key = new Set<string>();
-  edges.forEach(([a, b], k) => {
-    if (a === b) errs.push(`edge ${k} loop`);
-    const kk = a < b ? `${a},${b}` : `${b},${a}`;
-    if (key.has(kk)) errs.push(`edge ${k} dup`);
-    key.add(kk);
-  });
-  for (let i = 0; i < edges.length; i++) {
-    for (let j = i + 1; j < edges.length; j++) {
-      const [a, b] = edges[i], [c, d] = edges[j];
-      if (a === c || a === d || b === c || b === d) continue;
-      if (segInter(pts[a], pts[b], pts[c], pts[d])) errs.push(`edges ${i},${j} cross`);
-    }
-    const [a, b] = edges[i];
-    for (let s = 0; s < pts.length; s++) {
-      if (s === a || s === b) continue;
-      if (pointSegDist(pts[s], pts[a], pts[b]) < 0.55) errs.push(`star ${s} on edge ${i}`);
-    }
-  }
-  return errs;
+/** The drawing centred on its box and scaled so its larger side is 12 (stars within ±6). */
+function netOf(a: Art): Net {
+  const d = artDrawing(a);
+  const xs = d.pts.map((p) => p[0]), zs = d.pts.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cz = (Math.min(...zs) + Math.max(...zs)) / 2;
+  const k = 12 / size(d.pts);
+  const f = (p: P): P => [+((p[0] - cx) * k).toFixed(2), +((p[1] - cz) * k).toFixed(2)];
+  const net: Net = { pts: d.pts.map(f), edges: d.edges, shape: a.name.pt, bell: f(a.bell), name: a.name };
+  const probs = drawingProblems(net.pts, net.edges, net.bell);
+  if (probs.length) throw new Error(`drawing ${a.name.pt}: ${probs.join('; ')}`);
+  return net;
 }
 
-function connected(n: number, edges: [number, number][]): boolean {
+function adjOf(n: number, edges: [number, number][]): number[][] {
   const adj = Array.from({ length: n }, () => [] as number[]);
   for (const [a, b] of edges) {
     adj[a].push(b);
     adj[b].push(a);
   }
-  const seen = new Set([0]);
-  const q = [0];
-  while (q.length) for (const j of adj[q.pop()!]) if (!seen.has(j)) (seen.add(j), q.push(j));
-  return seen.size === n;
+  return adj;
 }
 
-/** Centre the network and scale it so every star fits inside radius `maxR`, spacing ≥ minDist. */
-function normalize(net: Net, maxR = 6.6, minDist = 1.7): Net | null {
+/** Components left when star `v` is removed. */
+function componentsWithout(n: number, adj: number[][], v: number): number[][] {
+  const seen = new Set<number>([v]);
+  const comps: number[][] = [];
+  for (let s = 0; s < n; s++) {
+    if (seen.has(s)) continue;
+    const c = [s];
+    seen.add(s);
+    for (let k = 0; k < c.length; k++) for (const j of adj[c[k]]) if (!seen.has(j)) (seen.add(j), c.push(j));
+    comps.push(c);
+  }
+  return comps;
+}
+
+function cutVertices(net: Net): { v: number; comps: number[][] }[] {
   const n = net.pts.length;
-  let cx = 0, cz = 0;
-  for (const [x, z] of net.pts) {
-    cx += x;
-    cz += z;
+  const adj = adjOf(n, net.edges);
+  const out: { v: number; comps: number[][] }[] = [];
+  for (let v = 0; v < n; v++) {
+    const comps = componentsWithout(n, adj, v);
+    if (comps.length >= 2) out.push({ v, comps });
   }
-  cx /= n;
-  cz /= n;
-  let pts: P[] = net.pts.map(([x, z]) => [x - cx, z - cz]);
-  let md = Infinity;
-  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) md = Math.min(md, dist(pts[i], pts[j]));
-  let R = 0;
-  for (const p of pts) R = Math.max(R, Math.hypot(p[0], p[1]));
-  // scale so that min distance = minDist*1.05 if possible, but radius ≤ maxR
-  let k = (minDist * 1.08) / md;
-  if (R * k > maxR) k = maxR / R;
-  if (md * k < minDist) return null;
-  pts = pts.map(([x, z]) => [+(x * k).toFixed(2), +(z * k).toFixed(2)]);
-  return { ...net, pts };
+  return out;
 }
 
-// ───────────────────────── shapes ─────────────────────────
+const isTree = (net: Net) => net.edges.length === net.pts.length - 1;
 
-function greedyPlanar(pts: P[], maxLen: number, keepRatio = 1, r?: Rng): [number, number][] {
-  const cand: [number, number, number][] = [];
-  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) cand.push([i, j, dist(pts[i], pts[j])]);
-  cand.sort((a, b) => a[2] - b[2]);
-  const edges: [number, number][] = [];
-  for (const [i, j, d] of cand) {
-    if (d > maxLen) break;
-    let ok = true;
-    for (const [a, b] of edges) {
-      if (a === i || a === j || b === i || b === j) continue;
-      if (segInter(pts[i], pts[j], pts[a], pts[b])) {
-        ok = false;
-        break;
+/** Simple cycles (as vertex lists), found by bounded DFS; graphs here are small. */
+function cycles(net: Net, maxLen = 12, budget = 300_000): number[][] {
+  const n = net.pts.length;
+  const adj = adjOf(n, net.edges);
+  const out: number[][] = [];
+  const seen = new Set<string>();
+  let steps = 0;
+  const path: number[] = [];
+  const on = new Uint8Array(n);
+  const dfs = (start: number, v: number) => {
+    if (++steps > budget) return;
+    for (const j of adj[v]) {
+      if (j === start && path.length >= 3) {
+        const key = [...path].sort((a, b) => a - b).join(',') + '|' + path.length;
+        if (!seen.has(key)) (seen.add(key), out.push(path.slice()));
       }
+      if (on[j] || j < start || path.length >= maxLen) continue;
+      on[j] = 1;
+      path.push(j);
+      dfs(start, j);
+      path.pop();
+      on[j] = 0;
     }
-    if (!ok) continue;
-    for (let s = 0; s < pts.length && ok; s++) if (s !== i && s !== j && pointSegDist(pts[s], pts[i], pts[j]) < 0.6 * (d / 2.2)) ok = false;
-    if (ok) edges.push([i, j]);
+  };
+  for (let s0 = 0; s0 < n && steps <= budget; s0++) {
+    on[s0] = 1;
+    path.push(s0);
+    dfs(s0, s0);
+    path.pop();
+    on[s0] = 0;
   }
-  if (keepRatio < 1 && r) {
-    // remove random edges while staying connected
-    const order = shuffle(r, edges.map((_, k) => k));
-    const removeCount = Math.floor(edges.length * (1 - keepRatio));
-    let removed = 0;
-    let cur = edges.slice();
-    for (const k of order) {
-      if (removed >= removeCount) break;
-      const e = edges[k];
-      const trial = cur.filter((x) => x !== e);
-      if (connected(pts.length, trial)) {
-        cur = trial;
-        removed++;
-      }
-    }
-    return cur;
-  }
-  return edges;
+  return out;
 }
 
-function poisson(r: Rng, n: number, radius: number, minD: number): P[] {
-  const pts: P[] = [];
-  let guard = 0;
-  while (pts.length < n && guard++ < 20000) {
-    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * radius;
-    const p: P = [Math.cos(a) * d, Math.sin(a) * d];
-    if (pts.every((q) => dist(p, q) >= minD)) pts.push(p);
-  }
-  return pts;
+function longestCycle(net: Net): number[] {
+  return cycles(net).sort((a, b) => b.length - a.length)[0] ?? [];
 }
 
-const SHAPES: Record<string, (r: Rng, n: number) => Net> = {
-  chain(r, n) {
-    const pts: P[] = [];
-    const bend = (r() - 0.5) * 1.4;
-    for (let i = 0; i < n; i++) {
-      const t = i / Math.max(1, n - 1) - 0.5;
-      pts.push([t * (n - 1) * 2, Math.sin(t * Math.PI * bend) * 2.2 + (r() - 0.5) * 0.3]);
-    }
-    return { pts, edges: pts.slice(1).map((_, i) => [i, i + 1]), shape: 'cadeia' };
-  },
-  ring(r, n) {
-    const pts: P[] = [];
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2;
-      pts.push([Math.cos(a) * 3 * (1 + (r() - 0.5) * 0.08), Math.sin(a) * 3]);
-    }
-    return { pts, edges: pts.map((_, i) => [i, (i + 1) % n]), shape: 'anel' };
-  },
-  wheel(r, n) {
-    const m = n - 1;
-    const pts: P[] = [[0, 0]];
-    for (let i = 0; i < m; i++) {
-      const a = (i / m) * Math.PI * 2 + r() * 0.1;
-      pts.push([Math.cos(a) * 3, Math.sin(a) * 3]);
-    }
-    const edges: [number, number][] = [];
-    for (let i = 0; i < m; i++) {
-      edges.push([1 + i, 1 + ((i + 1) % m)]);
-      if (i % (m > 7 ? 2 : 1) === 0 || r() < 0.35) edges.push([0, 1 + i]);
-    }
-    return { pts, edges, shape: 'roda' };
-  },
-  doubleRing(r, n) {
-    const m = Math.max(3, Math.floor(n / 2));
-    const pts: P[] = [];
-    for (let i = 0; i < m; i++) {
-      const a = (i / m) * Math.PI * 2;
-      pts.push([Math.cos(a) * 4, Math.sin(a) * 4]);
-    }
-    for (let i = 0; i < n - m; i++) {
-      const a = ((i + 0.5) / (n - m)) * Math.PI * 2;
-      pts.push([Math.cos(a) * 1.9, Math.sin(a) * 1.9]);
-    }
-    return { pts, edges: greedyPlanar(pts, 3.4, 0.8, r), shape: 'dois anéis' };
-  },
-  tree(r, n) {
-    const pts: P[] = [[0, 0]];
-    const edges: [number, number][] = [];
-    let guard = 0;
-    while (pts.length < n && guard++ < 4000) {
-      const p = Math.floor(r() * pts.length);
-      const a = r() * Math.PI * 2;
-      const q: P = [pts[p][0] + Math.cos(a) * 2.1, pts[p][1] + Math.sin(a) * 2.1];
-      if (Math.hypot(q[0], q[1]) > 6) continue;
-      if (pts.some((s) => dist(s, q) < 1.75)) continue;
-      const ok = edges.every(([u, v]) => u === p || v === p || !segInter(pts[u], pts[v], pts[p], q));
-      if (!ok) continue;
-      pts.push(q);
-      edges.push([p, pts.length - 1]);
-    }
-    return { pts, edges, shape: 'árvore' };
-  },
-  cluster(r, n) {
-    const pts = poisson(r, n, 5.4, 1.9);
-    return { pts, edges: greedyPlanar(pts, 3.3, 0.72 + r() * 0.2, r), shape: 'aglomerado' };
-  },
-  dense(r, n) {
-    const pts = poisson(r, n, 5.2, 1.85);
-    return { pts, edges: greedyPlanar(pts, 3.1, 1, r), shape: 'triangulado' };
-  },
-  ladder(r, n) {
-    const m = Math.max(2, Math.floor(n / 2));
-    const pts: P[] = [];
-    for (let i = 0; i < m; i++) pts.push([i * 2.1, 0], [i * 2.1, 2.2]);
-    const edges: [number, number][] = [];
-    for (let i = 0; i < m; i++) {
-      if (i < m - 1) edges.push([i * 2, i * 2 + 2], [i * 2 + 1, i * 2 + 3]);
-      if (i === 0 || i === m - 1 || r() < 0.6) edges.push([i * 2, i * 2 + 1]);
-    }
-    return { pts, edges, shape: 'escada' };
-  },
-  lattice(r, n) {
-    const w = Math.max(2, Math.round(Math.sqrt(n * 1.2)));
-    const h = Math.max(2, Math.ceil(n / w));
-    const pts: P[] = [];
-    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) pts.push([i * 2.2 + (j % 2) * 0.0, j * 2.2]);
-    let edges: [number, number][] = [];
-    for (let j = 0; j < h; j++)
-      for (let i = 0; i < w; i++) {
-        const k = j * w + i;
-        if (i < w - 1) edges.push([k, k + 1]);
-        if (j < h - 1) edges.push([k, k + w]);
-      }
-    // drop a few edges, keep connected
-    const order = shuffle(r, edges.map((_, k) => k));
-    let cur = edges;
-    let drops = Math.floor(edges.length * (0.1 + r() * 0.2));
-    for (const k of order) {
-      if (drops <= 0) break;
-      const trial = cur.filter((e) => e !== edges[k]);
-      if (connected(pts.length, trial)) {
-        cur = trial;
-        drops--;
-      }
-    }
-    edges = cur;
-    return { pts, edges, shape: 'treliça' };
-  },
-  triLattice(r, n) {
-    const pts: P[] = [];
-    const rows = Math.max(2, Math.round(Math.sqrt(n)));
-    for (let j = 0; j < rows; j++) {
-      const cnt = Math.ceil(n / rows);
-      for (let i = 0; i < cnt && pts.length < n; i++) pts.push([i * 2.2 + (j % 2) * 1.1, j * 1.9]);
-    }
-    return { pts, edges: greedyPlanar(pts, 2.3, 0.82, r), shape: 'treliça triangular' };
-  },
-  arms(r, n) {
-    const k = n > 12 ? 5 : n > 8 ? 4 : 3;
-    const per = Math.max(1, Math.floor((n - 1) / k));
-    const pts: P[] = [[0, 0]];
-    const edges: [number, number][] = [];
-    for (let a = 0; a < k; a++) {
-      const ang = (a / k) * Math.PI * 2 + r() * 0.2;
-      let prev = 0;
-      for (let i = 1; i <= per; i++) {
-        pts.push([Math.cos(ang) * 2.05 * i, Math.sin(ang) * 2.05 * i]);
-        edges.push([prev, pts.length - 1]);
-        prev = pts.length - 1;
-      }
-    }
-    // connect arm tips into a ring sometimes
-    if (r() < 0.5 && k >= 4) {
-      for (let a = 0; a < k; a++) {
-        const t1 = 1 + a * per + per - 1, t2 = 1 + ((a + 1) % k) * per + per - 1;
-        edges.push([t1, t2]);
-      }
-    }
-    return { pts, edges, shape: 'estrela de braços' };
-  },
-};
-
-/** Constellation drawings (normalised coordinates, x right, z down). */
-const DRAWINGS: Record<string, { pts: P[]; edges: [number, number][] }> = {
-  pássaro: {
-    pts: [[-3, 0], [-1.5, -0.4], [0, 0], [1.6, -0.2], [3, -0.9], [3.6, -1.6], [-0.4, -2.2], [-1.6, -3.6], [0.6, 1.8], [-0.6, 3.2], [2.3, 0.9]],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [2, 6], [6, 7], [1, 6], [2, 8], [8, 9], [3, 10], [8, 10]],
-  },
-  peixe: {
-    pts: [[-3.2, 0], [-1.6, -1.6], [0.4, -2], [2.2, -1.2], [3.2, 0], [2.2, 1.2], [0.4, 2], [-1.6, 1.6], [-4.6, -1.6], [-4.6, 1.6], [1.4, -0.4]],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0], [0, 8], [8, 9], [9, 0], [3, 10], [2, 10]],
-  },
-  chave: {
-    pts: [[-3.6, 0], [-2.6, -1.4], [-1.2, -1.4], [-0.4, 0], [-1.2, 1.4], [-2.6, 1.4], [1.4, 0], [3.2, 0], [5, 0], [3.2, 1.6], [5, 1.6]],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [3, 6], [6, 7], [7, 8], [7, 9], [8, 10]],
-  },
-  crescente: {
-    pts: [[0, -3.6], [2.2, -2.8], [3.4, -0.8], [3.2, 1.4], [1.8, 3.2], [-0.4, 3.6], [0.6, 2], [1.4, 0.4], [1.2, -1.4], [-0.2, -2]],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 0], [1, 8], [3, 7], [4, 6]],
-  },
-  casa: {
-    pts: [[-2.4, 3], [2.4, 3], [2.4, 0], [-2.4, 0], [0, -2.6], [0, 1.4], [-1.2, 3], [1.2, 3]],
-    edges: [[0, 6], [6, 7], [7, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 2], [6, 5], [5, 7], [5, 3], [5, 2]],
-  },
-  flor: {
-    pts: [[0, 0], [0, -2.2], [2.1, -0.7], [1.3, 1.8], [-1.3, 1.8], [-2.1, -0.7], [0, -4.2], [4, -1.3], [2.5, 3.4], [-2.5, 3.4], [-4, -1.3]],
-    edges: [[0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [1, 6], [2, 7], [3, 8], [4, 9], [5, 10], [1, 2], [3, 4]],
-  },
-  coroa: {
-    pts: [[-4, 1.6], [-2, 1.6], [0, 1.6], [2, 1.6], [4, 1.6], [-4, -1.6], [-2, 0], [0, -2.2], [2, 0], [4, -1.6]],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 4], [6, 1], [7, 2], [8, 3]],
-  },
-  coração: {
-    pts: [[0, -1.4], [-1.6, -3], [-3.4, -2], [-3.2, 0.2], [-1.6, 2], [0, 3.6], [1.6, 2], [3.2, 0.2], [3.4, -2], [1.6, -3], [0, 1]],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 0], [0, 10], [10, 4], [10, 6], [10, 5]],
-  },
-  barco: {
-    pts: [[-3.6, 1.6], [-1.2, 2.8], [1.2, 2.8], [3.6, 1.6], [0, 1.4], [0, -1], [0, -3.4], [-2.4, 0.6], [2.2, -0.6]],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [4, 5], [5, 6], [6, 7], [7, 4], [6, 8], [8, 5], [1, 4], [2, 4]],
-  },
-  borboleta: {
-    pts: [[0, -2], [0, 0], [0, 2], [-2.4, -3], [-4, -0.8], [-2.2, 0.6], [2.4, -3], [4, -0.8], [2.2, 0.6], [-2.6, 2.8], [2.6, 2.8]],
-    edges: [[0, 1], [1, 2], [0, 3], [3, 4], [4, 5], [5, 1], [0, 6], [6, 7], [7, 8], [8, 1], [2, 9], [9, 5], [2, 10], [10, 8]],
-  },
-  lanterna: {
-    pts: [[0, -3.8], [-1.6, -2.2], [1.6, -2.2], [-2.2, 0], [2.2, 0], [-1.6, 2.2], [1.6, 2.2], [0, 3.8], [0, 0]],
-    edges: [[0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [6, 7], [1, 8], [2, 8], [3, 8], [4, 8], [5, 8], [6, 8]],
-  },
-  serpente: {
-    pts: [[-4, -1], [-2.6, 0.6], [-1, -0.6], [0.6, 0.8], [2.2, -0.5], [3.6, 0.9], [4.4, -0.7], [-4.8, -2.6]],
-    edges: [[7, 0], [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]],
-  },
-};
-
-function drawing(name: string, r: Rng): Net {
-  const d = DRAWINGS[name];
-  const pts: P[] = d.pts.map(([x, z]) => [x + (r() - 0.5) * 0.25, z + (r() - 0.5) * 0.25]);
-  return { pts, edges: d.edges.slice(), shape: name };
+/** a cycle without chords (no thread joins two non-consecutive stars of it) */
+function chordless(net: Net, cyc: number[]): boolean {
+  const adj = adjOf(net.pts.length, net.edges);
+  const L = cyc.length;
+  for (let i = 0; i < L; i++) for (let j = i + 2; j < L; j++) {
+    if (i === 0 && j === L - 1) continue;
+    if (adj[cyc[i]].includes(cyc[j])) return false;
+  }
+  return true;
 }
 
 // ───────────────────────── clues ─────────────────────────
@@ -405,7 +181,7 @@ function buildDef(id: string, area: AreaId, net: Net, clues: Clue[], echo: boole
     else if (c.kind === 'lock') stars[c.star!].lock = c.lock;
     else stars[c.star!].glyph = c.glyph;
   }
-  return { id, area, stars, threads, bell: { x: 0, z: 0 }, ...(echo ? { echo: true } : {}), difficulty: 1 };
+  return { id, area, name: net.name, stars, threads, bell: { x: net.bell[0], z: net.bell[1] }, ...(echo ? { echo: true } : {}), difficulty: 1 };
 }
 
 /** Candidate clues consistent with `sol`. Gem colours: one colour per region; `fixed` pins colours
@@ -449,78 +225,26 @@ function uniqueWith(id: string, area: AreaId, net: Net, cl: Clue[], echo: boolea
   return f.every((v, i) => v === sol[i]) || (sym && f.every((v, i) => v !== sol[i]));
 }
 
-// ───────────────────────── graph features ─────────────────────────
-
-function adjOf(n: number, edges: [number, number][]): number[][] {
-  const adj = Array.from({ length: n }, () => [] as number[]);
-  for (const [a, b] of edges) {
-    adj[a].push(b);
-    adj[b].push(a);
-  }
-  return adj;
+function randomSol(r: Rng, n: number, p = 0.5): Uint8Array {
+  const s = new Uint8Array(n);
+  for (let i = 0; i < n; i++) s[i] = r() < p ? 1 : 0;
+  return s;
 }
-
-/** Components left when star `v` is removed. */
-function componentsWithout(n: number, adj: number[][], v: number): number[][] {
-  const seen = new Set<number>([v]);
-  const comps: number[][] = [];
-  for (let s = 0; s < n; s++) {
-    if (seen.has(s)) continue;
-    const c = [s];
-    seen.add(s);
-    for (let k = 0; k < c.length; k++) for (const j of adj[c[k]]) if (!seen.has(j)) (seen.add(j), c.push(j));
-    comps.push(c);
-  }
-  return comps;
+const tmpDef = (net: Net, echo = false) => buildDef('tmp', 'hub', net, [], echo);
+const gemClue = (i: number, c: GemColor): Clue => ({ kind: 'gem', star: i, glyph: { kind: 'gem', color: c } });
+const glyphClue = (kind: 'measure' | 'contour' | 'mosaic', i: number, n: number): Clue => ({ kind, star: i, glyph: { kind, n } });
+function markClue(net: Net, sol: Uint8Array, k: number): Clue {
+  const [a, b] = net.edges[k];
+  return { kind: 'mark', thread: k, mark: sol[a] === sol[b] ? 'same' : 'diff' };
 }
+const hubOf = (net: Net) => {
+  const adj = adjOf(net.pts.length, net.edges);
+  return [...adj.keys()].sort((a, b) => adj[b].length - adj[a].length)[0];
+};
 
-function cutVertices(net: Net): { v: number; comps: number[][] }[] {
-  const n = net.pts.length;
-  const adj = adjOf(n, net.edges);
-  const out: { v: number; comps: number[][] }[] = [];
-  for (let v = 0; v < n; v++) {
-    const comps = componentsWithout(n, adj, v);
-    if (comps.length >= 2) out.push({ v, comps });
-  }
-  return out;
-}
-
-const isTree = (net: Net) => net.edges.length === net.pts.length - 1 && connected(net.pts.length, net.edges);
-
-/** Longest simple cycle found by bounded DFS (graphs here are small). */
-function longestCycle(net: Net, budget = 200_000): number[] {
-  const n = net.pts.length;
-  const adj = adjOf(n, net.edges);
-  let best: number[] = [];
-  let steps = 0;
-  const path: number[] = [];
-  const on = new Uint8Array(n);
-  const dfs = (start: number, v: number) => {
-    if (++steps > budget) return;
-    for (const j of adj[v]) {
-      if (j === start && path.length >= 3 && path.length > best.length) best = path.slice();
-      if (on[j] || j < start) continue;
-      on[j] = 1;
-      path.push(j);
-      dfs(start, j);
-      path.pop();
-      on[j] = 0;
-    }
-  };
-  for (let s0 = 0; s0 < n && steps <= budget; s0++) {
-    on[s0] = 1;
-    path.push(s0);
-    dfs(s0, s0);
-    path.pop();
-    on[s0] = 0;
-  }
-  return best;
-}
-
-// ───────────────────────── insight templates ─────────────────────────
+// ───────────────────────── insight templates (on a fixed drawing) ─────────────────────────
 
 interface Instance {
-  net: Net;
   sol: Uint8Array;
   core: Clue[];
   note: string;
@@ -531,98 +255,27 @@ interface Instance {
   /** echo puzzles whose static rules admit ≥ 2 answers (reachability decides) */
   needStaticAmbiguity?: boolean;
 }
+type Template = (r: Rng, net: Net) => Instance | null;
 
-type Template = (r: Rng, size: number, shapes: string[]) => Instance | null;
-
-function netFromShape(r: Rng, shapes: string[], size: number): Net | null {
-  const shape = pick(r, shapes);
-  const raw = DRAWINGS[shape] ? drawing(shape, r) : SHAPES[shape](r, size);
-  if (raw.pts.length < 3 || raw.pts.length > 24 || !connected(raw.pts.length, raw.edges)) return null;
-  const norm = normalize(raw);
-  if (!norm || netProblems(norm.pts, norm.edges).length) return null;
-  return norm;
-}
-
-function placeNet(pts: P[], edges: [number, number][], shape: string): Net | null {
-  if (!connected(pts.length, edges)) return null;
-  const norm = normalize({ pts, edges, shape });
-  if (!norm || netProblems(norm.pts, norm.edges).length) return null;
-  return norm;
-}
-
-function randomSol(r: Rng, n: number, p = 0.5): Uint8Array {
-  const s = new Uint8Array(n);
-  for (let i = 0; i < n; i++) s[i] = r() < p ? 1 : 0;
-  return s;
-}
-
-function tmpDef(net: Net, echo = false): ConstellationDef {
-  return buildDef('tmp', 'hub', net, [], echo);
-}
-
-function gemClue(i: number, c: GemColor): Clue {
-  return { kind: 'gem', star: i, glyph: { kind: 'gem', color: c } };
-}
-function glyphClue(kind: 'measure' | 'contour' | 'mosaic', i: number, n: number): Clue {
-  return { kind, star: i, glyph: { kind, n } };
-}
-function markClue(net: Net, sol: Uint8Array, k: number): Clue {
-  const [a, b] = net.edges[k];
-  return { kind: 'mark', thread: k, mark: sol[a] === sol[b] ? 'same' : 'diff' };
-}
-
-/** two small clusters joined by a single star (a cut vertex) */
-function twoClusters(r: Rng, sizeEach: number): { pts: P[]; edges: [number, number][]; c: number } {
-  const pts: P[] = [[0, 0]];
-  const edges: [number, number][] = [];
-  for (const side of [-1, 1]) {
-    const base = pts.length;
-    const m = Math.max(3, sizeEach + Math.floor(r() * 2));
-    const cx = side * 3.6;
-    for (let i = 0; i < m; i++) {
-      const a = (i / m) * Math.PI * 2 + r() * 0.3;
-      pts.push([cx + Math.cos(a) * 1.9 + side * 0.4, Math.sin(a) * 1.9]);
-    }
-    for (let i = 0; i < m; i++) edges.push([base + i, base + ((i + 1) % m)]);
-    if (m >= 5 && r() < 0.6) edges.push([base, base + 2]);
-    // connect the cluster to the middle star through its nearest star
-    let best = base, bd = Infinity;
-    for (let i = base; i < base + m; i++) {
-      const d = dist(pts[i], [0, 0]);
-      if (d < bd) (bd = d), (best = i);
-    }
-    edges.push([0, best]);
-  }
-  // optional pendant on the middle star (keeps it a cut vertex)
-  if (r() < 0.4) {
-    pts.push([0, r() < 0.5 ? 2.2 : -2.2]);
-    edges.push([0, pts.length - 1]);
-  }
-  return { pts, edges, c: 0 };
-}
+/** the plain reading of each language, for panels that need no special insight */
+const PLAIN: Record<string, string> = {
+  gem: 'Afinidade em rede: cada família precisa de um caminho só dela, e famílias diferentes não podem se tocar no mesmo estado.',
+  measure: 'Medida em rede: a região conta as estrelas ligadas por fios, não as vizinhas no chão — conte pelos fios.',
+  contour: 'Contorno em rede: cada estrela conta só os seus próprios fios — as pontas decidem umas às outras.',
+  mosaic: 'Mosaico em rede: a janela de cada estrela é ela mais as vizinhas pelos fios — comece pelas janelas pequenas.',
+  mark: 'A linguagem secreta dos fios: o nó quer pontas iguais, o corte quer pontas diferentes — siga a corrente.',
+};
 
 const T: Record<string, Template> = {
-  /** Warm-ups: plain small puzzles with the area's language (no insight required). */
-  warm(r, size, shapes) {
-    const net = netFromShape(r, shapes, size);
-    if (!net) return null;
-    return { net, sol: randomSol(r, net.pts.length, 0.45), core: [], note: 'Aquecimento: a linguagem do lugar, agora em rede.' };
+  /** Warm-ups / plain reading: the area's language on the drawing, no special insight required. */
+  warm(r, net) {
+    return { sol: randomSol(r, net.pts.length, 0.45), core: [], note: '' };
   },
 
   /** A ponte: two same-colour gems on both sides of a cut star. */
-  bridgeKin(r, size, shapes) {
-    let net: Net | null = null;
-    let cut: { v: number; comps: number[][] } | undefined;
-    if (shapes.length) {
-      net = netFromShape(r, shapes, size);
-      if (!net) return null;
-      cut = shuffle(r, cutVertices(net)).find((c) => c.comps.filter((cc) => cc.length >= 2).length >= 2);
-    } else {
-      const tc = twoClusters(r, Math.max(3, Math.floor((size - 1) / 2)));
-      net = placeNet(tc.pts, tc.edges, 'duas ilhas e uma ponte');
-      if (net) cut = cutVertices(net).find((c) => c.v === 0);
-    }
-    if (!net || !cut) return null;
+  bridgeKin(r, net) {
+    const cut = shuffle(r, cutVertices(net)).find((c) => c.comps.filter((cc) => cc.length >= 2).length >= 2);
+    if (!cut) return null;
     const comps = cut.comps.filter((cc) => cc.length >= 2).sort((a, b) => b.length - a.length);
     const [C1, C2] = comps;
     const n = net.pts.length;
@@ -634,22 +287,22 @@ const T: Record<string, Template> = {
     sol[cut.v] = s;
     sol[a] = s;
     sol[b] = s;
-    // grow a little on each side so the gems can sit away from the bridge
     for (const [start, C] of [[a, C1], [b, C2]] as [number, number[]][]) {
       const nb = adj[start].filter((j) => C.includes(j));
       if (nb.length && r() < 0.7) sol[pick(r, nb)] = s;
     }
     const { id: reg, members } = regionsOf(tmpDef(net), sol);
     const R = members[reg[cut.v]];
-    const far = (C: number[], from: number) => {
+    const far = (C: number[]) => {
       const opts = R.filter((x) => C.includes(x));
-      return opts.sort((x, y) => dist(net!.pts[y], net!.pts[from]) - dist(net!.pts[x], net!.pts[from]))[0];
+      return opts.sort((x, y) => Math.hypot(net.pts[y][0] - net.pts[cut.v][0], net.pts[y][1] - net.pts[cut.v][1]) - Math.hypot(net.pts[x][0] - net.pts[cut.v][0], net.pts[x][1] - net.pts[cut.v][1]))[0];
     };
-    const g1 = far(C1, cut.v), g2 = far(C2, cut.v);
+    const g1 = far(C1), g2 = far(C2);
+    if (g1 === undefined || g2 === undefined) return null;
     const color = pick(r, COLORS);
     const cutStar = cut.v;
     return {
-      net, sol, core: [gemClue(g1, color), gemClue(g2, color)],
+      sol, core: [gemClue(g1, color), gemClue(g2, color)],
       note: `A ponte: as duas gemas ${COLOR_PT[color]} estão em lados opostos e só se encontram atravessando a estrela do meio — ela é da família.`,
       witness: (def) => {
         const gs = def.stars.map((st, i) => (st.glyph?.kind === 'gem' && st.glyph.color === color ? i : -1)).filter((i) => i >= 0);
@@ -659,26 +312,15 @@ const T: Record<string, Template> = {
   },
 
   /** O número não cabe de um lado só: the region must cross the bridge. */
-  bridgeMeasure(r, size, shapes) {
-    let net: Net | null = null;
-    let cut: { v: number; comps: number[][] } | undefined;
-    if (shapes.length) {
-      net = netFromShape(r, shapes, size);
-      if (!net) return null;
-      cut = shuffle(r, cutVertices(net)).find((c) => c.comps.filter((cc) => cc.length >= 2).length >= 2);
-    } else {
-      const tc = twoClusters(r, Math.max(3, Math.floor((size - 1) / 2)));
-      net = placeNet(tc.pts, tc.edges, 'duas ilhas e uma ponte');
-      if (net) cut = cutVertices(net).find((c) => c.v === 0);
-    }
-    if (!net || !cut) return null;
+  bridgeMeasure(r, net) {
+    const cut = shuffle(r, cutVertices(net)).find((c) => c.comps.filter((cc) => cc.length >= 2).length >= 2);
+    if (!cut) return null;
     const comps = cut.comps.filter((cc) => cc.length >= 2).sort((a, b) => a.length - b.length);
     const C1 = comps[0], C2 = comps[comps.length - 1];
     const n = net.pts.length;
     const adj = adjOf(n, net.edges);
     const s = r() < 0.5 ? 1 : 0;
     const sol = new Uint8Array(n).fill(1 - s);
-    // region: all of C1 except maybe one star, the cut star, and 1..3 stars of C2
     const R = new Set<number>([cut.v]);
     for (const x of C1) if (R.size < C1.length || r() < 0.85) R.add(x);
     const frontier = adj[cut.v].filter((j) => C2.includes(j));
@@ -692,63 +334,50 @@ const T: Record<string, Template> = {
       for (const j of adj[x]) if (C2.includes(j) && !R.has(j)) q.push(j);
     }
     for (const x of R) sol[x] = s;
-    // other stars random (but never touching R with state s)
     for (let i = 0; i < n; i++) if (!R.has(i)) sol[i] = adj[i].some((j) => R.has(j)) ? 1 - s : r() < 0.5 ? 1 : 0;
     const { id: reg, members } = regionsOf(tmpDef(net), sol);
     const region = members[reg[cut.v]];
     if (region.length <= C1.length + 1) return null;
     const inC1 = region.filter((x) => C1.includes(x));
     if (!inC1.length) return null;
-    const at = inC1.sort((x, y) => dist(net!.pts[y], net!.pts[cut!.v]) - dist(net!.pts[x], net!.pts[cut!.v]))[0];
+    const at = inC1.sort((x, y) => Math.hypot(net.pts[y][0] - net.pts[cut.v][0], net.pts[y][1] - net.pts[cut.v][1]) - Math.hypot(net.pts[x][0] - net.pts[cut.v][0], net.pts[x][1] - net.pts[cut.v][1]))[0];
     const N = region.length;
     return {
-      net, sol, core: [glyphClue('measure', at, N)],
+      sol, core: [glyphClue('measure', at, N)],
       note: `O número não cabe de um lado só: a região de ${N} tem de atravessar a ponte.`,
       witness: (def) => def.stars.some((st, i) => C1.includes(i) && st.glyph?.kind === 'measure' && st.glyph.n > C1.length + 1),
     };
   },
 
   /** O cubo: differently-coloured gems all touch the hub, so it can't share their state. */
-  hubKin(r, size) {
-    const m = Math.max(6, size - 1);
-    const pts: P[] = [[0, 0]];
-    for (let i = 0; i < m; i++) {
-      const a = (i / m) * Math.PI * 2;
-      pts.push([Math.cos(a) * 3, Math.sin(a) * 3]);
-    }
-    const edges: [number, number][] = [];
-    for (let i = 0; i < m; i++) {
-      edges.push([1 + i, 1 + ((i + 1) % m)]);
-      edges.push([0, 1 + i]);
-    }
-    const net = placeNet(pts, edges, 'roda');
-    if (!net) return null;
-    const s = r() < 0.5 ? 1 : 0; // hub state
-    const sol = new Uint8Array(net.pts.length);
-    sol[0] = s;
-    // rim: blocks of the opposite state separated by hub-state stars
-    for (let i = 0; i < m; i++) sol[1 + i] = r() < 0.55 ? 1 - s : s;
+  hubKin(r, net) {
+    const n = net.pts.length;
+    const adj = adjOf(n, net.edges);
+    const hub = hubOf(net);
+    if (adj[hub].length < 3) return null;
+    const s = r() < 0.5 ? 1 : 0;
+    const sol = randomSol(r, n, 0.5);
+    sol[hub] = s;
+    for (const j of adj[hub]) sol[j] = r() < 0.65 ? 1 - s : s;
     const { id: reg, members } = regionsOf(tmpDef(net), sol);
-    const opp = [...new Set(members.map((_, k) => k).filter((k) => sol[members[k][0]] !== s))];
+    const opp = [...new Set(adj[hub].filter((j) => sol[j] !== s).map((j) => reg[j]))];
     if (opp.length < 2) return null;
     const cols = shuffle(r, COLORS);
     const core = opp.slice(0, 4).map((rid, k) => gemClue(pick(r, members[rid]), cols[k]));
     return {
-      net, sol, core,
+      sol, core,
       note: 'O cubo encosta em todo mundo: gemas de cores diferentes ao redor dele não podem ter o estado dele — senão se juntariam pelo centro.',
-      witness: (def) => new Set(def.stars.slice(1).filter((st) => st.glyph?.kind === 'gem').map((st) => (st.glyph as { color: string }).color)).size >= 2 && !def.stars[0].glyph,
+      witness: (def) => new Set(def.stars.filter((st, i) => i !== hub && st.glyph?.kind === 'gem').map((st) => (st.glyph as { color: string }).color)).size >= 2 && !def.stars[hub].glyph,
     };
   },
 
   /** Amigo único / o dissidente: hub contour 1 or d-1. */
-  hubContour(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['wheel', 'arms', 'flor', 'lanterna'], size);
-    if (!net) return null;
+  hubContour(r, net) {
     const n = net.pts.length;
     const adj = adjOf(n, net.edges);
-    const hub = [...Array(n).keys()].sort((a, b) => adj[b].length - adj[a].length)[0];
+    const hub = hubOf(net);
     const d = adj[hub].length;
-    if (d < 4) return null;
+    if (d < 3) return null;
     const sol = randomSol(r, n, 0.5);
     const friend = r() < 0.5;
     const s = sol[hub];
@@ -756,7 +385,7 @@ const T: Record<string, Template> = {
     for (const j of adj[hub]) sol[j] = friend ? (j === chosen ? s : 1 - s) : j === chosen ? 1 - s : s;
     const c = contourCount(tmpDef(net), sol, hub);
     return {
-      net, sol, core: [glyphClue('contour', hub, c)],
+      sol, core: [glyphClue('contour', hub, c)],
       note: friend
         ? `Amigo único: dos ${d} fios do cubo, só um leva a alguém do mesmo estado — descubra qual.`
         : `O dissidente: dos ${d} vizinhos do cubo, só um é diferente — descubra qual.`,
@@ -765,209 +394,133 @@ const T: Record<string, Template> = {
   },
 
   /** A janela inteira: the hub's mosaic window is its whole neighbourhood. */
-  hubMosaic(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['wheel', 'flor', 'lanterna', 'arms'], size);
-    if (!net) return null;
+  hubMosaic(r, net) {
     const n = net.pts.length;
     const adj = adjOf(n, net.edges);
-    const hub = [...Array(n).keys()].sort((a, b) => adj[b].length - adj[a].length)[0];
-    if (adj[hub].length < 4) return null;
+    const hub = hubOf(net);
+    if (adj[hub].length < 3) return null;
     const sol = randomSol(r, n, 0.5);
     const def = tmpDef(net);
     const nb = pick(r, adj[hub]);
     return {
-      net, sol, core: [glyphClue('mosaic', hub, mosaicCount(def, sol, hub)), glyphClue('mosaic', nb, mosaicCount(def, sol, nb))],
+      sol, core: [glyphClue('mosaic', hub, mosaicCount(def, sol, hub)), glyphClue('mosaic', nb, mosaicCount(def, sol, nb))],
       note: 'A janela do cubo é a vizinhança inteira: compare-a com a janela de uma vizinha — o que sobra está nas estrelas que só uma delas vê.',
       witness: (d) => d.stars[hub].glyph?.kind === 'mosaic' && adj[hub].some((j) => d.stars[j].glyph?.kind === 'mosaic'),
     };
   },
 
   /** Folhas: a leaf's mosaic window only sees itself and its parent. */
-  leafMosaic(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['arms', 'tree', 'flor'], size);
-    if (!net) return null;
+  leafMosaic(r, net) {
     const n = net.pts.length;
     const adj = adjOf(n, net.edges);
     const leaves = [...Array(n).keys()].filter((i) => adj[i].length === 1);
-    if (leaves.length < 3) return null;
+    if (leaves.length < 2) return null;
     const sol = randomSol(r, n, 0.5);
     const def = tmpDef(net);
-    // leaves whose window is extreme (0 or 2) are the strong anchors
-    const picks = shuffle(r, leaves).slice(0, 3);
+    const picks = shuffle(r, leaves).slice(0, Math.min(3, leaves.length));
     for (const l of picks.slice(0, 2)) sol[adj[l][0]] = sol[l];
     const core = picks.slice(0, 2).map((l) => glyphClue('mosaic', l, mosaicCount(def, sol, l)));
     return {
-      net, sol, core,
+      sol, core,
       note: 'Uma folha só enxerga a si mesma e o pai: comece pelas pontas e caminhe para dentro.',
       witness: (d) => leaves.filter((l) => d.stars[l].glyph?.kind === 'mosaic').length >= 2,
     };
   },
 
   /** Árvore de medidas: in a tree every border splits for good. */
-  treeMeasure(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['tree', 'arms', 'serpente'], size);
-    if (!net || !isTree(net)) return null;
-    const sol = randomSol(r, net.pts.length, 0.5);
+  treeMeasure(r, net) {
+    if (!isTree(net)) return null;
     return {
-      net, sol, core: [],
+      sol: randomSol(r, net.pts.length, 0.5), core: [],
       note: 'Numa árvore cada fronteira separa de vez: as medidas se encaixam como galhos, das folhas para o tronco.',
       witness: (d) => d.stars.filter((st) => st.glyph?.kind === 'measure').length >= 3,
     };
   },
 
-  /** Laço ímpar (contorno): alternation can't close around an odd ring. */
-  oddRingContour(r, size) {
-    const L = size % 2 ? size : size + 1;
-    const pts: P[] = [];
-    for (let i = 0; i < L; i++) {
-      const a = (i / L) * Math.PI * 2;
-      pts.push([Math.cos(a) * 3, Math.sin(a) * 3]);
-    }
-    const edges: [number, number][] = pts.map((_, i) => [i, (i + 1) % L]);
-    const x = Math.floor(r() * L);
-    const w = (x + 1) % L;
-    // pendants on some stars (not the agreeing pair)
-    const pend = r() < 0.6 ? 1 + Math.floor(r() * 2) : 0;
-    const pendOn: number[] = [];
-    for (let k = 0; k < pend; k++) {
-      const v = (x + 2 + Math.floor(r() * (L - 3))) % L;
-      if (pendOn.includes(v)) continue;
-      const a = (v / L) * Math.PI * 2;
-      pts.push([Math.cos(a) * 5.2, Math.sin(a) * 5.2]);
-      edges.push([v, pts.length - 1]);
-      pendOn.push(v);
-    }
-    const net = placeNet(pts, edges, 'laço ímpar');
-    if (!net) return null;
-    const n = net.pts.length;
-    const sol = new Uint8Array(n);
-    // alternate starting at w going around, so that x and w agree
-    let st = 1;
+  /** Laço ímpar (contorno): alternation can't close around an odd ring of the drawing. */
+  oddRingContour(r, net) {
+    const odd = cycles(net).filter((c) => c.length % 2 === 1 && c.length >= 5 && chordless(net, c));
+    if (!odd.length) return null;
+    const ring = pick(r, odd);
+    const L = ring.length;
+    const adj = adjOf(net.pts.length, net.edges);
+    const k0 = Math.floor(r() * L);
+    const x = ring[k0], w = ring[(k0 + 1) % L];
+    const sol = randomSol(r, net.pts.length, 0.5);
+    let st = r() < 0.5 ? 1 : 0;
     for (let k = 0; k < L; k++) {
-      const v = (w + k) % L;
-      sol[v] = st;
+      sol[ring[(k0 + 1 + k) % L]] = st;
       st ^= 1;
     }
     sol[x] = sol[w];
-    for (let i = L; i < n; i++) sol[i] = r() < 0.5 ? 1 : 0;
     const def = tmpDef(net);
     const core: Clue[] = [];
-    for (let v = 0; v < L; v++) if (v !== x && v !== w && !pendOn.includes(v)) core.push(glyphClue('contour', v, contourCount(def, sol, v)));
+    for (const v of ring) if (v !== x && v !== w && adj[v].length === 2) core.push(glyphClue('contour', v, contourCount(def, sol, v)));
+    if (core.length < L - 4) return null;
     return {
-      net, sol, core,
+      sol, core,
       note: 'Laço ímpar: luz e sombra não conseguem alternar o anel inteiro — em algum ponto dois vizinhos precisam concordar.',
-      witness: (d) => d.stars.slice(0, L).filter((s2) => s2.glyph?.kind === 'contour' && s2.glyph.n === 2).length >= L - 4,
+      witness: (d) => ring.filter((v) => d.stars[v].glyph?.kind === 'contour' && (d.stars[v].glyph as { n: number }).n === 2).length >= L - 4,
     };
   },
 
   /** Laço ímpar de gemas: adjacent different colours must alternate; the twin pair agrees. */
-  oddRingKin(r, size) {
-    const L = Math.min(7, size % 2 ? size : size + 1);
-    const pts: P[] = [];
-    for (let i = 0; i < L; i++) {
-      const a = (i / L) * Math.PI * 2;
-      pts.push([Math.cos(a) * 2.7, Math.sin(a) * 2.7]);
-    }
-    const edges: [number, number][] = pts.map((_, i) => [i, (i + 1) % L]);
-    const pend = Math.floor(r() * 3);
-    for (let k = 0; k < pend; k++) {
-      const v = Math.floor(r() * L);
-      const a = (v / L) * Math.PI * 2;
-      if (pts.some((p) => dist(p, [Math.cos(a) * 4.8, Math.sin(a) * 4.8]) < 1.8)) continue;
-      pts.push([Math.cos(a) * 4.8, Math.sin(a) * 4.8]);
-      edges.push([v, pts.length - 1]);
-    }
-    const net = placeNet(pts, edges, 'laço de gemas');
-    if (!net) return null;
-    const n = net.pts.length;
-    const x = Math.floor(r() * L), w = (x + 1) % L;
-    const sol = new Uint8Array(n);
+  oddRingKin(r, net) {
+    const odd = cycles(net).filter((c) => c.length % 2 === 1 && c.length >= 5 && c.length <= 7 && chordless(net, c));
+    if (!odd.length) return null;
+    const ring = pick(r, odd);
+    const L = ring.length;
+    const k0 = Math.floor(r() * L);
+    const x = ring[k0], w = ring[(k0 + 1) % L];
+    const sol = randomSol(r, net.pts.length, 0.5);
     let st = 1;
     for (let k = 0; k < L; k++) {
-      sol[(w + k) % L] = st;
+      sol[ring[(k0 + 1 + k) % L]] = st;
       st ^= 1;
     }
     sol[x] = sol[w];
-    for (let i = L; i < n; i++) sol[i] = r() < 0.5 ? 1 : 0;
     const cols = shuffle(r, COLORS);
-    const core: Clue[] = [];
-    let ci = 0;
-    for (let k = 0; k < L; k++) {
-      const v = (w + k) % L;
-      if (v === x) core.push(gemClue(v, cols[0]));
-      else core.push(gemClue(v, v === w ? cols[0] : cols[1 + (ci++ % 5)]));
-    }
-    // a colour may only appear once (except the twin pair) → drop extra gems if colours ran out
-    const seen = new Map<string, number>();
-    const core2 = core.filter((c) => {
-      const col = (c.glyph as { color: string }).color;
-      const k = seen.get(col) ?? 0;
-      seen.set(col, k + 1);
-      return col === cols[0] ? true : k === 0;
-    });
+    const core: Clue[] = [gemClue(x, cols[0]), gemClue(w, cols[0])];
+    let ci = 1;
+    for (let k = 2; k < L && ci < COLORS.length; k++) core.push(gemClue(ring[(k0 + k) % L], cols[ci++]));
+    // gems of other regions must not share colours: the ring stars of the same state are separate regions
+    // only when not linked elsewhere; uniqueness checking discards inconsistent candidates
     const pair = cols[0];
     return {
-      net, sol, core: core2,
+      sol, core,
       note: `Laço ímpar de gemas: cores vizinhas diferentes precisam alternar luz e sombra, mas num anel ímpar a alternância não fecha — as duas gemas ${COLOR_PT[pair]} lado a lado dividem o estado.`,
-      witness: (d) => d.stars.slice(0, L).filter((s2) => s2.glyph?.kind === 'gem').length >= L - 2,
+      witness: (d) => ring.filter((v) => d.stars[v].glyph?.kind === 'gem').length >= L - 2,
     };
   },
 
   /** Paridade do laço: every loop has an even number of cuts. */
-  cutParity(r, size, shapes) {
-    let net: Net | null;
-    let ring: number[];
-    if (shapes.length) {
-      net = netFromShape(r, shapes, size);
-      if (!net) return null;
-      ring = longestCycle(net);
-      if (ring.length < 5) return null;
-    } else {
-      const L = size;
-      const pts: P[] = [];
-      for (let i = 0; i < L; i++) {
-        const a = (i / L) * Math.PI * 2;
-        pts.push([Math.cos(a) * 3.2, Math.sin(a) * 3.2]);
-      }
-      const edges: [number, number][] = pts.map((_, i) => [i, (i + 1) % L]);
-      if (r() < 0.6) {
-        pts.push([0, 0]);
-        edges.push([L, 0], [L, Math.floor(L / 2)]);
-      }
-      net = placeNet(pts, edges, 'laço');
-      ring = [...Array(L).keys()];
-    }
-    if (!net) return null;
-    const n = net.pts.length;
-    const sol = randomSol(r, n, 0.5);
-    const ek = (a: number, b: number) => net!.edges.findIndex(([u, v]) => (u === a && v === b) || (u === b && v === a));
+  cutParity(r, net) {
+    const ring = longestCycle(net);
+    if (ring.length < 4) return null;
+    const sol = randomSol(r, net.pts.length, 0.5);
+    const ek = (a: number, b: number) => net.edges.findIndex(([u, v]) => (u === a && v === b) || (u === b && v === a));
     const ringEdges = ring.map((v, k) => ek(v, ring[(k + 1) % ring.length]));
     if (ringEdges.some((e) => e < 0)) return null;
-    // leave two non-adjacent ring threads unmarked; one is decided by a local clue, the other by parity
     const L = ringEdges.length;
     const e1 = Math.floor(r() * L);
-    const e2 = (e1 + 2 + Math.floor(r() * (L - 3))) % L;
+    const e2 = (e1 + 2 + Math.floor(r() * Math.max(1, L - 3))) % L;
     const core: Clue[] = [];
     ringEdges.forEach((e, k) => {
-      if (k !== e1 && k !== e2) core.push(markClue(net!, sol, e));
+      if (k !== e1 && k !== e2) core.push(markClue(net, sol, e));
     });
-    // a contour clue at an endpoint of e2's far side makes e2 matter
     const [ea] = net.edges[ringEdges[e2]];
     core.push(glyphClue('contour', ea, contourCount(tmpDef(net), sol, ea)));
     return {
-      net, sol, core,
+      sol, core,
       note: 'Paridade do laço: todo laço tem um número par de cortes — conte os cortes ao redor e o elo sem marca se revela.',
       witness: (d) => ringEdges.filter((e) => d.threads[e].mark).length >= L - 3 && ringEdges.some((e) => !d.threads[e].mark),
     };
   },
 
   /** Corrente de nós: a chain of knots is one region; the measure says where it ends. */
-  knotChain(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['lattice', 'triLattice', 'cluster', 'ladder'], size);
-    if (!net) return null;
+  knotChain(r, net) {
     const n = net.pts.length;
     const adj = adjOf(n, net.edges);
-    // random simple path of length 3..5
     const len = 3 + Math.floor(r() * 3);
     let path: number[] = [];
     for (let tries = 0; tries < 30 && path.length < len; tries++) {
@@ -991,85 +544,30 @@ const T: Record<string, Template> = {
     const end = path[path.length - 1];
     core.push(glyphClue('measure', end, path.length));
     return {
-      net, sol, core,
+      sol, core,
       note: `Corrente de nós: as estrelas amarradas formam uma região só — e a medida ${path.length} diz que ela termina ali; todo fio que sai dela é um corte.`,
       witness: (d) => d.stars[end].glyph?.kind === 'measure' && d.threads.filter((t) => t.mark === 'same').length >= 2,
     };
   },
 
-  /** Famílias entrelaçadas: one family passes through the hub, the other goes around the rim. */
-  interleaved(r, size) {
-    const m = Math.max(7, size - 1);
-    const pts: P[] = [[0, 0]];
-    for (let i = 0; i < m; i++) {
-      const a = (i / m) * Math.PI * 2;
-      pts.push([Math.cos(a) * 3.3, Math.sin(a) * 3.3]);
-    }
-    const edges: [number, number][] = [];
-    for (let i = 0; i < m; i++) {
-      edges.push([1 + i, 1 + ((i + 1) % m)]);
-      edges.push([0, 1 + i]);
-    }
-    const net = placeNet(pts, edges, 'roda entrelaçada');
-    if (!net) return null;
+  /** Janelas quase iguais: two joined stars that see almost the same stars. */
+  theta(r, net) {
     const n = net.pts.length;
-    const s = r() < 0.5 ? 1 : 0; // hub family state
-    const p = 1 + Math.floor(r() * m);
-    const half = Math.floor(m / 2);
-    const q = 1 + ((p - 1 + half) % m);
-    // arc1 from p to q going forward contains m1; arc2 is the other way (A family goes around arc2)
-    const arc1: number[] = [];
-    for (let k = 1; k < half; k++) arc1.push(1 + ((p - 1 + k) % m));
-    const arc2: number[] = [];
-    for (let k = 1; k < m - half; k++) arc2.push(1 + ((q - 1 + k) % m));
-    if (!arc1.length || !arc2.length) return null;
-    const m1 = pick(r, arc1);
-    const sol = new Uint8Array(n);
-    sol[0] = s;
-    sol[m1] = s;
-    for (const v of [p, q, ...arc2]) sol[v] = 1 - s;
-    for (const v of arc1) if (v !== m1) sol[v] = r() < 0.5 ? 1 : 0;
-    const cols = shuffle(r, COLORS);
-    return {
-      net, sol,
-      core: [gemClue(p, cols[0]), gemClue(q, cols[0]), gemClue(m1, cols[1]), gemClue(0, cols[1])],
-      note: `Famílias entrelaçadas: as gemas ${COLOR_PT[cols[0]]} e ${COLOR_PT[cols[1]]} se cruzam no anel — uma família passa por dentro, pelo cubo, e a outra precisa dar a volta por fora, no estado oposto.`,
-      witness: (d) => d.stars[0].glyph?.kind === 'gem' && [p, q, m1].every((v) => d.stars[v].glyph?.kind === 'gem'),
-    };
-  },
-
-  /** Janelas quase iguais: two hubs that see almost the same stars. */
-  theta(r, size) {
-    const k = Math.max(3, Math.min(5, size - 4));
-    const pts: P[] = [[-1.7, 0], [1.7, 0]];
-    const edges: [number, number][] = [[0, 1]];
-    const ys = [2.1, -2.1, 4.2, -4.2, 6.0].slice(0, k);
-    for (const y of ys) {
-      pts.push([0, y]);
-      edges.push([0, pts.length - 1], [1, pts.length - 1]);
-    }
-    // private stars
-    const priv = 1 + Math.floor(r() * 2);
-    for (let i = 0; i < priv; i++) {
-      const side = i % 2 ? 1 : -1;
-      pts.push([side * 4.3, (r() - 0.5) * 2]);
-      edges.push([side < 0 ? 0 : 1, pts.length - 1]);
-    }
-    const net = placeNet(pts, edges, 'janelas gêmeas');
-    if (!net) return null;
-    const sol = randomSol(r, net.pts.length, 0.5);
+    const adj = adjOf(n, net.edges);
+    const pairs = net.edges.filter(([u, v]) => adj[u].filter((j) => adj[v].includes(j)).length >= 2);
+    if (!pairs.length) return null;
+    const [u, v] = pick(r, pairs);
+    const sol = randomSol(r, n, 0.5);
     const def = tmpDef(net);
     return {
-      net, sol, core: [glyphClue('mosaic', 0, mosaicCount(def, sol, 0)), glyphClue('mosaic', 1, mosaicCount(def, sol, 1))],
-      note: 'Janelas quase iguais: os dois centros enxergam as mesmas estrelas, menos as suas próprias — subtraia uma janela da outra.',
-      witness: (d) => d.stars[0].glyph?.kind === 'mosaic' && d.stars[1].glyph?.kind === 'mosaic',
+      sol, core: [glyphClue('mosaic', u, mosaicCount(def, sol, u)), glyphClue('mosaic', v, mosaicCount(def, sol, v))],
+      note: 'Janelas quase iguais: as duas estrelas enxergam quase as mesmas vizinhas, menos as suas próprias — subtraia uma janela da outra.',
+      witness: (d) => d.stars[u].glyph?.kind === 'mosaic' && d.stars[v].glyph?.kind === 'mosaic',
     };
   },
 
   /** Triângulos: every triangle has 0 or 2 borders. */
-  triangleContour(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['dense', 'triLattice', 'wheel', 'coroa', 'lanterna'], size);
-    if (!net) return null;
+  triangleContour(r, net) {
     const n = net.pts.length;
     const adj = adjOf(n, net.edges);
     const ears = [...Array(n).keys()].filter((v) => adj[v].length === 2 && adj[adj[v][0]].includes(adj[v][1]));
@@ -1077,53 +575,46 @@ const T: Record<string, Template> = {
     const x = pick(r, ears);
     const [y, z] = adj[x];
     const sol = randomSol(r, n, 0.5);
-    // contour 1 at the ear: exactly one of y,z differs → y and z disagree
     sol[y] = sol[x];
     sol[z] = 1 - sol[x];
     const def = tmpDef(net);
     return {
-      net, sol, core: [glyphClue('contour', x, 1), glyphClue('contour', y, contourCount(def, sol, y))],
+      sol, core: [glyphClue('contour', x, 1), glyphClue('contour', y, contourCount(def, sol, y))],
       note: 'Em todo triângulo há 0 ou 2 fronteiras, nunca 1 ou 3: se a ponta tem uma só, as outras duas brigam entre si.',
       witness: (d) => d.stars[x].glyph?.kind === 'contour' && (d.stars[x].glyph as { n: number }).n === 1,
     };
   },
 
   /** A soma par: the sum of all contours is twice the number of cut threads. */
-  contourSum(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['ring', 'wheel', 'ladder', 'lattice'], size);
-    if (!net) return null;
-    const sol = randomSol(r, net.pts.length, 0.5);
-    const def = tmpDef(net);
+  contourSum(r, net) {
     const n = net.pts.length;
+    if (n > 13) return null;
+    const sol = randomSol(r, n, 0.5);
+    const def = tmpDef(net);
     const skip = Math.floor(r() * n);
     const core = [...Array(n).keys()].filter((i) => i !== skip).map((i) => glyphClue('contour', i, contourCount(def, sol, i)));
     return {
-      net, sol, core,
+      sol, core,
       note: 'A soma de todos os contornos é sempre par (cada fio cortado conta duas vezes) — a estrela sem número se descobre contando.',
       witness: (d) => d.stars.filter((st) => st.glyph?.kind === 'contour').length >= n - 3,
     };
   },
 
-  /** A gema solitária: a unique colour on a busy star needs a world of its own. */
-  singleton(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['cluster', 'wheel', 'flor', 'dense'], size);
-    if (!net) return null;
+  /** A gema solitária: a unique colour on the busiest star needs a world of its own. */
+  singleton(r, net) {
     const n = net.pts.length;
     const adj = adjOf(n, net.edges);
-    const v = [...Array(n).keys()].sort((a, b) => adj[b].length - adj[a].length)[0];
-    if (adj[v].length < 4) return null;
+    const v = hubOf(net);
+    if (adj[v].length < 3) return null;
     const sol = randomSol(r, n, 0.5);
     for (const j of adj[v]) sol[j] = 1 - sol[v];
     const { id: reg, members } = regionsOf(tmpDef(net), sol);
     const cols = shuffle(r, COLORS);
     const others = shuffle(r, members.map((_, k) => k).filter((k) => k !== reg[v])).slice(0, 3);
     const core: Clue[] = [gemClue(v, cols[0])];
-    others.forEach((rid, k) => {
-      const ms = members[rid];
-      core.push(gemClue(pick(r, ms), cols[1 + k]));
-    });
+    others.forEach((rid, k) => core.push(gemClue(pick(r, members[rid]), cols[1 + k])));
     return {
-      net, sol, core,
+      sol, core,
       note: `A gema solitária: a ${COLOR_PT[cols[0]]} é única e está no lugar mais movimentado — ela precisa de um mundo só dela, cercado pelo estado oposto.`,
       witness: (d) => d.stars[v].glyph?.kind === 'gem',
     };
@@ -1131,38 +622,33 @@ const T: Record<string, Template> = {
 
   // ── echo ──
 
-  /** Eco na árvore: a leaf only flips itself and its parent. */
-  echoTree(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['tree', 'arms', 'serpente'], size);
-    if (!net || !isTree(net)) return null;
-    return { net, sol: new Uint8Array(net.pts.length).fill(1), core: [], echo: true, allLit: true, note: 'Eco na árvore: cada folha só mexe nela e no pai — resolva de fora para dentro.' };
-  },
-
-  /** Anel de eco: on a ring, pressing changes three stars at a time. */
-  echoRingLit(r, size) {
-    const L = size % 3 === 0 ? size + 1 : size;
-    const pts: P[] = [];
-    for (let i = 0; i < L; i++) {
-      const a = (i / L) * Math.PI * 2;
-      pts.push([Math.cos(a) * 3, Math.sin(a) * 3]);
-    }
-    const net = placeNet(pts, pts.map((_, i) => [i, (i + 1) % L]), 'anel de eco');
-    if (!net) return null;
-    return { net, sol: new Uint8Array(L).fill(1), core: [], echo: true, allLit: true, note: 'Anel de eco: cada toque vira três estrelas; como o anel não é múltiplo de três, só existe um jeito de acender tudo.' };
+  /** Eco com tudo aceso: find the presses that light the whole drawing. */
+  echoAllLit(r, net) {
+    void r;
+    const def = tmpDef(net, true);
+    const pr = pressesFor(def, new Uint8Array(net.pts.length).fill(1));
+    if (!pr || pr.length < 2) return null;
+    const adj = adjOf(net.pts.length, net.edges);
+    const ring = adj.every((l) => l.length === 2);
+    return {
+      sol: new Uint8Array(net.pts.length).fill(1), core: [], echo: true, allLit: true,
+      note: isTree(net)
+        ? 'Eco na árvore: cada folha só mexe nela e no pai — resolva de fora para dentro.'
+        : ring
+          ? 'Anel de eco: cada toque vira três estrelas; o anel inteiro decide quantos toques cabem.'
+          : `Eco: cada toque vira a estrela e suas vizinhas — acender o desenho inteiro pede exatamente ${pr.length} toques certos.`,
+    };
   },
 
   /** Eco + lógica: deduce the picture from the rules, then chase it with echoes. */
-  echoLogic(r, size, shapes) {
-    const net = netFromShape(r, shapes.length ? shapes : ['tree', 'arms', 'ring', 'wheel'], size);
-    if (!net) return null;
+  echoLogic(r, net) {
     const def0 = tmpDef(net, true);
-    if (parityChecks(def0).length) return null; // every picture reachable: the challenge is two-stage
+    if (parityChecks(def0).length) return null;
     const sol = initialState(def0);
     for (let i = 0; i < net.pts.length; i++) if (r() < 0.5) press(def0, sol, i);
-    const tree = isTree(net);
     return {
-      net, sol, core: [], echo: true,
-      note: tree
+      sol, core: [], echo: true,
+      note: isTree(net)
         ? 'Duas etapas: primeiro descubra o desenho pelas regras; depois persiga-o com ecos, das folhas para dentro.'
         : 'Duas etapas: as regras decidem o desenho; o eco decide como chegar nele — cada toque mexe numa vizinhança inteira.',
       witness: (d) => d.stars.some((st) => st.glyph) && (pressesFor(d, sol)?.length ?? 0) >= 3,
@@ -1170,31 +656,13 @@ const T: Record<string, Template> = {
   },
 
   /** Eco + regras: the static rules admit two answers, but only one can be reached. */
-  echoReach(r, size, shapes) {
-    let net: Net | null;
-    if (shapes.length) net = netFromShape(r, shapes, size);
-    else {
-      // ring of 3k (singular press matrix) with optional pendants
-      const L = Math.max(6, size - (size % 3));
-      const pts: P[] = [];
-      for (let i = 0; i < L; i++) {
-        const a = (i / L) * Math.PI * 2;
-        pts.push([Math.cos(a) * 3.1, Math.sin(a) * 3.1]);
-      }
-      const edges: [number, number][] = pts.map((_, i) => [i, (i + 1) % L]);
-      if (r() < 0.5) {
-        pts.push([0, 0]);
-        edges.push([L, 0], [L, L / 3], [L, (2 * L) / 3]);
-      }
-      net = placeNet(pts, edges, 'anel de três');
-    }
-    if (!net) return null;
+  echoReach(r, net) {
     const def0 = tmpDef(net, true);
-    if (!parityChecks(def0).length) return null; // need unreachable patterns
+    if (!parityChecks(def0).length) return null;
     const sol = initialState(def0);
     for (let i = 0; i < net.pts.length; i++) if (r() < 0.5) press(def0, sol, i);
     return {
-      net, sol, core: [], echo: true, needStaticAmbiguity: true,
+      sol, core: [], echo: true, needStaticAmbiguity: true,
       note: 'Duas respostas parecem certas, mas o eco só alcança uma: nem todo desenho de luz pode ser feito apertando estrelas aqui.',
     };
   },
@@ -1203,12 +671,8 @@ const T: Record<string, Template> = {
 // ───────────────────────── finishing an instance ─────────────────────────
 
 interface Slot {
-  tpl: string;
-  size: number;
-  shapes?: string[];
   extras: Partial<Record<ClueKind, number>>;
   warm?: boolean;
-  show?: boolean;
   /** minimal reasoning required: lookaheads + 3·deep */
   depth?: number;
 }
@@ -1216,13 +680,13 @@ interface Slot {
 interface Built {
   def: ConstellationDef;
   raw: number;
-  shape: string;
+  tpl: string;
   sol: Uint8Array;
   depth: number;
 }
 
-function finish(id: string, area: AreaId, slot: Slot, inst: Instance, r: Rng): Built | null {
-  const { net, sol, core } = inst;
+function finish(id: string, area: AreaId, net: Net, slot: Slot, inst: Instance, r: Rng, tpl: string): Built | null {
+  const { sol, core } = inst;
   const echo = !!inst.echo;
   let def: ConstellationDef;
   if (inst.allLit) {
@@ -1233,15 +697,23 @@ function finish(id: string, area: AreaId, slot: Slot, inst: Instance, r: Rng): B
   } else {
     if (echo && !reachable(tmpDef(net, true), sol)) return null;
     const base = buildDef(id, area, net, [], echo);
-    // pin gem colours used by the core to their regions
     const { id: reg } = regionsOf(base, sol);
     const fixed = new Map<number, GemColor>();
-    for (const c of core) if (c.kind === 'gem') fixed.set(reg[c.star!], (c.glyph as { color: GemColor }).color);
+    for (const c of core) if (c.kind === 'gem') {
+      const col = (c.glyph as { color: GemColor }).color;
+      if (fixed.has(reg[c.star!]) && fixed.get(reg[c.star!]) !== col) return null;
+      fixed.set(reg[c.star!], col);
+    }
+    // a colour may only name one region
+    const colorRegions = new Map<GemColor, number>();
+    for (const [rid, col] of fixed) {
+      if (colorRegions.has(col) && colorRegions.get(col) !== rid) return null;
+      colorRegions.set(col, rid);
+    }
     const coreStars = new Set(core.filter((c) => c.star !== undefined && c.kind !== 'lock').map((c) => c.star!));
     const coreThreads = new Set(core.filter((c) => c.kind === 'mark').map((c) => c.thread!));
     const kinds = (Object.keys(slot.extras) as ClueKind[]).filter((k) => (slot.extras[k] ?? 0) > 0);
     const pool = candidateClues(base, sol, kinds, r, fixed).filter((c) => (c.star === undefined || !coreStars.has(c.star)) && (c.thread === undefined || !coreThreads.has(c.thread)));
-    // initial: core + one weighted extra glyph on ~45% of the other stars
     const chosen: Clue[] = [...core];
     const byStar = new Map<number, Clue[]>();
     for (const c of pool) if (c.star !== undefined && c.kind !== 'lock') (byStar.get(c.star) ?? byStar.set(c.star, []).get(c.star)!).push(c);
@@ -1274,7 +746,6 @@ function finish(id: string, area: AreaId, slot: Slot, inst: Instance, r: Rng): B
       else return null;
     }
     if (!uniqueWith(id, area, net, chosen, echo, sol)) return null;
-    // minimise: extras first, then core clues as long as the insight witness still holds
     for (const c of shuffle(r, chosen.filter((c) => !core.includes(c)))) {
       const trial = chosen.filter((x) => x !== c);
       if (uniqueWith(id, area, net, trial, echo, sol)) chosen.splice(chosen.indexOf(c), 1);
@@ -1298,286 +769,202 @@ function finish(id: string, area: AreaId, slot: Slot, inst: Instance, r: Rng): B
   if (!rep.solvedByLogic) return null;
   const depth = rep.lookaheads + 3 * rep.deep + (inst.needStaticAmbiguity ? 2 : 0) + (def.echo ? Math.floor(rep.presses / 2) : 0);
   if (!slot.warm && depth < (slot.depth ?? 1)) return null;
-  def.bell = placeBell(def);
-  def.note = inst.note;
+  const note = inst.note || PLAIN[(Object.keys(slot.extras) as string[]).sort((a, b) => (slot.extras[b as ClueKind] ?? 0) - (slot.extras[a as ClueKind] ?? 0))[0]] || PLAIN.contour;
+  def.note = note;
   const n = def.stars.length;
-  // difficulty grows with reasoning, not with size
   const raw = 0.8 + 0.03 * n + 0.12 * rep.rounds + 1.1 * rep.lookaheads + 2.8 * rep.deep + (def.echo ? 0.4 + 0.3 * rep.presses : 0) + (inst.needStaticAmbiguity ? 1.2 : 0);
-  return { def, raw, shape: net.shape, sol, depth };
-}
-
-// ───────────────────────── bell ─────────────────────────
-
-function placeBell(def: ConstellationDef): { x: number; z: number } {
-  const pts: P[] = def.stars.map((s) => [s.x, s.z]);
-  let best: { x: number; z: number } | null = null;
-  let bestScore = -Infinity;
-  for (let k = 0; k < 32; k++) {
-    const a = (k / 32) * Math.PI * 2;
-    const dir: P = [Math.cos(a), Math.sin(a)];
-    let ext = 0;
-    for (const p of pts) ext = Math.max(ext, p[0] * dir[0] + p[1] * dir[1]);
-    for (const off of [1.4, 1.8, 2.3]) {
-      const d = Math.min(ext + off, 8.6);
-      const b: P = [+(dir[0] * d).toFixed(2), +(dir[1] * d).toFixed(2)];
-      let clear = Infinity;
-      for (const p of pts) clear = Math.min(clear, dist(p, b));
-      for (const t of def.threads) clear = Math.min(clear, pointSegDist(b, pts[t.a], pts[t.b]) + 0.3);
-      if (clear < 1.2) continue;
-      const score = Math.min(clear, 2.5) + 1.2 * dir[1] - 0.1 * off;
-      if (score > bestScore) {
-        bestScore = score;
-        best = { x: b[0], z: b[1] };
-      }
-    }
-  }
-  return best ?? { x: 0, z: 8 };
+  return { def, raw, tpl, sol, depth };
 }
 
 // ───────────────────────── plans per area ─────────────────────────
 
-const S = (tpl: string, size: number, extras: Partial<Record<ClueKind, number>>, o: Partial<Slot> = {}): Slot => ({ tpl, size, extras, ...o });
+type Extras = Partial<Record<ClueKind, number>>;
+interface AreaPlan {
+  /** number of warm-up slots (the simplest drawings) and showpieces (the richest) */
+  warm: number;
+  show: number;
+  warmExtras: Extras;
+  /** template of the warm-ups (default: plain reading of the place's language) */
+  warmTpl?: string;
+  /** templates of the place, with the languages that fill in around the insight */
+  tpls: [string, Extras][];
+  /** reasoning ramp multiplier */
+  brutal?: number;
+}
 
-const PLANS: Partial<Record<AreaId, Slot[]>> = {
-  hub: [
-    S('bridgeKin', 9, { gem: 1, measure: 0.5 }, { depth: 1 }),
-    S('hubMosaic', 9, { mosaic: 1, contour: 0.5 }, { depth: 1 }),
-    S('oddRingContour', 7, { measure: 1, mosaic: 0.5 }, { depth: 1 }),
-    S('knotChain', 11, { measure: 1, contour: 0.6, mark: 0.2 }, { depth: 2 }),
-    S('singleton', 10, { gem: 1, measure: 0.5 }, { depth: 2 }),
-    S('interleaved', 9, { gem: 0.6, measure: 0.6 }, { depth: 2 }),
-    S('theta', 8, { mosaic: 1, contour: 0.5 }, { depth: 2 }),
-    S('cutParity', 9, { measure: 0.7, mosaic: 0.4 }, { depth: 3 }),
-    S('triangleContour', 14, { contour: 1, measure: 0.6, mark: 0.2 }, { shapes: ['coroa', 'lanterna', 'barco'], show: true, depth: 8 }),
-    S('bridgeKin', 13, { gem: 1, measure: 0.8, mark: 0.2 }, { shapes: ['borboleta', 'chave', 'peixe'], show: true, depth: 9 }),
-  ],
-  kinship: [
-    S('warm', 5, { gem: 1 }, { shapes: ['chain'], warm: true }),
-    S('warm', 6, { gem: 1 }, { shapes: ['ring', 'ladder'], warm: true }),
-    S('bridgeKin', 8, { gem: 1 }, { depth: 1 }),
-    S('hubKin', 7, { gem: 1 }, { depth: 1 }),
-    S('oddRingKin', 5, { gem: 1 }, { depth: 1 }),
-    S('singleton', 10, { gem: 1 }, { depth: 1 }),
-    S('bridgeKin', 11, { gem: 1, measure: 0.4 }, { depth: 2 }),
-    S('interleaved', 9, { gem: 1 }, { depth: 2 }),
-    S('hubKin', 10, { gem: 1, measure: 0.4, mark: 0.1 }, { depth: 2 }),
-    S('singleton', 12, { gem: 1, measure: 0.4 }, { shapes: ['dense', 'cluster', 'wheel'], depth: 2 }),
-    S('oddRingKin', 7, { gem: 1, measure: 0.4 }, { depth: 2 }),
-    S('bridgeKin', 12, { gem: 1, measure: 0.5 }, { depth: 3 }),
-    S('interleaved', 10, { gem: 1, measure: 0.5 }, { depth: 3 }),
-    S('bridgeKin', 12, { gem: 1, measure: 0.5, mark: 0.15 }, { shapes: ['borboleta', 'chave', 'peixe', 'pássaro'], show: true, depth: 3 }),
-    S('interleaved', 11, { gem: 1, measure: 0.6, mark: 0.15 }, { show: true, depth: 4 }),
-  ],
-  measure: [
-    S('warm', 5, { measure: 1 }, { shapes: ['chain'], warm: true }),
-    S('warm', 6, { measure: 1 }, { shapes: ['tree', 'ring'], warm: true }),
-    S('treeMeasure', 8, { measure: 1 }, { depth: 1 }),
-    S('bridgeMeasure', 9, { measure: 1 }, { depth: 1 }),
-    S('knotChain', 9, { measure: 1, mark: 0.15 }, { depth: 1 }),
-    S('treeMeasure', 10, { measure: 1 }, { shapes: ['arms', 'serpente'], depth: 2 }),
-    S('bridgeMeasure', 11, { measure: 1, contour: 0.3 }, { depth: 2 }),
-    S('knotChain', 12, { measure: 1, mark: 0.2 }, { depth: 2 }),
-    S('treeMeasure', 13, { measure: 1, contour: 0.3 }, { depth: 3 }),
-    S('bridgeMeasure', 12, { measure: 1, contour: 0.4, mark: 0.1 }, { depth: 3 }),
-    S('knotChain', 13, { measure: 1, mark: 0.25 }, { shapes: ['cluster', 'triLattice'], depth: 3 }),
-    S('treeMeasure', 14, { measure: 1, contour: 0.4 }, { shapes: ['arms', 'tree'], depth: 3 }),
-    S('bridgeMeasure', 13, { measure: 1, contour: 0.5, mark: 0.1 }, { depth: 4 }),
-    S('knotChain', 12, { measure: 1, contour: 0.4, mark: 0.2 }, { shapes: ['casa', 'barco', 'coroa', 'lanterna'], show: true, depth: 5 }),
-    S('bridgeMeasure', 13, { measure: 1, contour: 0.4, mark: 0.15 }, { shapes: ['chave', 'borboleta', 'peixe'], show: true, depth: 4 }),
-  ],
-  mold: [
-    S('warm', 6, { measure: 1, contour: 1 }, { shapes: ['lattice', 'ladder'], warm: true }),
-    S('hubContour', 8, { measure: 0.6, contour: 0.6 }, { shapes: ['wheel', 'arms'], depth: 1 }),
-    S('knotChain', 9, { measure: 1, contour: 0.5, mark: 0.15 }, { shapes: ['lattice', 'ladder'], depth: 1 }),
-    S('bridgeMeasure', 10, { measure: 1, contour: 0.5 }, { depth: 1 }),
-    S('triangleContour', 10, { contour: 1, measure: 0.5 }, { shapes: ['triLattice', 'dense'], depth: 2 }),
-    S('contourSum', 9, { measure: 0.4 }, { shapes: ['lattice', 'ladder'], depth: 1 }),
-    S('treeMeasure', 11, { measure: 1, contour: 0.4 }, { shapes: ['arms', 'tree'], depth: 2 }),
-    S('hubContour', 11, { measure: 0.8, contour: 0.8, mark: 0.1 }, { shapes: ['wheel', 'lanterna', 'flor'], depth: 3 }),
-    S('contourSum', 11, { measure: 0.5 }, { shapes: ['lattice', 'triLattice'], depth: 2 }),
-    S('knotChain', 12, { measure: 1, contour: 0.5, mark: 0.2 }, { shapes: ['triLattice', 'lattice'], depth: 3 }),
-    S('triangleContour', 12, { contour: 1, measure: 0.6 }, { shapes: ['dense', 'triLattice'], depth: 3 }),
-    S('triangleContour', 12, { contour: 1, measure: 0.6 }, { shapes: ['casa', 'coroa', 'barco'], show: true, depth: 3 }),
-    S('bridgeMeasure', 13, { measure: 1, contour: 0.6, mark: 0.1 }, { shapes: ['chave', 'borboleta'], show: true, depth: 4 }),
-  ],
-  contour: [
-    S('warm', 6, { contour: 1 }, { shapes: ['chain'], warm: true }),
-    S('oddRingContour', 5, { contour: 0.5 }, { depth: 1 }),
-    S('hubContour', 8, { contour: 1 }, { shapes: ['wheel', 'arms'], depth: 1 }),
-    S('triangleContour', 9, { contour: 1 }, { shapes: ['wheel', 'dense'], depth: 1 }),
-    S('oddRingContour', 7, { contour: 0.6, measure: 0.3 }, { depth: 2 }),
-    S('contourSum', 9, {}, { shapes: ['ring', 'wheel', 'ladder'], depth: 1 }),
-    S('hubContour', 11, { contour: 1, mark: 0.1 }, { shapes: ['flor', 'lanterna', 'wheel'], depth: 2 }),
-    S('triangleContour', 12, { contour: 1, measure: 0.3 }, { shapes: ['triLattice', 'dense'], depth: 3 }),
-    S('contourSum', 11, { measure: 0.3 }, { shapes: ['wheel', 'lattice', 'triLattice'], depth: 2 }),
-    S('oddRingContour', 9, { contour: 0.7, measure: 0.4 }, { depth: 3 }),
-    S('hubContour', 12, { contour: 1, measure: 0.3, mark: 0.1 }, { shapes: ['flor', 'arms', 'lanterna'], depth: 3 }),
-    S('hubContour', 11, { contour: 1, measure: 0.5, mark: 0.1 }, { shapes: ['lanterna', 'flor', 'coroa'], show: true, depth: 4 }),
-    S('triangleContour', 13, { contour: 1, measure: 0.4, mark: 0.1 }, { shapes: ['coroa', 'lanterna', 'barco'], show: true, depth: 4 }),
-  ],
-  mosaic: [
-    S('warm', 6, { mosaic: 1 }, { shapes: ['chain'], warm: true }),
-    S('leafMosaic', 7, { mosaic: 1 }, { shapes: ['arms'], depth: 1 }),
-    S('hubMosaic', 8, { mosaic: 1 }, { shapes: ['wheel'], depth: 1 }),
-    S('leafMosaic', 9, { mosaic: 1 }, { shapes: ['tree'], depth: 1 }),
-    S('theta', 7, { mosaic: 1 }, { depth: 1 }),
-    S('hubMosaic', 10, { mosaic: 1 }, { shapes: ['wheel', 'arms'], depth: 2 }),
-    S('leafMosaic', 12, { mosaic: 1 }, { shapes: ['arms', 'tree'], depth: 2 }),
-    S('theta', 9, { mosaic: 1, contour: 0.3 }, { depth: 2 }),
-    S('hubMosaic', 11, { mosaic: 1, contour: 0.5 }, { shapes: ['wheel', 'lanterna'], depth: 4 }),
-    S('leafMosaic', 13, { mosaic: 1, contour: 0.5 }, { shapes: ['arms', 'tree', 'serpente'], depth: 4 }),
-    S('hubMosaic', 12, { mosaic: 1, contour: 0.6 }, { shapes: ['wheel', 'lanterna'], depth: 5 }),
-    S('hubMosaic', 12, { mosaic: 1, contour: 0.6, mark: 0.1 }, { shapes: ['wheel', 'flor', 'arms'], depth: 5 }),
-    S('leafMosaic', 14, { mosaic: 1, contour: 0.6 }, { shapes: ['arms', 'tree'], depth: 5 }),
-    S('hubMosaic', 11, { mosaic: 1, contour: 0.6 }, { shapes: ['flor', 'lanterna'], show: true, depth: 6 }),
-    S('hubMosaic', 11, { mosaic: 1, contour: 0.6, mark: 0.1 }, { shapes: ['coroa', 'barco', 'casa', 'borboleta'], show: true, depth: 6 }),
-  ],
-  beacon: [
-    S('warm', 6, { mosaic: 1, contour: 0.5 }, { shapes: ['arms', 'chain'], warm: true }),
-    S('leafMosaic', 7, { mosaic: 1, contour: 0.3 }, { shapes: ['arms'], depth: 1 }),
-    S('hubContour', 8, { contour: 1, mosaic: 0.4 }, { shapes: ['arms', 'wheel'], depth: 1 }),
-    S('hubMosaic', 9, { mosaic: 1, contour: 0.4 }, { shapes: ['wheel'], depth: 1 }),
-    S('cutParity', 7, { mosaic: 0.5, contour: 0.5 }, { depth: 1 }),
-    S('leafMosaic', 12, { mosaic: 1, contour: 0.4 }, { shapes: ['arms'], depth: 2 }),
-    S('theta', 8, { mosaic: 1, contour: 0.4 }, { depth: 2 }),
-    S('hubContour', 11, { contour: 1, mosaic: 0.5, mark: 0.15 }, { shapes: ['wheel', 'arms'], depth: 2 }),
-    S('cutParity', 9, { mosaic: 0.6, contour: 0.6 }, { depth: 3 }),
-    S('hubMosaic', 12, { mosaic: 1, contour: 0.5 }, { shapes: ['arms', 'wheel'], depth: 3 }),
-    S('leafMosaic', 13, { mosaic: 1, contour: 0.5 }, { shapes: ['arms', 'tree'], depth: 3 }),
-    S('hubMosaic', 11, { mosaic: 1, contour: 0.5 }, { shapes: ['lanterna', 'flor'], show: true, depth: 3 }),
-    S('hubContour', 11, { contour: 1, mosaic: 0.6, mark: 0.1 }, { shapes: ['flor', 'coroa', 'barco'], show: true, depth: 6 }),
-  ],
-  weave: [
-    S('warm', 5, { mark: 1 }, { shapes: ['chain'], warm: true }),
-    S('warm', 6, { mark: 1 }, { shapes: ['ladder'], warm: true }),
-    S('cutParity', 6, { measure: 0.5 }, { depth: 1 }),
-    S('knotChain', 8, { measure: 1, mark: 0.2 }, { shapes: ['lattice', 'ladder'], depth: 1 }),
-    S('cutParity', 8, { measure: 0.6 }, { depth: 1 }),
-    S('knotChain', 10, { measure: 1, mark: 0.25 }, { shapes: ['lattice', 'triLattice'], depth: 2 }),
-    S('cutParity', 7, { measure: 0.6, contour: 0.4 }, { depth: 2 }),
-    S('knotChain', 12, { measure: 1, contour: 0.4, mark: 0.25 }, { shapes: ['cluster', 'lattice'], depth: 2 }),
-    S('cutParity', 9, { measure: 0.7, contour: 0.4 }, { depth: 3 }),
-    S('knotChain', 13, { measure: 1, contour: 0.5, mark: 0.3 }, { shapes: ['triLattice', 'cluster', 'dense'], depth: 3 }),
-    S('cutParity', 10, { measure: 0.7, contour: 0.5 }, { depth: 3 }),
-    S('knotChain', 14, { measure: 1, contour: 0.5, mark: 0.3 }, { shapes: ['dense', 'cluster'], depth: 3 }),
-    S('cutParity', 11, { measure: 0.7, contour: 0.5 }, { depth: 4 }),
-    S('cutParity', 11, { measure: 0.7, contour: 0.6 }, { shapes: ['peixe', 'crescente', 'casa', 'coroa'], show: true, depth: 6 }),
-    S('knotChain', 12, { measure: 1, contour: 0.5, mark: 0.3 }, { shapes: ['casa', 'chave', 'barco'], show: true, depth: 4 }),
-  ],
-  twins: [
-    S('echoRingLit', 4, {}, { warm: true }),
-    S('echoTree', 5, {}, { shapes: ['chain'], warm: true }),
-    S('echoRingLit', 5, {}, { depth: 1 }),
-    S('echoTree', 7, {}, { shapes: ['arms', 'tree'], depth: 1 }),
-    S('echoRingLit', 7, {}, { depth: 2 }),
-    S('echoLogic', 9, { mosaic: 1, contour: 0.4 }, { shapes: ['tree', 'arms'], depth: 2 }),
-    S('echoReach', 6, { mosaic: 1, contour: 0.6 }, { depth: 1 }),
-    S('echoLogic', 8, { contour: 1, mosaic: 0.5 }, { shapes: ['ring', 'wheel'], depth: 3 }),
-    S('echoReach', 9, { mosaic: 1, measure: 0.5 }, { depth: 2 }),
-    S('echoLogic', 11, { mosaic: 1, measure: 0.5 }, { shapes: ['arms', 'tree'], depth: 4 }),
-    S('echoReach', 9, { mosaic: 1, contour: 0.6 }, { shapes: ['cluster', 'wheel', 'ladder'], depth: 2 }),
-    S('echoReach', 12, { mosaic: 1, contour: 0.6, measure: 0.4 }, { depth: 3 }),
-    S('echoReach', 10, { mosaic: 1, contour: 0.6, measure: 0.4 }, { shapes: ['lattice', 'ladder'], depth: 3 }),
-    S('echoReach', 11, { mosaic: 1, contour: 0.6, mark: 0.1 }, { shapes: ['pássaro', 'coroa', 'chave'], show: true, depth: 3 }),
-    S('echoReach', 11, { mosaic: 1, contour: 0.7, measure: 0.4 }, { shapes: ['peixe', 'crescente', 'casa'], show: true, depth: 4 }),
-  ],
-  citadel: [
-    S('cutParity', 9, { gem: 0.6, measure: 0.6 }, { depth: 2 }),
-    S('hubKin', 10, { gem: 1, measure: 0.5, mark: 0.2 }, { depth: 2 }),
-    S('bridgeMeasure', 12, { measure: 1, contour: 0.5, mark: 0.2 }, { depth: 3 }),
-    S('interleaved', 10, { gem: 1, mosaic: 0.4, mark: 0.15 }, { depth: 3 }),
-    S('theta', 9, { mosaic: 1, contour: 0.6, mark: 0.15 }, { depth: 3 }),
-    S('oddRingKin', 7, { gem: 1, measure: 0.6, mark: 0.15 }, { depth: 3 }),
-    S('triangleContour', 13, { contour: 1, mosaic: 0.5, mark: 0.2 }, { shapes: ['dense', 'triLattice'], depth: 4 }),
-    S('singleton', 12, { gem: 1, mosaic: 0.5, mark: 0.2 }, { shapes: ['dense', 'cluster'], depth: 4 }),
-    S('knotChain', 14, { measure: 1, gem: 0.5, contour: 0.4, mark: 0.3 }, { shapes: ['cluster', 'dense', 'triLattice'], depth: 4 }),
-    S('oddRingContour', 9, { contour: 0.6, gem: 0.6, mark: 0.2 }, { depth: 4 }),
-    S('bridgeKin', 14, { gem: 1, measure: 0.7, mark: 0.25 }, { shapes: ['chave', 'borboleta', 'peixe', 'pássaro'], show: true, depth: 5 }),
-    S('interleaved', 12, { gem: 1, mosaic: 0.6, measure: 0.4, mark: 0.2 }, { show: true, depth: 5 }),
-  ],
-  echo: [
-    S('echoRingLit', 8, {}, { depth: 2 }),
-    S('echoTree', 10, {}, { shapes: ['arms', 'tree'], depth: 2 }),
-    S('echoReach', 9, { mosaic: 1, contour: 0.6, measure: 0.4 }, { depth: 2 }),
-    S('echoReach', 12, { mosaic: 1, contour: 0.6, measure: 0.4 }, { shapes: ['lattice', 'ladder'], depth: 3 }),
-    S('echoReach', 12, { mosaic: 1, contour: 0.6, measure: 0.4, mark: 0.1 }, { shapes: ['cluster', 'dense'], depth: 3 }),
-    S('echoLogic', 11, { mosaic: 1, contour: 0.6, measure: 0.4 }, { shapes: ['tree', 'wheel', 'ring', 'arms'], depth: 5 }),
-    S('echoReach', 12, { mosaic: 1, contour: 0.7, measure: 0.5 }, { depth: 4 }),
-    S('echoReach', 13, { mosaic: 1, contour: 0.7, measure: 0.5, gem: 0.3 }, { shapes: ['dense', 'cluster', 'triLattice'], depth: 4 }),
-    S('echoReach', 11, { mosaic: 1, contour: 0.7, measure: 0.5, mark: 0.1 }, { shapes: ['crescente', 'coroa', 'serpente'], show: true, depth: 4 }),
-    S('echoReach', 13, { mosaic: 1, contour: 0.7, measure: 0.5, gem: 0.4 }, { shapes: ['pássaro', 'peixe', 'chave'], show: true, depth: 5 }),
-  ],
+const PLANS: Partial<Record<AreaId, AreaPlan>> = {
+  hub: {
+    warm: 0, show: 2, warmExtras: { mosaic: 1, contour: 0.5 }, brutal: 1.5,
+    tpls: [['bridgeKin', { gem: 1, measure: 0.5 }], ['hubMosaic', { mosaic: 1, contour: 0.5 }], ['oddRingContour', { measure: 1, mosaic: 0.5 }], ['knotChain', { measure: 1, contour: 0.6, mark: 0.2 }],
+      ['singleton', { gem: 1, measure: 0.5 }], ['theta', { mosaic: 1, contour: 0.5 }], ['cutParity', { measure: 0.7, mosaic: 0.4 }], ['triangleContour', { contour: 1, measure: 0.6, mark: 0.2 }],
+      ['bridgeMeasure', { measure: 1, contour: 0.5 }], ['hubContour', { contour: 1, measure: 0.4 }], ['treeMeasure', { measure: 1, contour: 0.4 }], ['leafMosaic', { mosaic: 1, contour: 0.5 }]],
+  },
+  kinship: {
+    warm: 2, show: 2, warmExtras: { gem: 1 },
+    tpls: [['bridgeKin', { gem: 1, measure: 0.4 }], ['hubKin', { gem: 1, measure: 0.4, mark: 0.1 }], ['oddRingKin', { gem: 1, measure: 0.4 }], ['singleton', { gem: 1, measure: 0.4 }], ['warm', { gem: 1, measure: 0.3 }]],
+  },
+  measure: {
+    warm: 2, show: 2, warmExtras: { measure: 1 },
+    tpls: [['treeMeasure', { measure: 1, contour: 0.3 }], ['bridgeMeasure', { measure: 1, contour: 0.3 }], ['knotChain', { measure: 1, mark: 0.2 }], ['warm', { measure: 1, contour: 0.3 }]],
+  },
+  mold: {
+    warm: 1, show: 2, warmExtras: { measure: 1, contour: 1 },
+    tpls: [['hubContour', { measure: 0.6, contour: 0.6 }], ['knotChain', { measure: 1, contour: 0.5, mark: 0.15 }], ['bridgeMeasure', { measure: 1, contour: 0.5 }], ['triangleContour', { contour: 1, measure: 0.5 }],
+      ['contourSum', { measure: 0.4 }], ['treeMeasure', { measure: 1, contour: 0.4 }], ['warm', { measure: 1, contour: 0.6 }]],
+  },
+  contour: {
+    warm: 1, show: 2, warmExtras: { contour: 1 },
+    tpls: [['oddRingContour', { contour: 0.6, measure: 0.3 }], ['hubContour', { contour: 1, mark: 0.1 }], ['triangleContour', { contour: 1, measure: 0.3 }], ['contourSum', { measure: 0.3 }], ['warm', { contour: 1, measure: 0.3 }]],
+  },
+  mosaic: {
+    warm: 1, show: 2, warmExtras: { mosaic: 1 },
+    tpls: [['leafMosaic', { mosaic: 1, contour: 0.6, mark: 0.2 }], ['hubMosaic', { mosaic: 1, contour: 0.6, mark: 0.2 }], ['theta', { mosaic: 1, contour: 0.5 }], ['leafMosaic', { mosaic: 1, contour: 0.3 }], ['hubMosaic', { mosaic: 1, contour: 0.4 }], ['warm', { mosaic: 1, contour: 0.6, mark: 0.2 }]],
+  },
+  beacon: {
+    warm: 1, show: 2, warmExtras: { mosaic: 1, contour: 0.5 },
+    tpls: [['leafMosaic', { mosaic: 1, contour: 0.5, mark: 0.15 }], ['hubContour', { contour: 1, mosaic: 0.5, mark: 0.15 }], ['hubMosaic', { mosaic: 1, contour: 0.5, mark: 0.15 }], ['cutParity', { mosaic: 0.6, contour: 0.6 }], ['theta', { mosaic: 1, contour: 0.4 }], ['warm', { mosaic: 1, contour: 0.6, mark: 0.15 }]],
+  },
+  weave: {
+    warm: 2, show: 2, warmExtras: { mark: 1 },
+    tpls: [['cutParity', { measure: 0.6, contour: 0.4 }], ['knotChain', { measure: 1, contour: 0.4, mark: 0.25 }], ['warm', { mark: 1, measure: 0.5 }]],
+  },
+  twins: {
+    warm: 2, show: 2, warmExtras: {}, warmTpl: 'echoAllLit',
+    tpls: [['echoAllLit', {}], ['echoLogic', { mosaic: 1, contour: 0.5 }], ['echoReach', { mosaic: 1, contour: 0.6, measure: 0.4 }]],
+  },
+  citadel: {
+    warm: 0, show: 2, warmExtras: { gem: 1, measure: 0.5 }, brutal: 1.35,
+    tpls: [['cutParity', { gem: 0.6, measure: 0.6 }], ['hubKin', { gem: 1, measure: 0.5, mark: 0.2 }], ['bridgeMeasure', { measure: 1, contour: 0.5, mark: 0.2 }], ['theta', { mosaic: 1, contour: 0.6, mark: 0.15 }],
+      ['oddRingKin', { gem: 1, measure: 0.6, mark: 0.15 }], ['triangleContour', { contour: 1, mosaic: 0.5, mark: 0.2 }], ['singleton', { gem: 1, mosaic: 0.5, mark: 0.2 }], ['knotChain', { measure: 1, gem: 0.5, contour: 0.4, mark: 0.3 }],
+      ['oddRingContour', { contour: 0.6, gem: 0.6, mark: 0.2 }], ['bridgeKin', { gem: 1, measure: 0.7, mark: 0.25 }], ['hubContour', { contour: 1, gem: 0.5, mark: 0.2 }], ['hubMosaic', { mosaic: 1, gem: 0.4, mark: 0.2 }]],
+  },
+  echo: {
+    warm: 0, show: 2, warmExtras: {}, brutal: 1.35,
+    tpls: [['echoAllLit', {}], ['echoReach', { mosaic: 1, contour: 0.7, measure: 0.5, mark: 0.1 }], ['echoLogic', { mosaic: 1, contour: 0.6, measure: 0.4 }], ['echoReach', { mosaic: 1, contour: 0.7, measure: 0.5, gem: 0.3 }]],
+  },
 };
 
-// ───────────────────────── handcrafted discovery ramp (prologue) ─────────────────────────
+// ───────────────────────── the discovery ramp (prologue), on its drawings ─────────────────────────
 
 function prologueSet(): ConstellationDef[] {
-  return [
-    {
-      id: 'prologue.c01', area: 'prologue', difficulty: 1,
-      note: 'Descoberta: três conchas ligadas por fios. Sem nenhum glifo, a constelação só quer todas as estrelas acesas — e o sino canta.',
-      stars: [{ x: -2.2, z: 0.4 }, { x: 0, z: -0.6 }, { x: 2.2, z: 0.4 }],
-      threads: [{ a: 0, b: 1 }, { a: 1, b: 2 }],
-      bell: { x: 0, z: 2.2 },
-    },
-    {
-      id: 'prologue.c02', area: 'prologue', difficulty: 2, echo: true,
-      note: 'Eco: apertar uma estrela vira também as vizinhas. Acender as quatro = apertar só as duas pontas.',
-      stars: [{ x: -3.3, z: 0 }, { x: -1.1, z: -0.5 }, { x: 1.1, z: 0.5 }, { x: 3.3, z: 0 }],
-      threads: [{ a: 0, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 3 }],
-      bell: { x: 0, z: 2.4 },
-    },
-    {
-      id: 'prologue.c03', area: 'prologue', difficulty: 2,
-      note: 'A linguagem secreta: o fio cortado quer pontas diferentes, o nó quer pontas iguais. Ninguém explica — quando erra, quem pisca é o fio.',
-      stars: [{ x: -2.2, z: 0.6 }, { x: 0, z: -0.5 }, { x: 2.2, z: 0.6 }],
-      threads: [{ a: 0, b: 1, mark: 'diff' }, { a: 1, b: 2, mark: 'same' }],
-      bell: { x: 0, z: 2.4 },
-    },
-    {
-      id: 'prologue.c04', area: 'prologue', difficulty: 3,
-      note: 'Um laço de quatro com dois cortes e dois nós: cortes em número par fecham o laço. A estaca acesa decide o resto.',
-      stars: [{ x: 0, z: -2.4, lock: 1 }, { x: 0, z: 0 }, { x: -2.2, z: 1.6 }, { x: 2.2, z: 1.6 }],
-      threads: [{ a: 0, b: 1, mark: 'same' }, { a: 1, b: 2, mark: 'diff' }, { a: 1, b: 3, mark: 'diff' }, { a: 2, b: 3, mark: 'same' }],
-      bell: { x: 0, z: 3.6 },
-    },
-  ];
+  const arts = ART.filter((a) => a.area === 'prologue');
+  const byName = (pt: string) => netOf(arts.find((a) => a.name.pt === pt)!);
+  const out: ConstellationDef[] = [];
+  // c01 — no glyphs: every star lit
+  {
+    const net = byName('Gaivota');
+    const d = buildDef('prologue.c01', 'prologue', net, [], false);
+    d.note = 'Descoberta: as cinco estrelas da gaivota ligadas por fios. Sem nenhum glifo, a constelação só quer todas as estrelas acesas — e o sino canta.';
+    out.push(d);
+  }
+  // c02 — echo, all lit
+  {
+    const net = byName('Veleiro');
+    const d = buildDef('prologue.c02', 'prologue', net, [], true);
+    const pr = pressesFor(d, new Uint8Array(net.pts.length).fill(1));
+    if (!pr || pr.length < 2 || pr.length > 4) throw new Error(`prologue echo: ${pr?.length} presses`);
+    d.note = `Eco: apertar uma estrela vira também as vizinhas. Acender o veleiro inteiro pede só ${pr.length} toques bem escolhidos.`;
+    out.push(d);
+  }
+  // c03 — the secret language of the threads: knots and cuts only
+  {
+    const net = byName('Concha');
+    const r = mulberry(303);
+    let best: ConstellationDef | null = null;
+    for (let k = 0; k < 400 && !best; k++) {
+      const sol = randomSol(r, net.pts.length, 0.5);
+      if (sol.every((v) => v === sol[0])) continue;
+      const base = buildDef('prologue.c03', 'prologue', net, [], false);
+      let chosen = candidateClues(base, sol, ['mark'], r);
+      if (!uniqueWith('prologue.c03', 'prologue', net, chosen, false, sol)) continue;
+      for (const c of shuffle(r, chosen.slice())) {
+        const trial = chosen.filter((x) => x !== c);
+        if (uniqueWith('prologue.c03', 'prologue', net, trial, false, sol)) chosen = trial;
+      }
+      const d = buildDef('prologue.c03', 'prologue', net, chosen, false);
+      if (!d.threads.some((t) => t.mark === 'same') || !d.threads.some((t) => t.mark === 'diff')) continue;
+      if (!estimateDifficulty(d, sol).solvedByLogic) continue;
+      best = d;
+    }
+    if (!best) throw new Error('prologue.c03');
+    best.note = 'A linguagem secreta: o fio cortado quer pontas diferentes, o nó quer pontas iguais. Ninguém explica — quando erra, quem pisca é o fio.';
+    out.push(best);
+  }
+  // c04 — a loop with knots and cuts, and the stake (the umbrella's pole) decides the rest
+  {
+    const net = byName('Guarda-sol');
+    const n = net.pts.length;
+    const pole = net.pts.reduce((b, p, i) => (p[1] > net.pts[b][1] ? i : b), 0);
+    const r = mulberry(404);
+    let best: ConstellationDef | null = null;
+    for (let k = 0; k < 600 && !best; k++) {
+      const sol = randomSol(r, n, 0.5);
+      sol[pole] = 1;
+      const base = buildDef('prologue.c04', 'prologue', net, [], false);
+      const lock: Clue = { kind: 'lock', star: pole, lock: 1 };
+      let chosen = [lock, ...candidateClues(base, sol, ['mark'], r)];
+      if (!uniqueWith('prologue.c04', 'prologue', net, chosen, false, sol)) continue;
+      for (const c of shuffle(r, chosen.filter((c) => c.kind === 'mark'))) {
+        const trial = chosen.filter((x) => x !== c);
+        if (uniqueWith('prologue.c04', 'prologue', net, trial, false, sol)) chosen = trial;
+      }
+      const d = buildDef('prologue.c04', 'prologue', net, chosen, false);
+      const unmarked = d.threads.filter((t) => !t.mark).length;
+      if (unmarked < 1 || unmarked > 2) continue;
+      const rep = estimateDifficulty(d, sol);
+      if (!rep.solvedByLogic) continue;
+      best = d;
+    }
+    if (!best) throw new Error('prologue.c04');
+    best.note = 'O guarda-sol fincado na areia: a estaca acesa decide o resto. Cada triângulo tem um número par de cortes — o fio sem marca se revela contando.';
+    out.push(best);
+  }
+  out[0].difficulty = 1;
+  out[1].difficulty = 2;
+  out[2].difficulty = 2;
+  out[3].difficulty = 3;
+  return out;
 }
 
 // ───────────────────────── generation ─────────────────────────
 
-function generateSlot(id: string, area: AreaId, slot0: Slot, seed: number, used: Built[], targetDepth: number): Built {
-  const tpl = T[slot0.tpl];
-  // if the requested depth is out of reach for this template, relax it step by step
+function generateSlot(id: string, area: AreaId, net: Net, plan: AreaPlan, warm: boolean, show: boolean, target: number, seed: number, usedTpls: string[]): Built {
+  // showpieces get one more layer: the secret thread language joins the place's languages
+  const choices: [string, Extras][] = warm ? [[plan.warmTpl ?? 'warm', plan.warmExtras]] : show ? plan.tpls.map(([t, e]) => [t, Object.keys(e).length ? { mark: 0.15, ...e } : e] as [string, Extras]) : plan.tpls;
   for (let relax = 0; relax <= 4; relax++) {
-    const slot: Slot = { ...slot0, depth: Math.max(1, (slot0.depth ?? 1) - relax), size: slot0.size + (relax >= 2 ? 1 : 0) };
     let best: Built | null = null;
     let bestScore = -Infinity;
-    const attempts = (slot.show ? 900 : 500) * (1 + relax);
     const r = mulberry(seed + relax * 7);
+    const attempts = (show ? 3000 : 1500) * (1 + relax);
+    const cap = (show ? 60 : 24) + Math.round(3 * target);
     let found = 0;
-    const cap = (slot.show ? 14 : 8) + Math.round(2 * targetDepth);
-    for (let k = 0; k < attempts && found < cap; k++) {
-      const inst = tpl(r, slot.size + Math.floor(r() * 3) - 1, slot.shapes ?? []);
+    const t0 = Date.now();
+    const depthMin = warm ? 0 : Math.max(1, Math.round(target / 3) - relax);
+    for (let k = 0; k < attempts && found < cap && Date.now() - t0 < 45_000 * (1 + relax); k++) {
+      const [tpl, extras] = pick(r, choices);
+      const inst = T[tpl](r, net);
       if (!inst) continue;
-      const b = finish(id, area, slot, inst, r);
+      const b = finish(id, area, net, { extras, warm, depth: depthMin }, inst, r, tpl);
       if (!b) continue;
+      // warm-ups are read, not reasoned: at most one "what if" (more only when nothing gentler exists)
+      if (warm && b.depth > 1 + relax) continue;
       found++;
-      const repeats = used.filter((u) => u.shape === b.shape).length;
+      const repeats = usedTpls.filter((u) => u === tpl).length;
       const clues = b.def.stars.filter((s) => s.glyph).length + b.def.threads.filter((t) => t.mark).length;
-      // aim at the slot's target reasoning depth (the ramp), then prefer small, sparse, varied
-      const score = -1.0 * Math.abs(b.depth - targetDepth) - 0.05 * b.def.stars.length - 0.1 * clues - 0.7 * repeats + (slot.warm ? -0.5 * b.raw : 0);
+      // a named insight beats plain reading, even at some cost in depth
+      const plain = tpl === 'warm' && !warm ? (show ? 3.5 : 2.5) : 0;
+      const score = -1.0 * Math.abs(b.depth - target) - 0.1 * clues - 0.6 * repeats - plain + (warm ? -0.5 * b.raw : 0);
       if (score > bestScore) {
         bestScore = score;
         best = b;
       }
     }
     if (best) {
-      if (relax) console.log(`  (${id} ${slot0.tpl}: depth relaxed by ${relax})`);
+      if (relax) console.log(`  (${id} ${net.shape}: relaxed ×${relax})`);
       return best;
     }
   }
-  throw new Error(`could not generate ${id} (${slot0.tpl})`);
+  throw new Error(`could not generate ${id} on ${net.shape}`);
 }
 
 function toDifficulty(raw: number): number {
@@ -1587,13 +974,15 @@ function toDifficulty(raw: number): number {
 function emit(all: ConstellationDef[]): string {
   const lines: string[] = [];
   lines.push('// GENERATED by tools/gen-constellations.ts — do not edit by hand.');
-  lines.push('// The secret layer: 150 constellations hidden across the island (see docs/CONSTELLATIONS.md).');
+  lines.push('// The secret layer: 150 constellations hidden across the island, each one a line drawing');
+  lines.push('// (see docs/CONSTELLATIONS.md). x to the right, z downward, as seen from the figure\'s spot.');
   lines.push("import type { ConstellationDef } from '../secret/types';");
   lines.push('');
   lines.push('export const CONSTELLATIONS: ConstellationDef[] = [');
   for (const d of all) {
     lines.push('  {');
     lines.push(`    id: '${d.id}', area: '${d.area}', difficulty: ${d.difficulty},${d.echo ? ' echo: true,' : ''}`);
+    lines.push(`    name: { pt: ${JSON.stringify(d.name.pt)}, en: ${JSON.stringify(d.name.en)} },`);
     if (d.note) lines.push(`    note: ${JSON.stringify(d.note)},`);
     lines.push('    stars: [');
     for (const s of d.stars) {
@@ -1627,24 +1016,48 @@ ORDER.forEach((area, ai) => {
   const ta = Date.now();
   if (area === 'prologue') {
     all.push(...prologueSet());
-    stats.push('prologue: 4 handcrafted');
+    stats.push('prologue: 4 handcrafted on drawings');
     return;
   }
   const plan = PLANS[area]!;
-  if (plan.length !== EXPECT[area]) throw new Error(`${area}: plan has ${plan.length}, expected ${EXPECT[area]}`);
-  const built: Built[] = [];
-  const brutal = area === 'citadel' || area === 'echo' ? 1.35 : area === 'hub' ? 1.5 : 1;
-  const N = plan.length;
-  plan.forEach((slot, i) => {
-    const id = `${area}.c${String(i + 1).padStart(2, '0')}`;
+  const arts = ART.filter((a) => a.area === area);
+  if (arts.length !== EXPECT[area]) throw new Error(`${area}: ${arts.length} drawings, expected ${EXPECT[area]}`);
+  // the simplest drawings warm up, the rest climb the ramp; the drawings that carry the deepest puzzles
+  // are then rebuilt as showpieces (more budget, one more language layer) and close the place
+  const nets = arts.map(netOf).sort((x, y) => x.pts.length + 0.6 * x.edges.length - (y.pts.length + 0.6 * y.edges.length));
+  const built: { b: Built; rank: number; net: Net; i: number; target: number }[] = [];
+  const used: string[] = [];
+  const brutal = plan.brutal ?? 1;
+  const N = nets.length;
+  const seedOf = (i: number, show: boolean) => (ai + 1) * 100_003 + i * 7919 + (show ? 55_555 : 0);
+  const log = (net: Net, b: Built, target: number, tag: string) => {
+    if (!process.argv.includes('--verbose')) return;
+    const d = b.def;
+    const kinds: Record<string, number> = {};
+    for (const st of d.stars) if (st.glyph) kinds[st.glyph.kind] = (kinds[st.glyph.kind] ?? 0) + 1;
+    console.log(`  ${tag} ${net.shape.padEnd(22)} ${b.tpl.padEnd(15)} n=${d.stars.length} e=${d.threads.length} ${JSON.stringify(kinds)} marks=${d.threads.filter((x) => x.mark).length}${d.echo ? ' ECHO' : ''} depth=${b.depth} target=${target.toFixed(1)} raw=${b.raw.toFixed(1)}`);
+  };
+  nets.forEach((net, i) => {
+    const warm = i < plan.warm;
     const t = N > 1 ? i / (N - 1) : 1;
-    const target = slot.warm ? 1 : (2 + (slot.show ? 9.5 : 7.5) * Math.pow(t, 1.1)) * brutal;
-    const b = generateSlot(id, area, slot, (ai + 1) * 100_003 + i * 7919, built, target);
-    built.push(b);
+    const target = warm ? 1 : (2 + 7.5 * Math.pow(t, 1.1)) * brutal;
+    const id = `${area}.c${String(i + 1).padStart(2, '0')}`;
+    const b = generateSlot(id, area, net, plan, warm, false, target, seedOf(i, false), used);
+    used.push(b.tpl);
+    built.push({ b, rank: warm ? 0 : 1, net, i, target });
+    log(net, b, target, warm ? 'warm' : 'ramp');
   });
+  const showWorth = (x: { b: Built }) => x.b.raw - (x.b.tpl === 'warm' ? 2.5 : 0);
+  const shows = built.filter((x) => x.rank === 1).sort((x, y) => showWorth(y) - showWorth(x)).slice(0, plan.show);
+  for (const x of shows) {
+    const target = (2 + 9.5) * brutal;
+    const b = generateSlot(x.b.def.id, area, x.net, plan, false, true, target, seedOf(x.i, true), used.filter((u) => u !== x.b.tpl));
+    if (b.raw > x.b.raw) x.b = b;
+    x.rank = 2;
+    log(x.net, x.b, target, 'show');
+  }
   // final order: warm-ups, then the ramp by difficulty, showpieces last
-  const rank = (b: Built) => (plan[built.indexOf(b)].warm ? 0 : plan[built.indexOf(b)].show ? 2 : 1);
-  const ordered = built.slice().sort((x, y) => rank(x) - rank(y) || x.raw - y.raw);
+  const ordered = built.sort((x, y) => x.rank - y.rank || x.b.raw - y.b.raw).map((x) => x.b);
   let prev = 1;
   ordered.forEach((b, k) => {
     b.def.id = `${area}.c${String(k + 1).padStart(2, '0')}`;
@@ -1653,15 +1066,6 @@ ORDER.forEach((area, ai) => {
     all.push(b.def);
   });
   stats.push(`${area}: ${built.length} (${((Date.now() - ta) / 1000).toFixed(1)}s)`);
-  if (DRY && process.argv.includes('--verbose')) {
-    for (const b of ordered) {
-      const d = b.def;
-      const kinds: Record<string, number> = {};
-      for (const st of d.stars) if (st.glyph) kinds[st.glyph.kind] = (kinds[st.glyph.kind] ?? 0) + 1;
-      const marks = d.threads.filter((t) => t.mark).length;
-      console.log(`  ${d.id} ${plan[built.indexOf(b)].tpl.padEnd(15)} ${b.shape.padEnd(20)} n=${d.stars.length} e=${d.threads.length} ${JSON.stringify(kinds)} marks=${marks}${d.echo ? ' ECHO' : ''} depth=${b.depth} raw=${b.raw.toFixed(1)} diff=${d.difficulty}`);
-    }
-  }
 });
 console.log(stats.join('\n'));
 console.log(`total ${all.length} in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
@@ -1685,8 +1089,6 @@ if (!DRY && !ONLY) {
   writeFileSync(join(here, '..', 'docs', 'CONSTELLATIONS.md'), docs(all));
   console.log('wrote docs/CONSTELLATIONS.md');
 }
-void isInversionSymmetric;
-void cutVertices;
 
 function docs(list: ConstellationDef[]): string {
   const KIND_PT: Record<string, string> = {
@@ -1699,14 +1101,17 @@ function docs(list: ConstellationDef[]): string {
   const out: string[] = [];
   out.push('# As Constelações — a camada secreta de Tessella');
   out.push('');
-  out.push('> Nenhum lugar do jogo ensina isto. Quem descobrir, descobre 150 puzzles a mais.');
+  out.push('> Nenhum lugar do jogo ensina isto. Quem descobrir, descobre 150 puzzles a mais — e 150 desenhos no céu da ilha.');
   out.push('');
   out.push('## A ideia');
   out.push('');
-  out.push('Espalhadas pela ilha existem **redes de estrelas**: lanternas, conchas, pedras, vitórias-régias, cristais, braseiros —');
-  out.push('objetos que parecem decoração, ligados por **fios finos de luz**. Cada objeto é uma *estrela* que acende e apaga');
-  out.push('com um clique. Cada rede tem um **sino**: tocar o sino confere a constelação. Se estiver certa, os fios brilham para sempre');
-  out.push('e o Salão das Tesselas ganha uma luz; se estiver errada, as estrelas e os fios culpados piscam em vermelho.');
+  out.push('Espalhadas pela ilha existem **redes de estrelas**: objetos que parecem decoração, ligados por **fios finos de luz**.');
+  out.push('Vistas do lugar certo, as estrelas e os fios formam um **desenho** — como as constelações do céu: um cisne, uma âncora,');
+  out.push('uma raposa, um farol. Cada desenho é diferente e combina com o lugar (conchas e gaivotas na praia, folhas e corujas no');
+  out.push('bosque, escaravelhos e esfinges no templo das areias…). Cada objeto é uma *estrela* que acende e apaga com um clique.');
+  out.push('Cada rede tem um **sino** num ponto que significa algo no desenho (o olho de um bicho, o centro de uma roda, a luz de uma');
+  out.push('lanterna): tocar o sino confere a constelação. Se estiver certa, os fios brilham para sempre e o Diário guarda o nome do');
+  out.push('desenho; se estiver errada, as estrelas e os fios culpados piscam em vermelho.');
   out.push('');
   out.push('Não é uma grade: **vizinhas são as estrelas ligadas por um fio**. As linguagens que o jogador aprendeu nos painéis');
   out.push('ganham outra geometria — e isso muda tudo:');
@@ -1724,60 +1129,70 @@ function docs(list: ConstellationDef[]): string {
   out.push('');
   out.push('### Como a descoberta acontece');
   out.push('');
-  out.push('1. No Despertar, três conchas na praia têm fios brilhando entre elas. Quem mira nelas vê o cursor virar anel —');
+  out.push('1. No Despertar, as cinco estrelas de uma **gaivota** brilham sobre a praia. Quem mira nelas vê o cursor virar anel —');
   out.push('   como num painel. Clicar acende. Tocar o sino com tudo aceso faz a primeira constelação cantar.');
-  out.push('2. A segunda tem eco (apertar uma vira as vizinhas) — só se descobre apertando.');
-  out.push('3. A terceira e a quarta ensinam sozinhas a linguagem secreta dos fios: o erro pisca *no fio*.');
+  out.push('2. A segunda, um **veleiro**, tem eco (apertar uma vira as vizinhas) — só se descobre apertando.');
+  out.push('3. A **concha** e o **guarda-sol** ensinam sozinhos a linguagem secreta dos fios: o erro pisca *no fio*.');
   out.push('4. A partir da primeira solução, um vitral escondido no Salão das Tesselas acende e mostra `1 / 150`.');
   out.push('5. Com 100 constelações, abre-se o Cofre Oculto.');
   out.push('');
+  out.push('### Desenhos legíveis');
+  out.push('');
+  out.push('Cada desenho foi feito à mão (`tools/lib/constellation-art.ts`) e passa por regras de leitura, conferidas em código');
+  out.push('(`tools/lib/drawing-rules.ts`, `tools/art-check.ts` e os testes), com W = o lado maior do desenho:');
+  out.push('');
+  out.push('- 4 a 16 estrelas, uma figura só; fios nunca se cruzam;');
+  out.push('- estrelas a pelo menos 0,11·W umas das outras e a 0,06·W de qualquer fio que não seja delas; nenhum fio menor que 0,10·W;');
+  out.push('- o ângulo entre dois fios numa estrela é de pelo menos 20°;');
+  out.push('- o sino fica dentro da figura, a pelo menos 0,10·W de toda estrela e todo fio;');
+  out.push('- nenhum par de desenhos é quase igual (sobreposição das linhas, também espelhada).');
+  out.push('');
+  out.push('A folha de contato com todos os desenhos e seus nomes: `npx tsx tools/render-constellations.ts` →');
+  out.push('`screenshots/constellation-drawings.png`.');
+  out.push('');
   out.push('### Uma percepção por constelação');
   out.push('');
-  out.push('Toda constelação não trivial nasce de **uma ideia que só existe em rede** (nunca numa grade). A nota de cada uma');
-  out.push('no catálogo nomeia essa ideia. As famílias de percepções:');
+  out.push('O desenho é fixo; o puzzle nasce **em cima dele**, de uma ideia que só existe em rede e que o próprio desenho oferece');
+  out.push('(a estrela que liga a cauda ao corpo, o cubo de uma roda, as pontas soltas de uma folha, o anel ímpar de um rosto…).');
+  out.push('A nota de cada uma no catálogo nomeia essa ideia. As famílias de percepções:');
   out.push('');
   out.push('| Percepção | Ideia |');
   out.push('|---|---|');
   out.push('| A ponte | uma estrela (ponto de corte) é a única passagem entre duas partes: famílias ou regiões que precisam se encontrar passam por ela |');
   out.push('| O número não cabe | a Medida é maior que um lado inteiro da ponte: a região é obrigada a atravessar |');
-  out.push('| O cubo | a estrela com muitos fios encosta em todo mundo: só uma família pode ter o estado dela |');
+  out.push('| O cubo | a estrela com mais fios encosta em todo mundo: só uma família pode ter o estado dela |');
   out.push('| Amigo único / o dissidente | Contorno 1 ou N−1 num cubo: exatamente um vizinho é igual (ou diferente) |');
   out.push('| A janela inteira | o Mosaico de um cubo conta a vizinhança toda; comparado com uma vizinha, sobra pouco |');
-  out.push('| Janelas quase iguais | dois centros veem as mesmas estrelas, menos as próprias: subtraia |');
+  out.push('| Janelas quase iguais | duas estrelas ligadas veem quase as mesmas vizinhas: subtraia |');
   out.push('| Folhas | o Mosaico de uma folha só vê ela e o pai: resolva das pontas para dentro |');
   out.push('| Árvore de medidas | numa árvore cada fronteira corta de vez; as Medidas se encaixam como galhos |');
   out.push('| Laço ímpar | num anel ímpar, luz e sombra não alternam o caminho todo: em algum ponto dois vizinhos concordam |');
   out.push('| Paridade do laço | todo laço tem um número par de fios cortados: o elo sem marca se revela contando |');
   out.push('| Corrente de nós | estrelas amarradas por nós são uma região só; a Medida diz onde ela termina |');
-  out.push('| Famílias entrelaçadas | cores que se cruzam no anel só se resolvem se uma passa por dentro (pelo cubo) e a outra por fora |');
   out.push('| Triângulos | todo triângulo tem 0 ou 2 fronteiras, nunca 1 ou 3 |');
   out.push('| A soma par | a soma de todos os Contornos é o dobro dos fios cortados: sempre par |');
   out.push('| A gema solitária | uma cor única no lugar mais movimentado precisa de um mundo só dela |');
-  out.push('| Eco na árvore / no anel | uma folha só mexe nela e no pai; num anel cada toque vira três estrelas |');
+  out.push('| Eco na árvore / no anel / no desenho | uma folha só mexe nela e no pai; acender tudo pede os toques certos |');
   out.push('| Eco alcançável | as regras admitem duas respostas, mas apertando estrelas só se chega a uma |');
   out.push('');
-  out.push('As últimas constelações de cada lugar são **vitrines**: desenhos (pássaro, peixe, chave, borboleta, flor, lanterna,');
-  out.push('coroa, crescente…) cuja forma carrega a percepção, com mais camadas de raciocínio.');
+  out.push('Os desenhos mais simples de cada lugar são o aquecimento; os mais ricos, as **vitrines**, com mais camadas de raciocínio.');
   out.push('');
   out.push('### Garantias');
   out.push('');
-  out.push('- Todas as redes são planas (fios nunca se cruzam), com estrelas a ≥ 1,6 m umas das outras, dentro de um raio de 7 m;');
-  out.push('  o sino fica fora da rede, a até 8,6 m do centro, de preferência do lado +z (sul).');
   out.push('- Toda constelação tem **uma única solução** (para regras simétricas — sem mosaico nem estaca — a solução invertida');
   out.push('  também vale e é aceita) e pode ser resolvida **só com raciocínio**, sem chute: o gerador simula um jogador cuidadoso');
   out.push('  (deduções locais + hipóteses com contradição) e descarta o que exigir tentativa e erro. A dificuldade vem da');
-  out.push('  profundidade do raciocínio, não do tamanho: candidatas difíceis só por serem grandes são descartadas.');
+  out.push('  profundidade do raciocínio, não do tamanho.');
   out.push('- Nas constelações com eco, a solução é alcançável apertando estrelas a partir do estado inicial.');
   out.push('');
   out.push('## Catálogo');
   out.push('');
-  out.push('| id | lugar | estrelas | fios | regras | dificuldade | nota |');
-  out.push('|---|---|---|---|---|---|---|');
+  out.push('| id | desenho | lugar | estrelas | fios | regras | dificuldade | nota |');
+  out.push('|---|---|---|---|---|---|---|---|');
   for (const d of list) {
     const kinds = constellationKinds(d).map((k) => KIND_PT[k] ?? k).join(', ');
-    out.push(`| ${d.id} | ${AREA_PT[d.area] ?? d.area} | ${d.stars.length} | ${d.threads.length} | ${kinds} | ${d.difficulty} | ${(d.note ?? '').replace(/\|/g, '/')} |`);
+    out.push(`| ${d.id} | **${d.name.pt}** (${d.name.en}) | ${AREA_PT[d.area] ?? d.area} | ${d.stars.length} | ${d.threads.length} | ${kinds} | ${d.difficulty} | ${(d.note ?? '').replace(/\|/g, '/')} |`);
   }
   out.push('');
   return out.join('\n');
 }
-void isInversionSymmetric;

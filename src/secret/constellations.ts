@@ -489,7 +489,7 @@ export class ConstellationSystem {
         let done = false;
         // strict first (objects at very different depths, some off the ground), then relaxed, then wider
         for (let pass = 0; pass < 4 && !done; pass++) {
-          for (let attempt = 0; attempt < (pass === 3 ? 600 : 260) && !done; attempt++) {
+          for (let attempt = 0; attempt < (pass === 3 ? 1600 : 260) && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
             const wide = pass >= 2 ? 1.6 : 1;
             let r = rMin + Math.sqrt(rnd()) * (rMax - rMin) * wide;
@@ -498,7 +498,7 @@ export class ConstellationSystem {
             if (pass >= 2 && area === 'echo' && attempt % 2) {
               // the caldera is cramped: its outer slopes belong to the hollow too
               base = { x: CALDERA.x, z: CALDERA.z };
-              r = 70 + rnd() * 45;
+              r = 70 + rnd() * (pass === 3 ? 90 : 45);
             }
             const vx = base.x + Math.cos(ang) * r, vz = base.z + Math.sin(ang) * r;
             if (Math.hypot(vx, vz - 20) > 520) continue; // stay on the island
@@ -517,7 +517,11 @@ export class ConstellationSystem {
     if (gy === null) return false;
     // not on the Sky Spire: its landings only exist once the stair of light is lit
     if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26 && gy > SPIRE.baseY + 2.5) return false;
-    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < SPOT_SPACING)) return false;
+    // the crater floor belongs to the Resonant Hollow alone
+    if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return false;
+    // (in the last, most relaxed pass a crowded place may keep its figures a little closer)
+    const spacing = pass === 3 ? SPOT_SPACING * 0.7 : SPOT_SPACING;
+    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return false;
     if (!this.enterable(vx, vz, gy)) return false;
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
     const yaw = rnd() * Math.PI * 2;

@@ -687,12 +687,34 @@ export interface GrassRules {
   flowerChance?: (x: number, z: number) => number;
   /** grass tint for a point */
   tint: (x: number, z: number, base: THREE.Color) => THREE.Color;
+  /** fallen leaves: how many lie here (0..1) and their colour */
+  litter?: (x: number, z: number) => number;
+  litterColor?: (x: number, z: number, r: number) => string;
+}
+
+/** a fallen leaf lying flat (unit size): a rounded leaf, a little curled */
+function makeFallenLeaf(): THREE.BufferGeometry {
+  const pos: number[] = [];
+  const K = 7;
+  const ring: number[][] = [];
+  for (let k = 0; k < K; k++) {
+    const a = (k / K) * Math.PI * 2;
+    const tip = Math.max(0, Math.cos(a)) ** 3 * 0.25;
+    ring.push([Math.cos(a) * 0.5 * (1 + tip), Math.abs(Math.sin(a)) * 0.05, Math.sin(a) * 0.21 * (1 - 0.15 * Math.cos(a))]);
+  }
+  for (let k = 0; k < K; k++) pos.push(0, 0.02, 0, ...ring[(k + 1) % K], ...ring[k]);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
 }
 
 export class GrassField {
   readonly group = new THREE.Group();
   private grass: THREE.InstancedMesh;
   private flowers: THREE.InstancedMesh;
+  private litter: THREE.InstancedMesh;
+  private maxLitter = 18000;
   private cx = Infinity;
   private cz = Infinity;
   private cell = 4;
@@ -707,6 +729,13 @@ export class GrassField {
   constructor(private terrain: Terrain, private rules: GrassRules, private colorAt: (x: number, z: number, out: THREE.Color) => THREE.Color) {
     this.grass = new THREE.InstancedMesh(makeGrassClump(), makeGrassMaterial(false), this.maxGrass);
     this.flowers = new THREE.InstancedMesh(makeFlower(), makeGrassMaterial(true), this.maxFlowers);
+    this.litter = new THREE.InstancedMesh(makeFallenLeaf(), new THREE.MeshStandardMaterial({ roughness: 0.85, side: THREE.DoubleSide }), this.maxLitter);
+    this.litter.frustumCulled = false;
+    this.litter.receiveShadow = true;
+    this.litter.count = 0;
+    this.litter.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.litter.setColorAt(0, new THREE.Color());
+    this.group.add(this.litter);
     for (const m of [this.grass, this.flowers]) {
       m.frustumCulled = false;
       m.receiveShadow = true;
@@ -725,7 +754,7 @@ export class GrassField {
 
   update(px: number, pz: number, force = false) {
     if (!this.enabled) {
-      this.grass.count = this.flowers.count = 0;
+      this.grass.count = this.flowers.count = this.litter.count = 0;
       return;
     }
     const cx = Math.round(px / 8) * 8;
@@ -742,6 +771,7 @@ export class GrassField {
     const n = new THREE.Vector3();
     let gi = 0;
     let fi = 0;
+    let li = 0;
     const R = this.radius;
     const c = this.cell;
     const x0 = Math.floor((px - R) / c), x1 = Math.ceil((px + R) / c);
@@ -752,6 +782,24 @@ export class GrassField {
         const ccx = gx * c + c / 2, ccz = gz * c + c / 2;
         const dd = Math.hypot(ccx - px, ccz - pz);
         if (dd > R) continue;
+        // fallen leaves on the autumn wood's floor (within 40 m)
+        if (this.rules.litter && dd < 40) {
+          for (let k = 0; k < 22 && li < this.maxLitter; k++) {
+            const r1 = hash2(gx * 41 + k * 5, gz * 19 + k * 17), r2 = hash2(gx * 23 + k * 9 + 7, gz * 37 + k * 3);
+            const x = gx * c + r1 * c, z = gz * c + r2 * c;
+            if (hash2(gx * 5 + k * 31, gz * 11 + k) > this.rules.litter(x, z)) continue;
+            const h = this.terrain.heightAt(x, z);
+            if (h < 0.9 || this.covered(x, z, h) || this.terrain.pathAt(x, z) > 0.4) continue;
+            dummy.position.set(x, h + 0.012, z);
+            dummy.rotation.set((r1 - 0.5) * 0.5, r2 * 6.283, (r2 - 0.5) * 0.5);
+            const s = 0.14 + r1 * 0.1;
+            dummy.scale.set(s, s, s);
+            dummy.updateMatrix();
+            this.litter.setMatrixAt(li, dummy.matrix);
+            this.litter.setColorAt(li, col.set(this.rules.litterColor ? this.rules.litterColor(x, z, r2) : '#e2662f'));
+            li++;
+          }
+        }
         for (let k = 0; k < perCell; k++) {
           const r1 = hash2(gx * 31 + k * 7, gz * 17 + k * 13);
           const r2 = hash2(gx * 13 + k * 5 + 99, gz * 29 + k * 11);
@@ -768,7 +816,8 @@ export class GrassField {
           dummy.position.set(x, h - 0.02, z);
           dummy.rotation.set(0, r1 * 6.283, 0);
           const s = 0.8 + r2 * 0.6;
-          dummy.scale.set(s, s * (0.8 + r3 * 0.5), s);
+          // wildflowers stand above the grass
+          dummy.scale.set(s, s * (0.8 + r3 * 0.5) * (flower ? 1.55 : 1), s);
           dummy.updateMatrix();
           if (flower && fi < this.maxFlowers) {
             this.flowers.setMatrixAt(fi, dummy.matrix);
@@ -785,6 +834,9 @@ export class GrassField {
     }
     this.grass.count = gi;
     this.flowers.count = fi;
+    this.litter.count = li;
+    this.litter.instanceMatrix.needsUpdate = true;
+    if (this.litter.instanceColor) this.litter.instanceColor.needsUpdate = true;
     this.grass.instanceMatrix.needsUpdate = true;
     this.flowers.instanceMatrix.needsUpdate = true;
     if (this.grass.instanceColor) this.grass.instanceColor.needsUpdate = true;

@@ -5,7 +5,7 @@
 // Usage: BASE=http://localhost:5180/ node scripts/place-constellations.cjs
 const { chromium } = require('playwright');
 const fs = require('fs');
-const out = 'src/data/constellation-places.json';
+const out = process.env.OUT || 'src/data/constellation-places.json';
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
@@ -14,7 +14,7 @@ const out = 'src/data/constellation-places.json';
   page.on('console', (m) => { if (/not placed/.test(m.text())) notPlaced.push(m.text()); });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
   const t0 = Date.now();
-  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&starsCompute&at=8,52,180,0', { waitUntil: 'load' });
+  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&starsCompute' + (process.env.QUICK ? '&starsQuick' : '') + '&at=8,52,180,0', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true && window.__game?.state === 'play');
   await page.evaluate(() => window.__game.stars.placeAll());
   const res = await page.evaluate(() => {

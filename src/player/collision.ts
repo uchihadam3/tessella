@@ -174,6 +174,11 @@ export class CollisionWorld {
     return { x: p.x, z: p.z, y: g, surface: surf };
   }
 
+  /** every blocker (read only: e.g. to weather the walls of the ruins) */
+  allBlockers(): readonly Blocker[] {
+    return this.blockers;
+  }
+
   /** A number that changes whenever the solid world changes (for caches built from it). */
   fingerprint(): number {
     let h = this.blockers.length * 7 + this.floors.length * 13;

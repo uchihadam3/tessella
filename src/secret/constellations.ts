@@ -38,7 +38,7 @@ export const VAULT_THRESHOLD = 100;
 /** the player's eye height (see Player.eye) */
 const EYE_H = 1.62;
 /** half-width of a figure as seen from its spot (degrees, centre to the farthest point) */
-const SPAN_DEG = 17;
+const SPAN_DEG = 14;
 /** how close to the spot you must stand (metres) and how straight you must look (degrees) */
 const SPOT_TOL = 0.42;
 const LOOK_TOL = 4;
@@ -89,6 +89,24 @@ interface Run {
   sid?: number;
 }
 
+/** what each place draws with (see castRay) */
+type PlaceMaterial = 'garden' | 'meadow' | 'wood' | 'stone';
+const AREA_MATERIAL: Record<string, PlaceMaterial> = {
+  twins: 'garden', weave: 'meadow', contour: 'meadow', hub: 'meadow', measure: 'meadow', prologue: 'meadow',
+  kinship: 'wood', mold: 'stone', citadel: 'stone', echo: 'stone', mosaic: 'stone', beacon: 'stone', spire: 'stone',
+};
+function placeMaterial(x: number, z: number): PlaceMaterial {
+  let best = 'hub', bd = Infinity;
+  for (const [id, a] of Object.entries(ANCHORS)) {
+    const d = (a.x - x) ** 2 + (a.z - z) ** 2;
+    if (d < bd) {
+      bd = d;
+      best = id;
+    }
+  }
+  return AREA_MATERIAL[best] ?? 'meadow';
+}
+
 /** the surfaces a picture is painted on: their geometry, and the band's points along its lines */
 interface PaintGroup {
   src: { geometry: THREE.BufferGeometry; matrix: THREE.Matrix4 };
@@ -119,7 +137,7 @@ function farthest(hexes: string[], c: THREE.Color): THREE.Color {
 const LEAFY = new Set(['oak', 'poplar', 'bush', 'blossom', 'autumn']);
 
 /** how far the drawing must fall apart when seen from a couple of steps aside (shape difference) */
-const SHIFT_MIN = 0.16;
+const SHIFT_MIN = 0.1;
 
 /** difference of two 2D point sets after the best shift, scale and turn (0 = same shape) */
 function shapeDifference(A: number[][], B: number[][]): number {
@@ -464,39 +482,34 @@ export class ConstellationSystem {
       return null;
     }
     const p = eye.clone().addScaledVector(dir, h.t);
-    if (h.cls === 'water') {
-      // a lake (reeds in its shallows); the sea and far water carry nothing
-      if (this.world.waterAt(p.x, p.z) < 1 || h.t > 36) return this.gapAt(eye, dir, h.t, h.n);
-      kind = 'water';
-    } else if (h.cls === 'tree') {
-      // the crown of a broad-leaved tree (its leaves; a blossom tree's blossoms)
-      if (h.sway <= 0.3 || !LEAFY.has(h.species)) return this.gapAt(eye, dir, h.t, h.n);
-      if (this.material === 'garden' && h.species !== 'blossom') return this.gapAt(eye, dir, h.t, h.n);
+    // what each place draws with — only what it already has plenty of:
+    //   the lake garden: its blossom trees' blossoms and its meadow's flowers
+    //   meadows: their flowers; the autumn wood: its fallen leaves (and flowers)
+    //   ruins and rocks: cracks in the stone
+    const mat = placeMaterial(p.x, p.z);
+    const seen = Math.abs(h.n.dot(dir));
+    if (h.cls === 'tree') {
+      if (!(mat === 'garden' && h.species === 'blossom' && h.sway > 0.3)) return this.gapAt(eye, dir, h.t, h.n);
       kind = 'tree';
-    } else if (h.cls === 'rock') kind = 'rock';
-    else if (h.cls === 'terrain') {
-      kind = 'ground';
+    } else if (h.cls === 'terrain') {
       if (this.world.terrain.heightAt(p.x, p.z) < this.world.waterAt(p.x, p.z) + 0.05) {
         this.lastWhy = 'water';
         return null;
       }
-      // only a meadow full of flowers or the autumn wood's floor of fallen leaves, near enough to see
       const surf = this.world.terrain.surfaceAt(p.x, p.z);
       const flowers = (surf === 'grass' || surf === 'leaves') && (grassRules.flowerChance?.(p.x, p.z) ?? 0) >= 0.08;
-      if (this.material === 'garden' && !flowers) return this.gapAt(eye, dir, h.t, h.n);
-      // seen too flat, a mark on the ground is lost: only where the ground rises enough towards you
-      const flat = Math.abs(h.n.dot(dir)) < 0.12;
-      if (!(flowers || surf === 'leaves' || surf === 'sand') || this.world.terrain.pathAt(p.x, p.z) > 0.35 || h.t > 34 || (flat && !flowers)) return this.gapAt(eye, dir, h.t, h.n);
-    } else kind = h.n.y > 0.6 ? 'floor' : 'wall';
-    if (this.material === 'garden' && kind !== 'tree' && kind !== 'ground') return this.gapAt(eye, dir, h.t, h.n);
-    // (lakes carry nothing yet: the line passes behind them)
-    if (kind === 'water') return this.gapAt(eye, dir, h.t, h.n);
+      const leaves = mat === 'wood' && surf === 'leaves' && (grassRules.litter?.(p.x, p.z) ?? 0) > 0.5;
+      // near enough to see, not a path, and the ground seen from above enough (not flattened)
+      if (!(flowers || leaves) || this.world.terrain.pathAt(p.x, p.z) > 0.35 || h.t > 38 || seen < 0.23) return this.gapAt(eye, dir, h.t, h.n);
+      kind = 'ground';
+    } else if (h.cls === 'rock' || h.cls === 'static') {
+      kind = h.cls === 'rock' ? 'rock' : h.n.y > 0.6 ? 'floor' : 'wall';
+      if (mat !== 'stone' || kind === 'floor' || seen < 0.3) return this.gapAt(eye, dir, h.t, h.n);
+    } else return this.gapAt(eye, dir, h.t, h.n); // water: nothing yet
     const inst = kind === 'tree' || kind === 'rock';
     return { kind, p, dist: h.t, n: h.n, id: h.id, wind: h.wind, col: h.color, tx: inst ? h.ox : undefined, tz: inst ? h.oz : undefined, sid: h.sid };
   }
 
-  /** what the place being searched draws with ('garden': the lake garden's blossoms and flowers) */
-  private material: 'any' | 'garden' = 'any';
 
   private gapAt(eye: THREE.Vector3, dir: THREE.Vector3, t: number, n: THREE.Vector3): Hit {
     return { kind: 'gap', p: eye.clone().addScaledVector(dir, t), dist: t, n };
@@ -806,14 +819,15 @@ export class ConstellationSystem {
     for (const [area, defs] of byArea) {
       const rnd = rng(area.length * 977 + 13);
       const { center, rMin, rMax } = this.region(area);
-      this.material = area === 'twins' ? 'garden' : 'any';
+
       for (const def of defs) {
         if (pick && !pick.has(def.id)) continue;
         let done = false;
         // strict first (a picture across several kinds of scenery), then relaxed, then wider
         for (let pass = 0; pass < 6 && !done; pass++) {
           // (only places with standing room count as attempts: most random points are slopes or water)
-          const tries = [900, 900, 1500, 6000, 8000, 14000][pass];
+          const quick = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsQuick');
+          const tries = (quick ? [150, 150, 250, 800, 800, 1200] : [900, 900, 1500, 6000, 8000, 14000])[pass];
           let real = 0;
           for (let attempt = 0; real < tries && attempt < tries * 30 && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
@@ -862,61 +876,51 @@ export class ConstellationSystem {
     if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return this.no('spacing');
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
     if (this.world.forest.crownNear(eye, 2.2)) return this.no('crown');
-    // look around from here and face the richest view: trees, walls, ruins and rocks rather than
-    // bare ground, and no open sky (a quick 3×3 probe across the picture's extent per direction)
-    let bestScore = -Infinity, yaw = 0, pitch = 0;
-    const yaw0 = rnd() * Math.PI * 2;
-    const tSpan = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG * 0.8));
-    for (let yi = 0; yi < 8; yi++) {
-      const yw = yaw0 + (yi / 8) * Math.PI * 2;
-      for (const pd of pass >= 3 ? [-26, -18, -10, -2] : [-18, -10, -2, 6]) {
-        const pt = THREE.MathUtils.degToRad(pd + (rnd() - 0.5) * 6);
-        const f = new THREE.Vector3(Math.sin(yw) * Math.cos(pt), Math.sin(pt), Math.cos(yw) * Math.cos(pt));
-        const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
-        const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
-        let score = 0;
-        const depths: number[] = [];
-        for (const [ax, ay] of [[0, 0], [-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1], [0, 1], [-1, 0], [1, 0]]) {
-          const d = f.clone().addScaledVector(rt, ax * tSpan).addScaledVector(upv, ay * tSpan).normalize();
-          const h = this.castRay(eye, d, 1.5, 50);
-          if (!h || (h.kind !== 'sky' && h.dist < 3)) score -= 6;
-          else if (h.kind === 'sky') score -= 2;
-          else if (h.kind !== 'gap') {
-            depths.push(Math.log(h.dist));
-            score += h.kind === 'tree' ? (this.material === 'garden' ? 7 : 3) : 2;
-          }
-        }
-        // things at many different depths (near, middle, far): what lets the lines join from here only
-        if (depths.length > 2) {
-          const m = depths.reduce((a, b) => a + b, 0) / depths.length;
-          score += 14 * Math.sqrt(depths.reduce((a, b) => a + (b - m) ** 2, 0) / depths.length);
-        }
-        score += rnd() * 2; // a little variety among equally good views
-        if (score > bestScore) {
-          bestScore = score;
-          yaw = yw;
-          pitch = pt;
-        }
-      }
-    }
-    if (bestScore < 0) return this.no('view');
-    const fwd = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
-    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
-    const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
-    // the picture's layout, centred and scaled to the angle it covers from the spot
+    // look around from here: for many facings, check the picture's own points directly — every
+    // one must land on what this place draws with (its flowers, leaves, blossoms, stone)
     const pts2 = [...def.stars.map((st) => [st.x, st.z]), [def.bell.x, def.bell.z]];
     const xs = def.stars.map((s) => s.x), zs = def.stars.map((s) => s.z);
     const mx = (Math.min(...xs) + Math.max(...xs)) / 2, mz = (Math.min(...zs) + Math.max(...zs)) / 2;
     const maxR = Math.max(0.3, ...pts2.map((q) => Math.hypot(q[0] - mx, q[1] - mz)));
     const k = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG)) / maxR;
-    const dirs = pts2.map(([x, z]) => fwd.clone().addScaledVector(right, (x - mx) * k).addScaledVector(up, -(z - mz) * k).normalize());
-    // the corners first (cheap): what each point of the picture meets in the scenery
-    const hits: Hit[] = [];
-    for (const d of dirs) {
-      const h = this.castRay(eye, d, 1.5, 48);
-      if (!h || h.kind === 'sky' || h.kind === 'gap' || h.dist < 3) return this.no('corner:' + (h ? (h.dist < 3 ? 'near' : h.kind) : 'null'));
-      hits.push(h);
+    const yaw0 = rnd() * Math.PI * 2;
+    const pitches = pass >= 3 ? [-38, -30, -22, -14, -6] : [-32, -24, -16, -8, 0];
+    let fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3();
+    let dirs: THREE.Vector3[] = [];
+    let hits: Hit[] = [];
+    let found = false, lastWhy = 'corner';
+    for (let yi = 0; yi < 16 && !found; yi++) {
+      const yw = yaw0 + (yi / 16) * Math.PI * 2;
+      for (const pd of pitches) {
+        const pt = THREE.MathUtils.degToRad(pd + (rnd() - 0.5) * 5);
+        const f = new THREE.Vector3(Math.sin(yw) * Math.cos(pt), Math.sin(pt), Math.cos(yw) * Math.cos(pt));
+        const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
+        const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
+        const ds = pts2.map(([x, z]) => f.clone().addScaledVector(rt, (x - mx) * k).addScaledVector(upv, -(z - mz) * k).normalize());
+        const hs: Hit[] = [];
+        let ok = true;
+        for (const d of ds) {
+          const h = this.castRay(eye, d, 1.5, 48);
+          // (on the ground a picture spreads over the meadow: never right at your feet)
+          const near = h && h.kind === 'ground' ? (pass >= 4 ? 3.2 : 4.5) : 3;
+          if (!h || h.kind === 'sky' || h.kind === 'gap' || h.dist < near) {
+            ok = false;
+            lastWhy = 'corner:' + (h ? (h.dist < near ? 'near' : h.kind) : 'null');
+            break;
+          }
+          hs.push(h);
+        }
+        if (!ok) continue;
+        fwd = f;
+        right = rt;
+        up = upv;
+        dirs = ds;
+        hits = hs;
+        found = true;
+        break;
+      }
     }
+    if (!found) return this.no(lastWhy);
     // a good frame: nothing big right in your face around the picture
     for (let kk = 0; kk < 12; kk++) {
       const a = (kk / 12) * Math.PI * 2;
@@ -949,8 +953,9 @@ export class ConstellationSystem {
     const skyRuns = lines.flat().filter((r) => r.kind === 'sky');
     if (skyRuns.length > 1 || (skyRuns.length === 1 && skyRuns[0].samples.length > 5)) return this.no('sky');
     const kinds = (Object.keys(count) as HitKind[]).filter((kk) => kk !== 'sky' && count[kk] / total > 0.06).length;
-    const groundMax = this.material === 'garden' ? 0.93 : pass >= 3 ? 0.88 : 0.8;
-    if (onGround > groundMax || kinds < (this.material === 'garden' ? 1 : 2)) return this.no('mix' + Math.min(pass, 2));
+    // (a meadow draws on the ground, a ruin on its walls: one material per picture is natural)
+    void onGround;
+    void kinds;
     // anamorphic: the line pieces lie at very different depths, so they join only from here —
     // a couple of steps aside, the drawing must fall apart (not a picture painted on one wall)
     // (almost) every line is cut by jumps in depth, well inside it (not just at a tip): seen from
@@ -969,7 +974,10 @@ export class ConstellationSystem {
       longest = Math.max(longest, 1 - from);
       if (longest <= 0.72) split++;
     }
-    if (split < Math.ceil(def.threads.length * [0.6, 0.55, 0.5, 0.45, 0.42, 0.38][pass])) return this.no('breaks');
+    // (a picture of cracks on walls must cross walls at different depths: never all on one wall)
+    const onWalls = (count.wall + count.rock) / Math.max(1, total);
+    const needSplit = onWalls > 0.4 ? 0.45 : [0.3, 0.2, 0.12, 0, 0, 0][pass];
+    if (split < Math.floor(def.threads.length * needSplit)) return this.no('breaks');
     const shift = this.shapeShift(eye, fwd, right, up, lines);
     if (shift < SHIFT_MIN) return this.no('shift');
     // last (the slowest check): the spot must be walkable-to from the rest of the island
@@ -1039,11 +1047,8 @@ export class ConstellationSystem {
             const c = grassRules.flower(x + ((k * 37) % 17) - 8, z + ((k * 23) % 19) - 9);
             if (c) counts.set(c, (counts.get(c) ?? 0) + 1);
           }
-          let best = Infinity;
-          for (const [c, n] of counts) if (n >= 4 && n < best) {
-            best = n;
-            out = c;
-          }
+          const byCount = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+          out = (byCount[1] ?? byCount[0])?.[0] ?? null;
         }
         flowerCache.set(key, out);
         return out;
@@ -1088,9 +1093,8 @@ export class ConstellationSystem {
         };
         if (onlyPlace) return;
         const surf = piece.ground;
-        const paintIt = run.kind === 'wall' || run.kind === 'floor' || run.kind === 'rock'
-          || (run.kind === 'tree' && !(species && species in BLOSSOM_COLORS))
-          || (run.kind === 'ground' && (surf === 'sand' || surf === 'leaves'));
+        // (painting a surface reads as a drawn line: the places draw with their own things instead)
+        const paintIt = false && !!surf;
         if (!paintIt) {
           dressPiece(b, piece, ctx);
           return;
@@ -1211,7 +1215,7 @@ export class ConstellationSystem {
       }
       const mesh = new THREE.Mesh(pg.src.geometry, paintMaterial({
         points: points.slice(0, MAX_PAINT_POINTS), ts, cuts, lines, breaks, lineGlow: it.paintGlow,
-        eye: it.view.eye, halfAngle: 0.0042, color: pg.color, wind: pg.wind, u: it.u, seed: (it.view.eye.x * 13.1 + it.view.eye.z * 7.3) % 97,
+        eye: it.view.eye, halfAngle: pg.wind ? 0.0095 : 0.0055, color: pg.color, wind: pg.wind, u: it.u, seed: (it.view.eye.x * 13.1 + it.view.eye.z * 7.3) % 97,
       }));
       mesh.matrixAutoUpdate = false;
       mesh.matrix.copy(pg.src.matrix);

@@ -17,6 +17,8 @@
  */
 import * as THREE from 'three';
 import { BLOSSOM_COLORS, PALETTE } from '../world/vegetation';
+import { LITTER_LINE } from '../world/biomes';
+import { CRACK_COLOR } from '../world/weathering';
 
 export type PieceKind = 'ground' | 'floor' | 'wall' | 'tree' | 'rock' | 'water';
 
@@ -391,7 +393,7 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
         for (let k = 0; k < n; k++) {
           const s = 0.8 + rnd() * 0.6;
           const dir = spread(dir0, across, (rnd() - 0.5) * 1.2 * (s0 / dist));
-          const h = 0.42 * s * (0.85 + rnd() * 0.4);
+          const h = 0.42 * s * (0.85 + rnd() * 0.4) * 1.55;
           const head = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, h));
           const base = new THREE.Vector3(head.x, ctx.heightAt(head.x, head.z) - 0.02, head.z);
           const face = UP.clone().multiplyScalar(1.7).add(eye.clone().sub(head).setY(0).normalize()).add(new THREE.Vector3(rnd() - 0.5, 0, rnd() - 0.5).multiplyScalar(0.5)).normalize();
@@ -401,19 +403,17 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
       return;
     }
     if (g === 'leaves') {
-      // the autumn wood's floor: fallen leaves, a few together, of another of the wood's colours
-      const col = otherShade(FALLEN, ctx.groundColor(mid.x, mid.z));
-      walk(pc, ctx, b, () => 0.34, 0.9, (dir0, dist, s0, across) => {
-        const dir = spread(dir0, across, (rnd() - 0.5) * 0.8 * (s0 / dist));
-        const c = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, 0.06));
-        const n = 3 + Math.floor(rnd() * 3);
+      // the autumn wood's floor, covered in fallen leaves: some of them, of its deeper red
+      const col = C(LITTER_LINE);
+      walk(pc, ctx, b, () => 0.2, 0.8, (dir0, dist, s0, across) => {
+        const n = 1 + (rnd() < 0.4 ? 1 : 0);
         for (let k = 0; k < n; k++) {
-          const q = c.clone().add(new THREE.Vector3((rnd() - 0.5) * 0.3, 0, (rnd() - 0.5) * 0.3));
-          q.y = ctx.heightAt(q.x, q.z) + 0.03 + k * 0.01;
-          // lying flat, tilted a little (curled leaves catch the light)
-          const nrm = new THREE.Vector3((rnd() - 0.5) * 0.9, 1, (rnd() - 0.5) * 0.9).normalize();
+          const dir = spread(dir0, across, (rnd() - 0.5) * 1.1 * (s0 / dist));
+          const q = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, 0.02));
+          q.y = ctx.heightAt(q.x, q.z) + 0.014 + k * 0.004;
+          const nrm = new THREE.Vector3((rnd() - 0.5) * 0.5, 1, (rnd() - 0.5) * 0.5).normalize();
           const ax = new THREE.Vector3(rnd() - 0.5, 0, rnd() - 0.5).normalize();
-          b.leaf(q, nrm, ax, 0.16 + rnd() * 0.08, col.clone().multiplyScalar(0.9 + rnd() * 0.15));
+          b.leaf(q, nrm, ax, 0.14 + rnd() * 0.1, col.clone().multiplyScalar(0.92 + rnd() * 0.14));
         }
       });
       return;
@@ -521,10 +521,10 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
   }
 
   // a crack in a wall, the paving or a rock: a darker shade of the stone itself, uneven
-  const base = hitCol.clone().multiplyScalar(0.42);
+  const base = CRACK_COLOR.clone();
   const c = midC;
   const lift = (d: number) => (0.012 + d * 0.0012) / Math.max(0.2, c);
-  const half = (d: number) => THREE.MathUtils.clamp((d * 0.0032) / Math.max(0.35, c) / 2, 0.006, 0.06);
+  const half = (d: number) => THREE.MathUtils.clamp((d * 0.0024) / Math.max(0.35, c) / 2, 0.005, 0.016);
   const cp: THREE.Vector3[] = [], cw: number[] = [], ct: number[] = [], cc: number[] = [];
   for (let i = 0; i < N; i++) {
     const p = eye.clone().addScaledVector(pc.dirs[i], pc.dists[i] - lift(pc.dists[i]));

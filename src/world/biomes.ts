@@ -76,6 +76,10 @@ export function scatterVegetation(f: Forest) {
 
 const C = (hex: string) => new THREE.Color(hex);
 
+/** the autumn wood's fallen leaves (the drawing's are of the deeper red, rarer, colour) */
+export const LITTER = ['#e2662f', '#f0a033', '#d9572b', '#f2c14e', '#e08a2e', '#c9412a'];
+export const LITTER_LINE = '#c9412a';
+
 export const grassRules: GrassRules = {
   density(x, z, h, slope, path) {
     let d = 0.92;
@@ -104,6 +108,12 @@ export const grassRules: GrassRules = {
     if (w('kinship', x, z, 60, 110) > 0.4) return q < 0.5 ? '#f2a03b' : '#e0562d';
     if (w('measure', x, z, 60, 110) > 0.4) return q < 0.7 ? '#f6e05a' : '#ffffff';
     return q < 0.4 ? '#ffffff' : q < 0.7 ? '#ffd84a' : q < 0.88 ? '#e8453c' : '#9fb7ff';
+  },
+  litter(x, z) {
+    return 0.9 * w('kinship', x, z, 95, 120);
+  },
+  litterColor(x, z, r) {
+    return LITTER[Math.floor(r * LITTER.length) % LITTER.length];
   },
   tint(x, z, base) {
     const out = base.clone();

@@ -5,7 +5,8 @@ import { STRINGS, type StringKey } from './i18n';
 import type { Game } from '../game/game';
 import { AREAS, AREA_BY_ID, TEACHING_AREAS, type AreaId } from '../data/areas';
 import { ACHIEVEMENTS, type AchievementId } from '../game/achievements';
-import { listSlots, loadSlot, deleteSlot, exportSave, importSave, writeSlot, lastSlot, SLOT_COUNT } from '../core/save';
+import { listSlots, loadSlot, deleteSlot, exportSave, importSave, writeSlot, lastSlot, SLOT_COUNT, saveToCode, saveFromCode } from '../core/save';
+import type { SaveData } from '../core/save';
 import { audio } from '../audio';
 import { WAYSTONES, ANCHORS, WORLD_HALF } from '../world/layout';
 
@@ -140,20 +141,14 @@ export class UI {
     });
     const imp = this.screens.get('slots')!;
     const file = $('input[type=file]', imp) as HTMLInputElement;
-    $('.imp', imp).addEventListener('click', () => file.click());
+    $('.imp', imp).addEventListener('click', () => this.importDialog(file));
     file.addEventListener('change', async () => {
       const f = file.files?.[0];
       if (!f) return;
       const d = await importSave(f);
       file.value = '';
-      if (!d) return this.toast(this.t('importFail'), 'warn');
-      // import into the first empty slot (or slot of the file)
-      const slots = listSlots();
-      const empty = slots.find((s) => !s.data);
-      d.slot = empty ? empty.slot : d.slot % SLOT_COUNT;
-      writeSlot(d);
-      this.toast(this.t('importOk'), 'save');
-      this.renderSlots(this.slotMode);
+      this.root.querySelector('.save-io')?.remove();
+      this.acceptImported(d);
     });
     this.setTexts();
   }
@@ -307,7 +302,7 @@ export class UI {
         const ex = h(`<button class="btn">${this.t('exportSave')}</button>`);
         ex.addEventListener('click', (e) => {
           e.stopPropagation();
-          exportSave(d);
+          this.exportDialog(d);
         });
         const del = h(`<button class="btn">${this.t('delete')}</button>`);
         del.addEventListener('click', (e) => {
@@ -330,6 +325,64 @@ export class UI {
       box.append(card);
     }
     if (this.stack[this.stack.length - 1] !== 'slots') this.show('slots');
+  }
+
+  /** puts an imported save into the first empty slot (or the slot it came from) */
+  private acceptImported(d: SaveData | null) {
+    if (!d) return this.toast(this.t('importFail'), 'warn');
+    const empty = listSlots().find((s) => !s.data);
+    d.slot = empty ? empty.slot : d.slot % SLOT_COUNT;
+    writeSlot(d);
+    this.toast(this.t('importOk'), 'save');
+    this.renderSlots(this.slotMode);
+  }
+
+  /** shows the save as a copyable code (downloads are often blocked inside embedded pages) */
+  private exportDialog(d: SaveData) {
+    const el = h(`<div class="screen on center dim-bg save-io" style="z-index:40"><div class="dialog" style="min-width:min(520px,92vw)"><h2 style="font-size:28px">${this.t('exportSave')}</h2><p class="io-help"></p><textarea class="io-code" readonly spellcheck="false"></textarea><div class="row" style="margin-top:14px"><button class="btn dl"></button><span class="spacer"></span><button class="btn x"></button><button class="btn primary cp"></button></div></div></div>`);
+    $('.io-help', el).textContent = this.t('exportHelp');
+    const ta = $('.io-code', el) as HTMLTextAreaElement;
+    ta.value = saveToCode(d);
+    $('.dl', el).textContent = this.t('download');
+    $('.x', el).textContent = this.t('close');
+    $('.cp', el).textContent = this.t('copy');
+    $('.dl', el).addEventListener('click', () => exportSave(d));
+    $('.x', el).addEventListener('click', () => el.remove());
+    $('.cp', el).addEventListener('click', async () => {
+      ta.focus();
+      ta.select();
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(ta.value);
+        ok = true;
+      } catch {
+        try {
+          ok = document.execCommand('copy');
+        } catch {
+          ok = false;
+        }
+      }
+      if (ok) this.toast(this.t('copied'), 'save');
+    });
+    this.root.append(el);
+    setTimeout(() => ta.select(), 50);
+  }
+
+  private importDialog(file: HTMLInputElement) {
+    const el = h(`<div class="screen on center dim-bg save-io" style="z-index:40"><div class="dialog" style="min-width:min(520px,92vw)"><h2 style="font-size:28px">${this.t('importSave')}</h2><p class="io-help"></p><textarea class="io-code" spellcheck="false" placeholder="TESSELLA1:…"></textarea><div class="row" style="margin-top:14px"><button class="btn fl"></button><span class="spacer"></span><button class="btn x"></button><button class="btn primary go"></button></div></div></div>`);
+    $('.io-help', el).textContent = this.t('importHelp');
+    $('.fl', el).textContent = this.t('chooseFile');
+    $('.x', el).textContent = this.t('back');
+    $('.go', el).textContent = this.t('doImport');
+    $('.fl', el).addEventListener('click', () => file.click());
+    $('.x', el).addEventListener('click', () => el.remove());
+    $('.go', el).addEventListener('click', () => {
+      const d = saveFromCode(($('.io-code', el) as HTMLTextAreaElement).value);
+      if (d) el.remove();
+      this.acceptImported(d);
+    });
+    this.root.append(el);
+    setTimeout(() => ($('.io-code', el) as HTMLTextAreaElement).focus(), 50);
   }
 
   private confirm(text: string, yes: () => void) {

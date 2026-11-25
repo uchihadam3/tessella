@@ -149,6 +149,27 @@ export function exportSave(data: SaveData) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+/** A save as a copyable text code: works where file downloads are blocked (embedded pages). */
+export function saveToCode(data: SaveData): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(data));
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return 'TESSELLA1:' + btoa(bin);
+}
+
+/** Reads a save code (or raw save JSON) back; null when it is not a valid save. */
+export function saveFromCode(text: string): SaveData | null {
+  try {
+    const t = text.trim();
+    if (t.startsWith('{')) return validate(JSON.parse(t));
+    const bin = atob(t.replace(/^TESSELLA1:/, '').replace(/\s+/g, ''));
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    return validate(JSON.parse(new TextDecoder().decode(bytes)));
+  } catch {
+    return null;
+  }
+}
+
 export function importSave(file: File): Promise<SaveData | null> {
   return file
     .text()

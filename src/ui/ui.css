@@ -184,3 +184,6 @@
   .dialog { padding: 18px 26px; }
   .dialog h2 { font-size: 26px; margin-bottom: 10px; }
 }
+
+.save-io .io-help { color: var(--dim); line-height: 1.5; margin: 0 0 12px; max-width: 560px; }
+.save-io .io-code { width: 100%; box-sizing: border-box; height: 110px; resize: vertical; background: rgba(0,0,0,.35); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; padding: 10px; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }

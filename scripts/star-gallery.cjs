@@ -45,16 +45,14 @@ fs.mkdirSync(outDir, { recursive: true });
     await page.waitForTimeout(6000);
     await page.screenshot({ path: `${name}-1-de-lado.png` });
     await place(0, 0);
-    // stop the vision from advancing while we take the "unlit" picture
-    await page.evaluate((idx) => { window.__REVEAL_FREEZE = idx; }, idx);
+    // hold each stage of the vision still while it is photographed
+    await page.evaluate((idx) => { const st = window.__game.stars; st.holdPaused = true; st.items[idx].hold = 0; st.items[idx].dirty = true; }, idx);
     await page.waitForTimeout(3500);
-    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0; it.dirty = true; }, idx);
-    await page.waitForTimeout(1200);
-    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0; }, idx);
     await page.screenshot({ path: `${name}-2-apagada.png` });
-    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0.75; it.dirty = true; }, idx);
-    await page.waitForTimeout(1800);
+    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0.6; it.dirty = true; }, idx);
+    await page.waitForTimeout(2200);
     await page.screenshot({ path: `${name}-3-acendendo.png` });
+    await page.evaluate(() => { window.__game.stars.holdPaused = false; });
     await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0.999; }, idx);
     await page.waitForFunction((idx) => window.__game.stars.items[idx].revealed && window.__game.stars.items[idx].reveal >= 1, idx);
     // light a couple of objects so the picture shows what lit ones look like

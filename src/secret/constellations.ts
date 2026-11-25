@@ -312,6 +312,8 @@ export interface CItem {
   reveal: number;
   /** 0..1: how far the vision has come while looking from the spot */
   hold: number;
+  /** 0..1: how well the figure's points line up from where you stand (1 = on the spot, facing it) */
+  seen: number;
   /** where to stand (feet), the eye there, and the way to look */
   view: { spot: THREE.Vector3; eye: THREE.Vector3; dir: THREE.Vector3 };
   center: THREE.Vector3;
@@ -338,6 +340,8 @@ export class ConstellationSystem {
   onRevealed: (item: CItem) => void = () => {};
   /** the secret ending: everything blazes, seen from anywhere */
   blaze = false;
+  /** pictures/tests: keep each vision exactly where it is */
+  holdPaused = false;
   private bodyMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
   private glowMat = glowMaterial();
   private discGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.05, 14).rotateX(Math.PI / 2);
@@ -817,7 +821,7 @@ export class ConstellationSystem {
     else centroid.copy(eye);
     this.items.push({
       def, area, group: g, vis, props, discs, fruits, restColors, specks, threads, threadShadow, threadU, threadRanges: ranges, sprites, rings, orb, orbBase,
-      state: initialState(def), solved: false, revealed: false, reveal: 1, hold: 0,
+      state: initialState(def), solved: false, revealed: false, reveal: 1, hold: 0, seen: 0,
       view: { spot: new THREE.Vector3(eye.x, gy, eye.z), eye: eye.clone(), dir: fwd.clone() },
       center: centroid, radius: 3, starPos, rest, lit, blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false,
     });
@@ -910,6 +914,10 @@ export class ConstellationSystem {
       const place = THREE.MathUtils.clamp(1 - (dh - SPOT_TOL) / 0.9, 0, 1);
       const facing = THREE.MathUtils.clamp(1 - (ang - LOOK_TOL) / 8, 0, 1);
       const seen = Math.pow(place * facing, 1.6) * (dv < 0.6 ? 1 : 0);
+      if (Math.abs(seen - it.seen) > 1e-3) {
+        it.seen = seen;
+        it.dirty = true;
+      }
       let alpha: number, lit: number;
       if (this.blaze) {
         alpha = 0.9;
@@ -919,11 +927,15 @@ export class ConstellationSystem {
         lit = 1;
       } else {
         const before = it.hold;
-        if (aligned && steady) it.hold = Math.min(1, it.hold + dt / REVEAL_SECONDS);
+        if (this.holdPaused) {
+          /* keep it */
+        } else if (aligned && steady) it.hold = Math.min(1, it.hold + dt / REVEAL_SECONDS);
         else it.hold = Math.max(0, it.hold - dt * (aligned ? 0.15 : 0.5));
         if (it.hold !== before) it.dirty = true;
-        alpha = 0.78 * seen + 0.22 * it.hold;
-        lit = it.hold * it.hold;
+        // before it lights there are only the points; the lines draw themselves, already lit,
+        // one after another while you keep looking
+        alpha = it.hold > 0.002 ? Math.min(1, 0.35 + it.hold) : 0;
+        lit = 1;
         if (it.hold >= 1) {
           it.revealed = true;
           it.reveal = 0;
@@ -1078,7 +1090,7 @@ export class ConstellationSystem {
         it.dirty = true;
       }
       const show = (it.revealed || this.blaze) && it.threadU.uAlpha.value > 0.02;
-      const ghost = !show && it.threadU.uAlpha.value > 0.02;
+      const ghost = !show && !it.revealed && it.seen > 0.02;
       it.orb.visible = show && !it.solved;
       if (it.orb.visible) {
         const bob = Math.sin(t * 1.6 + it.orbBase.x) * 0.04 * Math.max(1, it.orbBase.distanceTo(it.view.eye) / 6);
@@ -1094,9 +1106,9 @@ export class ConstellationSystem {
         r.visible = show || ghost;
         const m = r.material as THREE.SpriteMaterial;
         if (ghost) {
-          // the unlit figure: plain grey rings around the objects
-          m.opacity = 0.6 * it.threadU.uAlpha.value;
-          m.color.setRGB(0.55, 0.55, 0.6).lerp(new THREE.Color(1, 0.97, 0.9), it.threadU.uLit.value);
+          // unlit: only the points, quiet grey rings on the objects, brightening as you hold
+          m.opacity = Math.min(1, 0.7 * it.seen + 0.3 * it.hold);
+          m.color.setRGB(0.6, 0.6, 0.66).lerp(new THREE.Color(1.3, 1.22, 1.05), it.hold);
           return;
         }
         m.opacity = Math.min(1, it.reveal * 1.4) * it.threadU.uAlpha.value * (it.state[i] ? 1 : 0.55);
@@ -1109,7 +1121,7 @@ export class ConstellationSystem {
         it.dirty = true;
       }
       if (!it.dirty && !it.solved) continue;
-      it.threadU.uReveal.value = it.revealed ? it.reveal : 1;
+      it.threadU.uReveal.value = it.revealed || this.blaze ? it.reveal : it.hold;
       const blinkOn = it.blink > 0 && Math.floor(it.blink * 4) % 2 === 0;
       for (let i = 0; i < it.state.length; i++) {
         if (blinkOn && it.bad.has(i)) this.setGlow(it, i, c.setRGB(1, 0.08, 0.05), 2.2);

@@ -16,7 +16,7 @@
  * into the line; anywhere else they are just flowers, leaves, sand, stones, reeds and cracks.
  */
 import * as THREE from 'three';
-import { BLOSSOM_COLORS, PALETTE } from '../world/vegetation';
+import { BLOSSOM_COLORS, LEAF_COLORS, PALETTE } from '../world/vegetation';
 import { LITTER_LINE } from '../world/biomes';
 import { CRACK_COLOR } from '../world/weathering';
 
@@ -501,8 +501,9 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
     }
     // a crown: a few clusters of its leaves in another of its own colours
     const pal = PALETTE[(pc.species ?? 'oak') as keyof typeof PALETTE]?.leaves;
-    // (only a little different from the leaves around them: a few turning or younger leaves)
-    const col = hitCol.clone().lerp(otherShade(pal && pal.length ? pal : PALETTE.oak.leaves, hitCol), 0.3).multiplyScalar(1.07);
+    // (some of its young or turning leaves: the shade a few of every such tree's leaves have)
+    const lc = LEAF_COLORS[pc.species ?? ''];
+    const col = lc ? C(lc.colors[lc.colors.length - 1]) : hitCol.clone().lerp(otherShade(pal && pal.length ? pal : PALETTE.oak.leaves, hitCol), 0.3).multiplyScalar(1.07);
     walk(pc, ctx, b, () => 0.3, 0.95, (dir0, dist, s0, across) => {
       const dir = spread(dir0, across, (rnd() - 0.5) * 0.9 * (s0 / dist));
       const c = eye.clone().addScaledVector(dir, Math.max(dist * 0.5, dist - 0.06));

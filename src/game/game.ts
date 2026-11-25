@@ -192,6 +192,10 @@ export class Game {
         this.world.blossoms.radius = s.quality === 'low' ? 36 : s.quality === 'medium' ? 50 : 64;
         this.world.blossoms.update(this.player?.pos.x ?? 0, this.player?.pos.z ?? 0, true);
       }
+      if (this.world.leaves) {
+        this.world.leaves.radius = s.quality === 'low' ? 26 : s.quality === 'medium' ? 36 : 46;
+        this.world.leaves.update(this.player?.pos.x ?? 0, this.player?.pos.z ?? 0, true);
+      }
     }
     saveSettings(s);
   }

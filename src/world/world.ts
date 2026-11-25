@@ -4,7 +4,7 @@ import type { Engine } from '../core/engine';
 import { Terrain } from './terrain';
 import { Sky } from './sky';
 import { WaterSystem } from './water';
-import { BlossomField, Forest, GrassField, windUniforms } from './vegetation';
+import { BlossomField, Forest, GrassField, LeafField, windUniforms } from './vegetation';
 import { Weathering } from './weathering';
 import { scatterVegetation, grassRules } from './biomes';
 import SAVED_PLACES from '../data/constellation-places.json';
@@ -26,6 +26,8 @@ export class World {
   readonly grass: GrassField;
   /** the blossom trees in flower (around the player) */
   blossoms: BlossomField | null = null;
+  /** the broad-leaved crowns' leaves up close (around the player) */
+  leaves: LeafField | null = null;
   /** cracks on the old stone walls (around the player) */
   weathering: Weathering | null = null;
   private weatherTimer = 0;
@@ -96,6 +98,9 @@ export class World {
     this.blossoms = new BlossomField(this.forest);
     this.blossoms.group.userData.castAs = 'skip';
     this.root.add(this.blossoms.group);
+    this.leaves = new LeafField(this.forest);
+    this.leaves.group.userData.castAs = 'skip';
+    this.root.add(this.leaves.group);
     this.weathering = new Weathering(this);
     this.root.add(this.weathering.group);
     for (const c of this.forest.colliders) this.collision.addBlocker({ x: c.x, z: c.z, r: c.r, y0: -100, y1: 400, sig: c.planted ? false : undefined });
@@ -116,6 +121,7 @@ export class World {
     this.engine.renderer.toneMappingExposure = s.exposure;
     this.grass.update(focus.x, focus.z);
     this.blossoms?.update(focus.x, focus.z);
+    this.leaves?.update(focus.x, focus.z);
     this.weatherTimer -= dt;
     if (this.weathering && this.weatherTimer <= 0) {
       this.weatherTimer = 0.5;

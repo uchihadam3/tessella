@@ -131,8 +131,12 @@ const GROW: Partial<Record<AreaId, { kind: string; s: [number, number]; w: numbe
   weave: [{ kind: 'poplar', s: [0.9, 1.45], w: 0.55 }, { kind: 'oak', s: [0.8, 1.45], w: 0.45 }],
   contour: [{ kind: 'oak', s: [0.8, 1.45], w: 0.6 }, { kind: 'blossom', s: [0.85, 1.35], w: 0.4 }],
   prologue: [{ kind: 'oak', s: [0.8, 1.4], w: 1 }],
-  beacon: [{ kind: 'pine', s: [0.85, 1.5], w: 1 }],
-  echo: [{ kind: 'pine', s: [0.85, 1.5], w: 1 }],
+  beacon: [{ kind: 'pine', s: [0.85, 1.5], w: 0.5 }, { kind: 'rock', s: [0.9, 2.3], w: 0.5 }],
+  echo: [{ kind: 'pine', s: [0.85, 1.5], w: 0.35 }, { kind: 'rockdark', s: [0.9, 2.3], w: 0.65 }],
+  // the stony places: boulders of their own stone (the quarry's white, the citadel's dark, the desert's sand)
+  mold: [{ kind: 'rockwhite', s: [0.9, 2.4], w: 1 }],
+  citadel: [{ kind: 'rockdark', s: [0.9, 2.3], w: 1 }],
+  mosaic: [{ kind: 'rocksand', s: [0.9, 2.2], w: 1 }],
 };
 /** whose grounds a point is on (the nearest place; the Spire's island is the caldera's) */
 function territory(x: number, z: number): string {
@@ -658,7 +662,7 @@ export class ConstellationSystem {
     };
     // most of the line must be there; a trunk or a bush in front may hide a little of it
     // (through crowns, a line may leap across the sky between two trees a little more)
-    const crowns = samples.filter((sm) => sm.hit.kind === 'tree').length > samples.length * 0.3;
+    const crowns = samples.filter((sm) => sm.hit.kind === 'tree' || sm.hit.kind === 'rock').length > samples.length * 0.3;
     const gaps = samples.filter((sm) => sm.hit.kind === 'gap').length;
     if (gaps > samples.length * (crowns ? 0.34 : 0.28)) {
       this.lastMiss = 'hidden';
@@ -1018,8 +1022,13 @@ export class ConstellationSystem {
    * their leaves a shade apart) — from anywhere else they are just trees of a grove.
    */
   private tryGrow(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number): boolean {
-    const kinds = GROW[area];
-    if (!kinds) return false;
+    const all = GROW[area];
+    if (!all) return false;
+    // crowns, or rocks (a place may have both: pines up its slopes, boulders below)
+    const rockKinds = all.filter((k) => k.kind.startsWith('rock')), crownKinds = all.filter((k) => !k.kind.startsWith('rock'));
+    const wR = rockKinds.reduce((acc, k) => acc + k.w, 0), wC = crownKinds.reduce((acc, k) => acc + k.w, 0);
+    const rockMode = rockKinds.length > 0 && (crownKinds.length === 0 || rnd() * (wR + wC) < wR);
+    const kinds = rockMode ? rockKinds : crownKinds;
     this.curArea = area;
     this.ownOnly = true;
     const spot = this.spotFor(area, vx, vz, 0);
@@ -1030,8 +1039,9 @@ export class ConstellationSystem {
     // the picture up among a grove's crowns, its lowest point a little above the horizon (from
     // there down to the ground nothing could carry it: too low for the crowns, too far for bushes)
     // (and far enough that no single crown fills it: each crown carries a part, at its own depth)
-    const span = 7.5 + rnd() * 2;
-    const pitch = THREE.MathUtils.degToRad(span + 4 + rnd() * 2.5);
+    // (boulders: the picture below the horizon, over the ground they lie on)
+    const span = rockMode ? 7 + rnd() * 2.5 : 7.5 + rnd() * 2;
+    const pitch = THREE.MathUtils.degToRad(rockMode ? -(span + 3.5 + rnd() * 3) : span + 4 + rnd() * 2.5);
     const f = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
     const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
     const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
@@ -1063,7 +1073,9 @@ export class ConstellationSystem {
       const h0 = this.castRay(eye, d, 1.5, 48);
       if (h0 && h0.kind !== 'gap' && h0.kind !== 'sky' && h0.dist >= 4.5) continue;
       // up among the crowns: a tree of the place's own; low down: a bush where you look at the ground
-      const g = d.y > 0.035 ? this.growCrown(eye, d, kinds, BANDS[band[i]], plan, rnd) : bushes ? this.growBush(eye, d, plan, rnd) : null;
+      const g = rockMode
+        ? this.growRock(eye, d, kinds, band[i], plan, rnd)
+        : d.y > 0.035 ? this.growCrown(eye, d, kinds, BANDS[band[i]], plan, rnd) : bushes ? this.growBush(eye, d, plan, rnd) : null;
       // (a point no tree could carry may still land in a neighbour's crown: checked once grown)
       if (!g) {
         if (++missed > Math.max(1, n * 0.2)) return this.no(d.y > 0.035 ? 'grow:star' : 'grow:low');
@@ -1083,8 +1095,8 @@ export class ConstellationSystem {
           open = 0;
           continue;
         }
-        if (++open < 2 || d.y <= 0.035) continue;
-        const g = this.growCrown(eye, d, kinds, BANDS[1], plan, rnd, 6);
+        if (++open < 2 || (!rockMode && d.y <= 0.035)) continue;
+        const g = rockMode ? this.growRock(eye, d, kinds, 1, plan, rnd, 5) : this.growCrown(eye, d, kinds, BANDS[1], plan, rnd, 6);
         if (g) {
           plan.push(g);
           open = 0;
@@ -1195,6 +1207,61 @@ export class ConstellationSystem {
         kind: kd.kind, x: bx, z: bz, s: sc, r,
         c: new THREE.Vector3(bx + (sh.c.x * cs + sh.c.z * sn) * sc, y0 + sh.c.y * sc, bz + (-sh.c.x * sn + sh.c.z * cs) * sc),
         e: sh.e.clone().multiplyScalar(sc),
+      };
+      if (!this.clearView(eye, d, g)) continue;
+      return g;
+    }
+    return null;
+  }
+
+  /**
+   * A boulder of the place's own stone carrying a direction that looks at the ground: nearer than
+   * where that line of sight meets the ground by its band (a big one well before, a small one just
+   * before), so that neighbouring points lie at different depths.
+   */
+  private growRock(eye: THREE.Vector3, d: THREE.Vector3, kinds: { kind: string; s: [number, number]; w: number }[], band: number, plan: Grown[], rnd: () => number, attempts = 12): Grown | null {
+    const forest = this.world.forest, terrain = this.world.terrain;
+    let tg = -1;
+    for (let t = 3; t < 40; t += 0.25) {
+      if (eye.y + d.y * t < terrain.heightAt(eye.x + d.x * t, eye.z + d.z * t) + 0.05) {
+        tg = t;
+        break;
+      }
+    }
+    if (tg < 8) {
+      this.no('g:rocknear');
+      return null;
+    }
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      let pickW = rnd() * kinds.reduce((acc, k) => acc + k.w, 0);
+      const kd = kinds.find((k) => (pickW -= k.w) <= 0) ?? kinds[0];
+      const D = band === 2 ? tg - 0.3 - rnd() * 0.9 : band === 1 ? tg - 1.2 - rnd() * 2.5 : tg - 3 - rnd() * 4.5;
+      if (D < 7) {
+        this.no('g:rocknear');
+        continue;
+      }
+      let bx = Math.round((eye.x + d.x * D) * 100) / 100, bz = Math.round((eye.z + d.z * D) * 100) / 100;
+      const key = forest.keyAt(kd.kind, bx, bz), r = forest.turnAt(bx, bz), sh = forest.shape(key);
+      const y0 = terrain.heightAt(bx, bz) - 0.15;
+      const ray = eye.y + d.y * D - y0; // the line of sight's height over the rock's foot
+      // a rock whose body (well inside it) reaches up to there
+      const need = ray / Math.max(0.2, sh.c.y + 0.5 * sh.e.y);
+      if (need > kd.s[1]) {
+        this.no('g:rocksize');
+        continue;
+      }
+      const sc = Math.round(THREE.MathUtils.clamp(Math.max(need, kd.s[0]) * (1 + rnd() * 0.3), kd.s[0], kd.s[1]) * 1000) / 1000;
+      // its middle on the line of sight (a rock stands a little off its own centre)
+      const cs = Math.cos(r), sn = Math.sin(r);
+      bx = Math.round((bx - (sh.c.x * cs + sh.c.z * sn) * sc) * 100) / 100;
+      bz = Math.round((bz - (-sh.c.x * sn + sh.c.z * cs) * sc) * 100) / 100;
+      if (forest.keyAt(kd.kind, bx, bz) !== key) continue;
+      if (!this.canGrow(bx, bz, sc * 0.55, eye, plan)) continue;
+      const [fx, fz] = forest.rockStretch(bx, bz);
+      const g: Grown = {
+        kind: kd.kind, x: bx, z: bz, s: sc, r,
+        c: new THREE.Vector3(bx + (sh.c.x * fx * cs + sh.c.z * fz * sn) * sc, y0 + sh.c.y * sc, bz + (-sh.c.x * fx * sn + sh.c.z * fz * cs) * sc),
+        e: new THREE.Vector3(sh.e.x * fx * sc, sh.e.y * sc, sh.e.z * fz * sc),
       };
       if (!this.clearView(eye, d, g)) continue;
       return g;

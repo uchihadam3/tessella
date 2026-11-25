@@ -348,29 +348,39 @@ Ao resolver o último: todos os totens disparam juntos, a aurora toma o céu, o 
 
 O jogo nunca ensina isto. Pela ilha existem **150 constelações**, e nenhuma está "na cara". Cada uma é
 um **desenho de verdade** (uma baleia, uma coruja, um moinho, um cisne, uma âncora…, cada um diferente) e
-é **o próprio cenário que o desenha**: cada traço da figura é um galho caído ou uma madeira trazida pelo
-mar no chão, um galho seco preso na copa de uma árvore (balançando junto com ela no vento), hera subindo
-uma parede, uma rachadura numa ruína, na calçada ou numa rocha, um cipó num tronco — e, no máximo, uma
-pequena nuvem que parece nuvem de verdade. Não existe ponto falso nem linha falsa: com a figura apagada,
-o que se vê é só paisagem. Galhos, heras e rachaduras iguais aparecem pela ilha inteira sem desenhar
-nada, então nada denuncia quais são especiais.
+é **o próprio cenário de cada lugar que o desenha, com o que esse lugar já tem de sobra**: no jardim das
+cerejeiras, algumas das flores das copas (do tom branco que um décimo delas já tem); no bosque de outono,
+algumas folhas de um vermelho mais fundo; nos prados, folhas novas, de um verde mais claro, nas copas dos
+carvalhos e álamos; na pedreira, na cidadela, na cratera e no deserto, rachaduras nas pedras e nas
+paredes, da própria pedra; na beira dos lagos, juncos. Toda árvore da ilha tem, de perto, cachos de folhas
+dos seus próprios tons — e uma em cada dez é desse tom "diferente" —, então as folhas de uma figura são só
+algumas dessas. Nada é colocado que o lugar não tenha: não existe ponto falso, linha preta nem objeto
+flutuando; com a figura apagada, o que se vê é só paisagem.
 
-**Cada traço é cortado no meio por saltos de profundidade**: começa num galho a 5 metros, continua numa
-copa a 20, termina numa parede a 40. Os pedaços só se juntam no desenho de **um único lugar, olhando numa
-única direção** — uma anamorfose. Dois passos para o lado e cada traço se desmancha em pedaços soltos
-(a busca descarta qualquer lugar em que a figura ainda se reconheça de lado, ou que esteja numa parede só,
-numa árvore só, ou só no chão). Quem para exatamente ali (meio passo de tolerância) e olha do jeito certo
-vê a figura, ainda apagada; é preciso **ficar parado olhando por uns seis segundos**, sem virar a cabeça,
-para ela acender: uma luz percorre os traços um depois do outro, o mundo em volta escurece um pouco, os
-nós (os pontos do puzzle) aparecem onde os traços se encontram e surge uma pequena esfera de luz, que
-serve para confirmar a resposta. A figura só faz sentido daquele ponto, e é de lá que ela é resolvida.
+**O cenário é feito pensando na figura** (como em The Witness): para cada uma, a ferramenta escolhe um
+lugar de onde olhar e **planta algumas árvores (ou pedras grandes) da espécie do próprio lugar**, em
+profundidades diferentes — uma a 18 metros, outra a 26, outra a 34 —, de modo que as copas carreguem os
+pontos e os traços. De qualquer outro lugar são só árvores de um bosque (ou pedras de um campo de pedras),
+como tantas outras na ilha.
+
+**Cada traço é cortado no meio por saltos de profundidade**: dois pontos ligados por um traço ficam em
+copas (ou pedras) a distâncias diferentes. Os pedaços só se juntam no desenho de **um único lugar, olhando
+numa única direção** — uma anamorfose. Dois passos para o lado e cada traço se desmancha em folhas soltas
+em copas diferentes (a busca descarta qualquer lugar em que a figura ainda se reconheça de lado, ou que
+esteja quase toda numa copa só, numa parede só ou só no chão). Quem para exatamente ali (meio passo de
+tolerância) e olha do jeito certo vê a figura, ainda apagada; é preciso **ficar parado olhando por uns seis
+segundos**, sem virar a cabeça, para ela acender: uma luz percorre os traços um depois do outro, o mundo em
+volta escurece um pouco, os nós (os pontos do puzzle) aparecem onde os traços se encontram e surge uma
+pequena esfera de luz, que serve para confirmar a resposta. A figura só faz sentido daquele ponto, e é de
+lá que ela é resolvida. Cada figura fica no território do seu próprio lugar.
 
 Os traços ficam exatamente sobre o que aparece na tela (a busca lança raios contra a geometria desenhada,
 triângulo por triângulo), nunca sobre água, painéis, portas ou qualquer coisa que se mexa. Os 150 lugares
 de observação ficam espalhados pela ilha inteira, longe uns dos outros, sempre num lugar onde dá para
 andar. Eles são calculados uma vez por uma ferramenta (`scripts/place-constellations.cjs`) e guardados
-junto com o jogo (`src/data/constellation-places.json`, com uma assinatura da ilha); se a ilha mudar, o
-jogo percebe e recalcula sozinho em segundo plano.
+junto com o jogo (`src/data/constellation-places.json`, com as árvores e pedras plantadas para cada figura
+e uma assinatura da ilha — que não conta essas árvores); se a ilha mudar, o jogo percebe e recalcula
+sozinho em segundo plano.
 
 São puzzles em **rede**, não em grade: os vizinhos são quem está ligado por um fio. As linguagens dos
 painéis (Afinidade, Medida, Contorno, Mosaico, Eco) ganham comportamentos novos nessa geometria (ciclos

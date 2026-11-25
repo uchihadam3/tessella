@@ -410,6 +410,11 @@ export class Forest {
     return o.matrix.clone();
   }
 
+  /** how much wider one way than the other a grown rock is (see matrixOf) */
+  rockStretch(x: number, z: number): [number, number] {
+    return [0.8 + hash2(Math.round(x * 10), 3) * 0.5, 0.8 + hash2(Math.round(z * 10), 7) * 0.5];
+  }
+
   /** a grown one drawn at once, before the forest is built again (while the pictures are placed) */
   meshOf(key: string, p: Placement): THREE.InstancedMesh {
     const mesh = new THREE.InstancedMesh(this.geometryFor(key), key.startsWith('rock') ? this.rockMat : this.treeMat, 1);
@@ -495,6 +500,18 @@ export class Forest {
     for (const [key, list] of this.placements) {
       const species = key.split('#')[0];
       if (!(species in BLOSSOM_COLORS)) continue;
+      const geometry = this.geometryFor(key);
+      for (const p of list) if ((p.x - x) ** 2 + (p.z - z) ** 2 < r * r) out.push({ key, species, geometry, p });
+    }
+    return out;
+  }
+
+  /** the broad-leaved trees (their leaves drawn up close: see LeafField) within r of (x,z) */
+  leafy(x: number, z: number, r: number): { key: string; species: string; geometry: THREE.BufferGeometry; p: Placement }[] {
+    const out: { key: string; species: string; geometry: THREE.BufferGeometry; p: Placement }[] = [];
+    for (const [key, list] of this.placements) {
+      const species = key.split('#')[0];
+      if (!(species in LEAF_COLORS)) continue;
       const geometry = this.geometryFor(key);
       for (const p of list) if ((p.x - x) ** 2 + (p.z - z) ** 2 < r * r) out.push({ key, species, geometry, p });
     }
@@ -1042,6 +1059,49 @@ export const BLOSSOM_COLORS: Record<string, { colors: string[]; weights: number[
   blossom: { colors: ['#f9c4d7', '#fdf3f6'], weights: [0.84, 0.16] },
 };
 
+/**
+ * The leaves of the broad-leaved crowns, up close: small clusters of the tree's own shades over
+ * its crown, a few of them (the last colour) young or turning — on every tree alike, so that the
+ * ones some pictures are drawn with are just some of those.
+ */
+export const LEAF_COLORS: Record<string, { colors: string[]; weights: number[] }> = {
+  oak: { colors: ['#5c9a3c', '#6fae45', '#4f8a36', '#7db84e', '#a6c95c'], weights: [0.24, 0.24, 0.2, 0.22, 0.1] },
+  autumn: { colors: ['#e2662f', '#f0a033', '#c9412a', '#f2c14e', '#d9572b', '#93281e'], weights: [0.2, 0.19, 0.17, 0.17, 0.17, 0.1] },
+  poplar: { colors: ['#9fbf4a', '#b7c95a', '#a9c452', '#dcd27c'], weights: [0.32, 0.3, 0.28, 0.1] },
+  bush: { colors: ['#5f9440', '#6ea44a', '#4f8338', '#9ec45e'], weights: [0.32, 0.3, 0.28, 0.1] },
+};
+
+/** a small cluster of three leaves facing +Y (unit size), lighter in the middle of each */
+export function makeLeafCluster(): THREE.BufferGeometry {
+  const pos: number[] = [], col: number[] = [];
+  const K = 5;
+  const leafAt = (ang: number, tilt: number, len: number) => {
+    const ax = Math.cos(ang), az = Math.sin(ang);
+    const cx = ax * len * 0.55, cz = az * len * 0.55, cy = tilt * len;
+    const ring: number[][] = [];
+    for (let k = 0; k < K; k++) {
+      const a = (k / K) * Math.PI * 2;
+      const tip = Math.max(0, Math.cos(a)) ** 3 * 0.25;
+      const u = Math.cos(a) * (1 + tip) * len * 0.5, v = Math.sin(a) * len * 0.21;
+      ring.push([cx + ax * u - az * v, cy + Math.cos(a) * tilt * len * 0.3, cz + az * u + ax * v]);
+    }
+    for (let k = 0; k < K; k++) {
+      pos.push(cx, cy, cz, ...ring[k], ...ring[(k + 1) % K]);
+      col.push(1.06, 1.06, 1.06, 0.86, 0.86, 0.86, 0.86, 0.86, 0.86);
+    }
+  };
+  leafAt(0.3, 0.15, 1);
+  leafAt(2.4, 0.1, 0.85);
+  leafAt(4.4, 0.2, 0.9);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  const n = new Float32Array(pos.length);
+  for (let i = 1; i < n.length; i += 3) n[i] = 1;
+  g.setAttribute('normal', new THREE.BufferAttribute(n, 3));
+  return g;
+}
+
 /** a blossom facing +Y (unit size): five rounded petals and a small yellow centre */
 export function makeBlossom(): THREE.BufferGeometry {
   const pos: number[] = [], col: number[] = [];
@@ -1179,6 +1239,80 @@ export class BlossomField {
         const pick = hash2(k * 13 + 5, Math.round(t.p.x * 7));
         while (pick > acc && ci < pal.colors.length - 1) acc += pal.weights[++ci];
         this.mesh.setColorAt(n, col.set(pal.colors[ci]).multiplyScalar(0.95 + h * 0.08));
+        this.wind.setXYZ(n, ph, sp.sway * sp.sway * t.p.s, t.p.r);
+        n++;
+      }
+    }
+    this.mesh.count = n;
+    this.mesh.instanceMatrix.needsUpdate = true;
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
+    this.wind.needsUpdate = true;
+  }
+}
+
+/** The leaves of the broad-leaved crowns around the player (see LEAF_COLORS). */
+export class LeafField {
+  readonly group = new THREE.Group();
+  private mesh: THREE.InstancedMesh;
+  private wind: THREE.InstancedBufferAttribute;
+  private cx = Infinity;
+  private cz = Infinity;
+  radius = 46;
+  private maxN = 9000;
+  private spots = new Map<string, { p: THREE.Vector3; n: THREE.Vector3; sway: number }[]>();
+
+  constructor(private forest: Forest) {
+    this.mesh = new THREE.InstancedMesh(makeLeafCluster(), blossomMaterial(), this.maxN);
+    this.mesh.frustumCulled = false;
+    this.mesh.count = 0;
+    this.mesh.receiveShadow = true;
+    this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.mesh.setColorAt(0, new THREE.Color());
+    this.wind = new THREE.InstancedBufferAttribute(new Float32Array(this.maxN * 3), 3);
+    this.wind.setUsage(THREE.DynamicDrawUsage);
+    this.mesh.geometry.setAttribute('aWind', this.wind);
+    this.group.add(this.mesh);
+  }
+
+  private spotsFor(key: string, geo: THREE.BufferGeometry) {
+    let s = this.spots.get(key);
+    if (!s) {
+      const area = crownSpots(geo, 1, 1).area;
+      s = crownSpots(geo, Math.min(110, Math.max(24, Math.round(area / 0.5))), key.length * 97 + key.charCodeAt(0) * 3).spots;
+      this.spots.set(key, s);
+    }
+    return s;
+  }
+
+  update(px: number, pz: number, force = false) {
+    const cx = Math.round(px / 8) * 8, cz = Math.round(pz / 8) * 8;
+    if (!force && cx === this.cx && cz === this.cz) return;
+    this.cx = cx;
+    this.cz = cz;
+    let n = 0;
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const col = new THREE.Color();
+    const wp = new THREE.Vector3(), wn = new THREE.Vector3(), tw = new THREE.Quaternion();
+    for (const t of this.forest.leafy(px, pz, this.radius)) {
+      const pal = LEAF_COLORS[t.species];
+      const spots = this.spotsFor(t.key, t.geometry);
+      const cs = Math.cos(t.p.r), sn = Math.sin(t.p.r);
+      const ph = t.p.x * 0.071 + t.p.z * 0.053;
+      for (let k = 0; k < spots.length && n < this.maxN; k++) {
+        const sp = spots[k];
+        wp.set(t.p.x + (sp.p.x * cs + sp.p.z * sn) * t.p.s, t.p.y + sp.p.y * t.p.s, t.p.z + (-sp.p.x * sn + sp.p.z * cs) * t.p.s);
+        wn.set(sp.n.x * cs + sp.n.z * sn, sp.n.y, -sp.n.x * sn + sp.n.z * cs).normalize();
+        const h = hash2(Math.round(t.p.x * 10) + k * 7, Math.round(t.p.z * 10) - k * 3);
+        wp.addScaledVector(wn, 0.02);
+        q.setFromUnitVectors(up, wn);
+        q.multiply(tw.setFromAxisAngle(up, h * 6.28));
+        const size = (0.2 + h * 0.08) * Math.min(1.25, t.p.s) * (t.species === 'bush' ? 0.62 : 1);
+        m.compose(wp, q, sc.set(size, size, size));
+        this.mesh.setMatrixAt(n, m);
+        let ci = 0, acc = pal.weights[0];
+        const pick = hash2(k * 13 + 5, Math.round(t.p.x * 7) + Math.round(t.p.z * 3));
+        while (pick > acc && ci < pal.colors.length - 1) acc += pal.weights[++ci];
+        this.mesh.setColorAt(n, col.set(pal.colors[ci]).multiplyScalar(0.94 + h * 0.1));
         this.wind.setXYZ(n, ph, sp.sway * sp.sway * t.p.s, t.p.r);
         n++;
       }

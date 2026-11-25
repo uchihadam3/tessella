@@ -669,6 +669,17 @@ export class UI {
     const extra = g.secretSummary?.();
     if (extra && extra.found > 0) {
       box.append(h(`<div class="arow"><div class="n">✦</div><div class="t"><b>${this.t('constellations')}</b><span></span></div><div><div class="bar"><i style="width:${(extra.solved / extra.total) * 100}%;background:#cfe3ff"></i></div></div><div class="c">${extra.solved}/${extra.total}</div></div>`));
+      // a small star atlas: every figure seen so far, named once it is solved
+      const atlas = h(`<div class="atlas"></div>`);
+      for (const it of g.stars.items) {
+        if (!it.revealed && !it.solved) continue;
+        const name = (it.def as { name?: { pt: string; en: string } }).name?.[lang];
+        const tile = h(`<div class="atile ${it.solved ? 'solved' : ''}"><canvas width="128" height="128"></canvas><span></span></div>`);
+        $('span', tile).textContent = it.solved ? name ?? '✦' : '?';
+        drawFigure($('canvas', tile) as HTMLCanvasElement, it.def, it.solved);
+        atlas.append(tile);
+      }
+      box.append(atlas);
     }
     if (this.stack[this.stack.length - 1] !== 'journal') this.show('journal');
   }
@@ -1004,6 +1015,37 @@ export class UI {
     } else if (g.state === 'menu') {
       if (e.code === 'Escape' && this.stack.length > 1) this.back();
     }
+  }
+}
+
+/** A constellation's figure as a little drawing (for the Journal's atlas). */
+function drawFigure(c: HTMLCanvasElement, def: { stars: { x: number; z: number }[]; threads: { a: number; b: number }[] }, solved: boolean) {
+  const ctx = c.getContext('2d');
+  if (!ctx) return;
+  const W = c.width, pad = 14;
+  const xs = def.stars.map((s) => s.x), zs = def.stars.map((s) => s.z);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+  const k = (W - pad * 2) / Math.max(x1 - x0, z1 - z0, 0.01);
+  const ox = (W - (x1 - x0) * k) / 2, oz = (W - (z1 - z0) * k) / 2;
+  const P = (i: number): [number, number] => [ox + (def.stars[i].x - x0) * k, oz + (def.stars[i].z - z0) * k];
+  ctx.clearRect(0, 0, W, W);
+  ctx.lineWidth = 2.2;
+  ctx.strokeStyle = solved ? 'rgba(255,226,170,0.9)' : 'rgba(170,196,255,0.45)';
+  ctx.shadowColor = solved ? 'rgba(255,210,140,0.8)' : 'transparent';
+  ctx.shadowBlur = solved ? 6 : 0;
+  for (const t of def.threads) {
+    const [ax, ay] = P(t.a), [bx, by] = P(t.b);
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+  }
+  ctx.fillStyle = solved ? '#fff4dc' : 'rgba(230,236,255,0.7)';
+  for (let i = 0; i < def.stars.length; i++) {
+    const [x, y] = P(i);
+    ctx.beginPath();
+    ctx.arc(x, y, solved ? 3.6 : 2.8, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 

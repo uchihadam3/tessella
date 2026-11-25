@@ -210,7 +210,10 @@ export class StrokeBuilder {
     side.normalize();
     const w = 0.012;
     const sn = side.clone().cross(UP).normalize();
+    const cut = this.c;
+    this.c = 1; // (the stem stays dark when the picture lights up: only the heads glow)
     this.tri(base.clone().addScaledVector(side, -w), base.clone().addScaledVector(side, w), head, STEM, sn);
+    this.c = cut;
     const u = new THREE.Vector3().crossVectors(face, side).normalize();
     const rot = rnd() * Math.PI;
     const p = (ang: number, rad: number) => head.clone().addScaledVector(side, Math.cos(ang) * rad).addScaledVector(u, Math.sin(ang) * rad);
@@ -253,7 +256,7 @@ export class StrokeBuilder {
   }
 
   /** reeds standing in shallow water (some with a cattail) */
-  reeds(base: THREE.Vector3, top: number, rnd: () => number) {
+  reeds(base: THREE.Vector3, top: number, rnd: () => number, cattails = 0.5) {
     for (let k = 0; k < 4; k++) {
       const a = rnd() * Math.PI * 2;
       const w = 0.018;
@@ -262,8 +265,11 @@ export class StrokeBuilder {
       const b0 = base.clone().add(o).add(new THREE.Vector3(-dz * w, 0, dx * w)), b1 = base.clone().add(o).add(new THREE.Vector3(dz * w, 0, -dx * w));
       const h = (top - base.y) * (0.8 + rnd() * 0.25);
       const tip = base.clone().add(o).add(new THREE.Vector3(dx * 0.05, h, dz * 0.05));
+      const cut = this.c;
+      this.c = 1; // (only the cattails glow when the picture lights up)
       this.tri(b0, b1, tip, REED[Math.floor(rnd() * REED.length)], new THREE.Vector3(dx, 0.3, dz).normalize());
-      if (k === 0 && rnd() < 0.5) this.blob(tip.clone().addScaledVector(UP, -0.1), 0.025, 0.09, 0.025, CATTAIL, rnd);
+      this.c = cut;
+      if (k < 2 && rnd() < cattails) this.blob(tip.clone().addScaledVector(UP, -0.1), 0.025, 0.09, 0.025, CATTAIL, rnd);
     }
   }
 }
@@ -433,8 +439,9 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
     }
     if (g === 'sand') {
       // sand: low ridges of the sand itself
-      const col = ctx.groundColor(mid.x, mid.z).clone().multiplyScalar(0.94);
-      const hR = pc.dists.map((d) => THREE.MathUtils.clamp(d * 0.0035, 0.05, 0.16));
+      // (like the wind ripples all over the dunes)
+      const col = ctx.groundColor(mid.x, mid.z).clone().multiplyScalar(1.03);
+      const hR = pc.dists.map((d) => THREE.MathUtils.clamp(d * 0.003, 0.05, 0.09));
       const pts = pc.dirs.map((dir, i) => {
         const p = eye.clone().addScaledVector(dir, overGround(ctx, dir, pc.dists[i], hR[i]));
         p.y = ctx.heightAt(p.x, p.z);
@@ -463,7 +470,7 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
       const h = 0.8 + rnd() * 0.35;
       const top = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, h, true));
       const base = new THREE.Vector3(top.x, Math.max(ctx.heightAt(top.x, top.z), ctx.waterAt(top.x, top.z)) - 0.05, top.z);
-      b.reeds(base, top.y, rnd);
+      b.reeds(base, top.y, rnd, 0.9);
     });
     return;
   }
@@ -494,7 +501,8 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
     }
     // a crown: a few clusters of its leaves in another of its own colours
     const pal = PALETTE[(pc.species ?? 'oak') as keyof typeof PALETTE]?.leaves;
-    const col = otherShade(pal && pal.length ? pal : PALETTE.oak.leaves, hitCol);
+    // (only a little different from the leaves around them: a few turning or younger leaves)
+    const col = hitCol.clone().lerp(otherShade(pal && pal.length ? pal : PALETTE.oak.leaves, hitCol), 0.3).multiplyScalar(1.07);
     walk(pc, ctx, b, () => 0.3, 0.95, (dir0, dist, s0, across) => {
       const dir = spread(dir0, across, (rnd() - 0.5) * 0.9 * (s0 / dist));
       const c = eye.clone().addScaledVector(dir, Math.max(dist * 0.5, dist - 0.06));

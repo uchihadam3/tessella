@@ -687,9 +687,58 @@ export interface GrassRules {
   flowerChance?: (x: number, z: number) => number;
   /** grass tint for a point */
   tint: (x: number, z: number, base: THREE.Color) => THREE.Color;
+  /** wind ripples on the sand: how many here (0..1) */
+  ripples?: (x: number, z: number) => number;
+  /** reeds: how many stand here (0..1), given the depth of the water (negative: dry) */
+  reeds?: (x: number, z: number, depth: number) => number;
   /** fallen leaves: how many lie here (0..1) and their colour */
   litter?: (x: number, z: number) => number;
   litterColor?: (x: number, z: number, r: number) => string;
+}
+
+/** a wind ripple in the sand (unit length along X): a low ridge, a little curved */
+function makeRipple(): THREE.BufferGeometry {
+  const pos: number[] = [];
+  const N = 8;
+  const pt = (i: number, side: number) => {
+    const t = i / N - 0.5;
+    const bend = (t * t - 0.08) * 0.35;
+    const h = 0.06 * Math.sin((i / N) * Math.PI) ** 0.6;
+    return side === 0 ? [t, h, bend] : [t, 0, bend + side * 0.14];
+  };
+  for (let i = 0; i < N; i++) {
+    for (const side of [-1, 1]) {
+      const a0 = pt(i, side), a1 = pt(i + 1, side), t0 = pt(i, 0), t1 = pt(i + 1, 0);
+      if (side < 0) pos.push(...a0, ...t0, ...t1, ...a0, ...t1, ...a1);
+      else pos.push(...a0, ...t1, ...t0, ...a0, ...a1, ...t1);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/** a clump of reeds (unit height): thin blades standing in the shallows */
+function makeReeds(): THREE.BufferGeometry {
+  const pos: number[] = [], col: number[] = [];
+  const rand = rng(77);
+  const greens = [new THREE.Color('#6f8a3a'), new THREE.Color('#7f9844'), new THREE.Color('#5f7a33'), new THREE.Color('#8a9a4a')];
+  for (let k = 0; k < 7; k++) {
+    const a = rand() * Math.PI * 2, r = rand() * 0.12;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    const h = 0.75 + rand() * 0.25, w = 0.014 + rand() * 0.008;
+    const lean = (rand() - 0.5) * 0.12, dir = rand() * Math.PI * 2;
+    const sx = Math.cos(dir) * w, sz = Math.sin(dir) * w;
+    pos.push(x - sx, 0, z - sz, x + sx, 0, z + sz, x + lean, h, z + lean * 0.5);
+    const c = greens[k % greens.length];
+    for (let i = 0; i < 3; i++) col.push(c.r, c.g, c.b);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  return g;
 }
 
 /** a fallen leaf lying flat (unit size): a rounded leaf, a little curled */
@@ -715,6 +764,12 @@ export class GrassField {
   private flowers: THREE.InstancedMesh;
   private litter: THREE.InstancedMesh;
   private maxLitter = 18000;
+  private reedMesh: THREE.InstancedMesh;
+  private maxReeds = 5000;
+  private rippleMesh: THREE.InstancedMesh;
+  private maxRipples = 9000;
+  /** water level at a point (lakes), set by the world */
+  waterAt: (x: number, z: number) => number = () => 0;
   private cx = Infinity;
   private cz = Infinity;
   private cell = 4;
@@ -736,6 +791,19 @@ export class GrassField {
     this.litter.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.litter.setColorAt(0, new THREE.Color());
     this.group.add(this.litter);
+    this.reedMesh = new THREE.InstancedMesh(makeReeds(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, side: THREE.DoubleSide }), this.maxReeds);
+    this.reedMesh.frustumCulled = false;
+    this.reedMesh.receiveShadow = true;
+    this.reedMesh.count = 0;
+    this.reedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.group.add(this.reedMesh);
+    this.rippleMesh = new THREE.InstancedMesh(makeRipple(), new THREE.MeshStandardMaterial({ roughness: 1 }), this.maxRipples);
+    this.rippleMesh.frustumCulled = false;
+    this.rippleMesh.receiveShadow = true;
+    this.rippleMesh.count = 0;
+    this.rippleMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.rippleMesh.setColorAt(0, new THREE.Color());
+    this.group.add(this.rippleMesh);
     for (const m of [this.grass, this.flowers]) {
       m.frustumCulled = false;
       m.receiveShadow = true;
@@ -754,7 +822,7 @@ export class GrassField {
 
   update(px: number, pz: number, force = false) {
     if (!this.enabled) {
-      this.grass.count = this.flowers.count = this.litter.count = 0;
+      this.grass.count = this.flowers.count = this.litter.count = this.reedMesh.count = this.rippleMesh.count = 0;
       return;
     }
     const cx = Math.round(px / 8) * 8;
@@ -772,6 +840,8 @@ export class GrassField {
     let gi = 0;
     let fi = 0;
     let li = 0;
+    let ri = 0;
+    let pi = 0;
     const R = this.radius;
     const c = this.cell;
     const x0 = Math.floor((px - R) / c), x1 = Math.ceil((px + R) / c);
@@ -782,6 +852,43 @@ export class GrassField {
         const ccx = gx * c + c / 2, ccz = gz * c + c / 2;
         const dd = Math.hypot(ccx - px, ccz - pz);
         if (dd > R) continue;
+        // wind ripples on the dunes (within 50 m): roughly parallel, as the wind lays them
+        if (this.rules.ripples && dd < 50) {
+          for (let k = 0; k < 14 && pi < this.maxRipples; k++) {
+            const r1 = hash2(gx * 61 + k * 7, gz * 23 + k * 11), r2 = hash2(gx * 29 + k * 19 + 5, gz * 47 + k * 3);
+            const x = gx * c + r1 * c, z = gz * c + r2 * c;
+            if (hash2(gx * 7 + k * 41, gz * 5 + k * 3) > this.rules.ripples(x, z)) continue;
+            if (this.terrain.surfaceAt(x, z) !== 'sand' || this.terrain.pathAt(x, z) > 0.4) continue;
+            const h = this.terrain.heightAt(x, z);
+            if (h < this.waterAt(x, z) + 0.2 || this.covered(x, z, h)) continue;
+            dummy.position.set(x, h - 0.012, z);
+            dummy.rotation.set(0, 0.6 + (r1 - 0.5) * 0.5, 0);
+            const len = 1.2 + r2 * 1.6;
+            dummy.scale.set(len, 0.8 + r1 * 0.6, 1 + r2 * 0.5);
+            dummy.updateMatrix();
+            this.rippleMesh.setMatrixAt(pi, dummy.matrix);
+            this.colorAt(x, z, col);
+            this.rippleMesh.setColorAt(pi, col.multiplyScalar(1.03));
+            pi++;
+          }
+        }
+        // reeds in the lakes' shallows (within 52 m)
+        if (this.rules.reeds && dd < 52) {
+          for (let k = 0; k < 10 && ri < this.maxReeds; k++) {
+            const r1 = hash2(gx * 53 + k * 3, gz * 7 + k * 29), r2 = hash2(gx * 17 + k * 13 + 3, gz * 43 + k * 5);
+            const x = gx * c + r1 * c, z = gz * c + r2 * c;
+            const lvl = this.waterAt(x, z);
+            if (lvl < 1) continue;
+            const h = this.terrain.heightAt(x, z);
+            if (hash2(gx * 3 + k * 37, gz * 13 + k) > this.rules.reeds(x, z, lvl - h)) continue;
+            dummy.position.set(x, h - 0.05, z);
+            dummy.rotation.set((r1 - 0.5) * 0.15, r2 * 6.283, (r2 - 0.5) * 0.15);
+            const s = 0.9 + r1 * 0.6 + Math.max(0, lvl - h) * 0.8;
+            dummy.scale.set(1, s, 1);
+            dummy.updateMatrix();
+            this.reedMesh.setMatrixAt(ri++, dummy.matrix);
+          }
+        }
         // fallen leaves on the autumn wood's floor (within 40 m)
         if (this.rules.litter && dd < 40) {
           for (let k = 0; k < 22 && li < this.maxLitter; k++) {
@@ -835,6 +942,11 @@ export class GrassField {
     this.grass.count = gi;
     this.flowers.count = fi;
     this.litter.count = li;
+    this.reedMesh.count = ri;
+    this.rippleMesh.count = pi;
+    this.rippleMesh.instanceMatrix.needsUpdate = true;
+    if (this.rippleMesh.instanceColor) this.rippleMesh.instanceColor.needsUpdate = true;
+    this.reedMesh.instanceMatrix.needsUpdate = true;
     this.litter.instanceMatrix.needsUpdate = true;
     if (this.litter.instanceColor) this.litter.instanceColor.needsUpdate = true;
     this.grass.instanceMatrix.needsUpdate = true;

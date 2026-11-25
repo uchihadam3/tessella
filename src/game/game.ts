@@ -187,6 +187,11 @@ export class Game {
       this.world.grass.densityScale = s.quality === 'low' ? 0.45 : s.quality === 'medium' ? 0.75 : 1;
       this.world.grass.radius = s.quality === 'low' ? 38 : s.quality === 'medium' ? 48 : 58;
       this.world.grass.update(this.player?.pos.x ?? 0, this.player?.pos.z ?? 0, true);
+      // (the blossoms on the garden's crowns: nearer ones only on lighter settings)
+      if (this.world.blossoms) {
+        this.world.blossoms.radius = s.quality === 'low' ? 36 : s.quality === 'medium' ? 50 : 64;
+        this.world.blossoms.update(this.player?.pos.x ?? 0, this.player?.pos.z ?? 0, true);
+      }
     }
     saveSettings(s);
   }

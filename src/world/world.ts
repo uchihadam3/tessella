@@ -46,6 +46,7 @@ export class World {
     this.collision.waterAt = (x, z) => this.waterAt(x, z);
     this.forest = new Forest(this.terrain);
     this.grass = new GrassField(this.terrain, grassRules, (x, z, out) => this.terrain.colorAt(x, z, out));
+    this.grass.waterAt = (x, z) => this.waterAt(x, z);
     // fixed water bodies
     const tw = ANCHORS.twins;
     this.addLake(tw.x, tw.z, 74, 7.5, { shallow: '#86d9cf', deep: '#2f6f95', calm: 1, waveScale: 0.9 });

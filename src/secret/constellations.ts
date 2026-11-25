@@ -89,13 +89,36 @@ interface Run {
   sid?: number;
 }
 
-/** what each place draws with (see castRay) */
-type PlaceMaterial = 'garden' | 'meadow' | 'wood' | 'stone';
-const AREA_MATERIAL: Record<string, PlaceMaterial> = {
-  twins: 'garden', weave: 'meadow', contour: 'meadow', hub: 'meadow', measure: 'meadow', prologue: 'meadow',
-  kinship: 'wood', mold: 'stone', citadel: 'stone', echo: 'stone', mosaic: 'stone', beacon: 'stone', spire: 'stone',
+/**
+ * What each place draws its pictures with — only what it already has plenty of (see castRay):
+ * the crowns of its own trees (some of their leaves or blossoms, of a shade only a little
+ * different), its meadow's flowers, its wood's fallen leaves, its sand's ridges, the cracks of its
+ * stone, its lake's reeds. And where its pictures are seen: up in the crowns, down on the sand.
+ */
+interface Draws {
+  crowns: ReadonlySet<string>;
+  ground: 'flowers' | 'leaves' | 'sand' | null;
+  stone: boolean;
+  reeds: boolean;
+  pitches: number[];
+}
+const UP = [-14, -5, 4, 13, 22], LEVEL = [-18, -10, -2, 6, 14], DOWN = [-32, -24, -16, -8, 0];
+const DRAWS: Record<string, Draws> = {
+  twins: { crowns: new Set(['blossom']), ground: 'flowers', stone: false, reeds: true, pitches: UP },
+  kinship: { crowns: new Set(['autumn', 'bush']), ground: 'leaves', stone: false, reeds: true, pitches: UP },
+  hub: { crowns: new Set(['oak', 'bush', 'poplar']), ground: 'flowers', stone: false, reeds: false, pitches: UP },
+  measure: { crowns: new Set(['oak', 'bush', 'pine']), ground: 'flowers', stone: false, reeds: false, pitches: UP },
+  weave: { crowns: new Set(['poplar', 'oak', 'bush', 'pine']), ground: 'flowers', stone: false, reeds: false, pitches: UP },
+  contour: { crowns: new Set(['oak', 'bush', 'blossom']), ground: 'flowers', stone: false, reeds: false, pitches: UP },
+  prologue: { crowns: new Set(['oak', 'bush']), ground: 'flowers', stone: false, reeds: false, pitches: UP },
+  mosaic: { crowns: new Set(), ground: 'sand', stone: true, reeds: false, pitches: DOWN },
+  mold: { crowns: new Set(), ground: null, stone: true, reeds: false, pitches: LEVEL },
+  citadel: { crowns: new Set(), ground: null, stone: true, reeds: false, pitches: LEVEL },
+  echo: { crowns: new Set(['pine']), ground: null, stone: true, reeds: true, pitches: LEVEL },
+  beacon: { crowns: new Set(['pine']), ground: null, stone: true, reeds: false, pitches: LEVEL },
+  spire: { crowns: new Set(), ground: null, stone: true, reeds: false, pitches: LEVEL },
 };
-function placeMaterial(x: number, z: number): PlaceMaterial {
+function placeDraws(x: number, z: number): Draws {
   let best = 'hub', bd = Infinity;
   for (const [id, a] of Object.entries(ANCHORS)) {
     const d = (a.x - x) ** 2 + (a.z - z) ** 2;
@@ -104,7 +127,7 @@ function placeMaterial(x: number, z: number): PlaceMaterial {
       best = id;
     }
   }
-  return AREA_MATERIAL[best] ?? 'meadow';
+  return DRAWS[best] ?? DRAWS.hub;
 }
 
 /** the surfaces a picture is painted on: their geometry, and the band's points along its lines */
@@ -471,7 +494,8 @@ export class ConstellationSystem {
    */
   private castRay(eye: THREE.Vector3, dir: THREE.Vector3, tMin: number, tMax: number): Hit | null {
     const h = this.ensureCaster().cast(eye, dir, 0.05, tMax);
-    if (!h) return { kind: 'sky', p: eye.clone().addScaledVector(dir, SKY_DIST), dist: SKY_DIST, n: dir.clone().negate() };
+    // (open sky between two crowns or two walls: the line just carries on behind them)
+    if (!h) return this.gapAt(eye, dir, SKY_DIST, dir.clone().negate());
     if (h.t < tMin) {
       this.lastWhy = 'close';
       return null;
@@ -486,10 +510,11 @@ export class ConstellationSystem {
     //   the lake garden: its blossom trees' blossoms and its meadow's flowers
     //   meadows: their flowers; the autumn wood: its fallen leaves (and flowers)
     //   ruins and rocks: cracks in the stone
-    const mat = placeMaterial(p.x, p.z);
+    const dr = placeDraws(p.x, p.z);
     const seen = Math.abs(h.n.dot(dir));
     if (h.cls === 'tree') {
-      if (!(mat === 'garden' && h.species === 'blossom' && h.sway > 0.3)) return this.gapAt(eye, dir, h.t, h.n);
+      // a crown of the place's own trees, near enough to see its leaves (not its trunk)
+      if (!(h.species && dr.crowns.has(h.species) && h.sway > 0.3) || h.t > 40) return this.gapAt(eye, dir, h.t, h.n);
       kind = 'tree';
     } else if (h.cls === 'terrain') {
       if (this.world.terrain.heightAt(p.x, p.z) < this.world.waterAt(p.x, p.z) + 0.05) {
@@ -497,15 +522,26 @@ export class ConstellationSystem {
         return null;
       }
       const surf = this.world.terrain.surfaceAt(p.x, p.z);
-      const flowers = (surf === 'grass' || surf === 'leaves') && (grassRules.flowerChance?.(p.x, p.z) ?? 0) >= 0.08;
-      const leaves = mat === 'wood' && surf === 'leaves' && (grassRules.litter?.(p.x, p.z) ?? 0) > 0.5;
-      // near enough to see, not a path, and the ground seen from above enough (not flattened)
-      if (!(flowers || leaves) || this.world.terrain.pathAt(p.x, p.z) > 0.35 || h.t > 38 || seen < 0.23) return this.gapAt(eye, dir, h.t, h.n);
-      kind = 'ground';
+      if (dr.stone && surf === 'stone' && h.n.y < 0.6 && seen >= 0.3 && h.t <= 40) {
+        // a rock face of a stony place: its cracks
+        kind = 'rock';
+      } else {
+        const flowers = dr.ground === 'flowers' && surf === 'grass' && (grassRules.flowerChance?.(p.x, p.z) ?? 0) >= 0.08;
+        const leaves = dr.ground === 'leaves' && surf === 'leaves' && (grassRules.litter?.(p.x, p.z) ?? 0) > 0.5;
+        const sand = dr.ground === 'sand' && surf === 'sand' && (grassRules.ripples?.(p.x, p.z) ?? 0) > 0.5;
+        // near enough to see, not a path, and the ground seen from above enough (not flattened)
+        if (!(flowers || leaves || sand) || this.world.terrain.pathAt(p.x, p.z) > 0.35 || h.t > 38 || seen < 0.23) return this.gapAt(eye, dir, h.t, h.n);
+        kind = 'ground';
+      }
     } else if (h.cls === 'rock' || h.cls === 'static') {
       kind = h.cls === 'rock' ? 'rock' : h.n.y > 0.6 ? 'floor' : 'wall';
-      if (mat !== 'stone' || kind === 'floor' || seen < 0.3) return this.gapAt(eye, dir, h.t, h.n);
-    } else return this.gapAt(eye, dir, h.t, h.n); // water: nothing yet
+      if (!dr.stone || kind === 'floor' || seen < 0.3) return this.gapAt(eye, dir, h.t, h.n);
+    } else if (h.cls === 'water') {
+      // a lake's shallows: its reeds
+      const depth = this.world.waterAt(p.x, p.z) - this.world.terrain.heightAt(p.x, p.z);
+      if (!dr.reeds || this.world.waterAt(p.x, p.z) < 1 || depth > 0.75 || h.t > 36) return this.gapAt(eye, dir, h.t, h.n);
+      kind = 'water';
+    } else return this.gapAt(eye, dir, h.t, h.n);
     const inst = kind === 'tree' || kind === 'rock';
     return { kind, p, dist: h.t, n: h.n, id: h.id, wind: h.wind, col: h.color, tx: inst ? h.ox : undefined, tz: inst ? h.oz : undefined, sid: h.sid };
   }
@@ -573,8 +609,10 @@ export class ConstellationSystem {
       return w.sub(seg.multiplyScalar(f)).length() < 0.04 * m.hit.dist + 0.1;
     };
     // most of the line must be there; a trunk or a bush in front may hide a little of it
+    // (through crowns, a line may leap across the sky between two trees a little more)
+    const crowns = samples.filter((sm) => sm.hit.kind === 'tree').length > samples.length * 0.3;
     const gaps = samples.filter((sm) => sm.hit.kind === 'gap').length;
-    if (gaps > samples.length * 0.28) {
+    if (gaps > samples.length * (crowns ? 0.34 : 0.28)) {
       this.lastMiss = 'hidden';
       return null;
     }
@@ -583,7 +621,7 @@ export class ConstellationSystem {
       runGap = sm.hit.kind === 'gap' ? runGap + 1 : 0;
       longest = Math.max(longest, runGap);
     }
-    if (longest > Math.max(2, samples.length * 0.16)) {
+    if (longest > Math.max(2, samples.length * (crowns ? 0.22 : 0.16))) {
       this.lastMiss = 'hidden';
       return null;
     }
@@ -884,7 +922,7 @@ export class ConstellationSystem {
     const maxR = Math.max(0.3, ...pts2.map((q) => Math.hypot(q[0] - mx, q[1] - mz)));
     const k = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG)) / maxR;
     const yaw0 = rnd() * Math.PI * 2;
-    const pitches = pass >= 3 ? [-38, -30, -22, -14, -6] : [-32, -24, -16, -8, 0];
+    const pitches = placeDraws(vx, vz).pitches;
     let fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3();
     let dirs: THREE.Vector3[] = [];
     let hits: Hit[] = [];
@@ -954,6 +992,24 @@ export class ConstellationSystem {
     if (skyRuns.length > 1 || (skyRuns.length === 1 && skyRuns[0].samples.length > 5)) return this.no('sky');
     const kinds = (Object.keys(count) as HitKind[]).filter((kk) => kk !== 'sky' && count[kk] / total > 0.06).length;
     // (a meadow draws on the ground, a ruin on its walls: one material per picture is natural)
+    // where there are crowns, mostly up in them: a picture spread flat on the ground reads as one
+    // drawn there (it stays a drawing from everywhere), one across crowns at many depths does not
+    const home = placeDraws(vx, vz);
+    if (pass < 4 && home.crowns.size && count.ground / total > 0.45) return this.no('flat');
+    // up in the crowns: across several trees at different depths, never one crown carrying it all
+    // (a picture on one crown would still be a picture on that crown from everywhere)
+    if (count.tree / total > 0.3) {
+      const trees = new Set<string>();
+      let near = Infinity, far = 0;
+      for (const runs of lines) for (const r of runs) if (r.kind === 'tree') {
+        trees.add(`${Math.round((r.tx ?? 0) * 10)},${Math.round((r.tz ?? 0) * 10)}`);
+        for (const sm of r.samples) {
+          near = Math.min(near, sm.hit.dist);
+          far = Math.max(far, sm.hit.dist);
+        }
+      }
+      if (trees.size < (def.stars.length >= 7 ? 3 : 2) || far < near * 1.45) return this.no('one crown');
+    }
     void onGround;
     void kinds;
     // anamorphic: the line pieces lie at very different depths, so they join only from here —
@@ -976,7 +1032,8 @@ export class ConstellationSystem {
     }
     // (a picture of cracks on walls must cross walls at different depths: never all on one wall)
     const onWalls = (count.wall + count.rock) / Math.max(1, total);
-    const needSplit = onWalls > 0.4 ? 0.45 : [0.3, 0.2, 0.12, 0, 0, 0][pass];
+    const inCrowns = count.tree / Math.max(1, total);
+    const needSplit = onWalls > 0.4 || inCrowns > 0.3 ? 0.45 : [0.3, 0.2, 0.12, 0, 0, 0][pass];
     if (split < Math.floor(def.threads.length * needSplit)) return this.no('breaks');
     const shift = this.shapeShift(eye, fwd, right, up, lines);
     if (shift < SHIFT_MIN) return this.no('shift');

@@ -42,7 +42,7 @@ async function sheet(browser, name, info) {
   });
   const picks = await page.evaluate((areas) => {
     const items = window.__game.stars.items;
-    // names (e.g. "Owl,Whale") pick those figures; area ids pick a big one from each area;
+    // ids (e.g. "hub.c10") or names (e.g. "Owl,Whale") pick those figures; area ids pick a big one from each area;
     // "auto" picks a varied set: drawn mostly on walls, on trees, with a cloud, on rocks, on paving
     if (areas[0] === 'all') return items.map((_, i) => i);
     if (areas[0] === 'auto') {
@@ -55,6 +55,7 @@ async function sheet(browser, name, info) {
       }
       return out;
     }
+    if (areas.some((a) => a.includes('.'))) return areas.map((id) => items.findIndex((it) => it.def.id === id)).filter((i) => i >= 0);
     if (areas.some((a) => /[A-Z]/.test(a))) return areas.map((n) => items.findIndex((it) => it.def.name?.en === n)).filter((i) => i >= 0);
     return areas.map((a) => {
       const cands = items.map((it, i) => ({ it, i })).filter(({ it }) => it.area === a && it.def.stars.length >= 5);

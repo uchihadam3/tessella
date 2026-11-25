@@ -562,7 +562,7 @@ export class ConstellationSystem {
     // passes look a little beyond its grounds, still with its own things)
     const at = territory(p.x, p.z);
     if (this.ownOnly && this.curArea && at !== territoryOf(this.curArea)) return this.gapAt(eye, dir, h.t, h.n);
-    const dr = DRAWS[this.curArea ?? at] ?? DRAWS.hub;
+    const dr = DRAWS[this.anyMaterial || !this.curArea ? at : this.curArea] ?? DRAWS.hub;
     const seen = Math.abs(h.n.dot(dir));
     if (h.cls === 'tree') {
       // a crown of the place's own trees, near enough to see its leaves (not its trunk)
@@ -907,6 +907,12 @@ export class ConstellationSystem {
     // (tools: ?starsOnly=id,id… places just those, for a quick look)
     const only = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('starsOnly') : null;
     const pick = only ? new Set(only.split(',')) : null;
+    // (placing just some again: the others keep their spots, and the new ones keep away from them)
+    if (pick) {
+      for (const [id, pl] of Object.entries((SAVED_PLACES as unknown as PlaceRecord).places ?? {})) {
+        if (!pick.has(id)) this.spots.push({ x: pl.e[0], z: pl.e[2] });
+      }
+    }
     for (const [area, defs0] of byArea) {
       const rnd = rng(area.length * 977 + 13);
       // the biggest pictures first: they need the roomiest spots
@@ -936,10 +942,10 @@ export class ConstellationSystem {
           }
         }
         // strict first (a picture across several kinds of scenery), then relaxed, then wider
-        for (let pass = 0; pass < 6 && !done; pass++) {
+        for (let pass = 0; pass < 7 && !done; pass++) {
           // (only places with standing room count as attempts: most random points are slopes or water)
           const quick = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsQuick');
-          const tries = (quick ? [150, 150, 250, 800, 800, 1200] : [900, 900, 1500, 6000, 8000, 14000])[pass];
+          const tries = (quick ? [150, 150, 250, 800, 800, 1200, 1500] : [900, 900, 1500, 6000, 8000, 14000, 16000])[pass];
           let real = 0;
           for (let attempt = 0; real < tries && attempt < tries * 30 && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
@@ -957,9 +963,14 @@ export class ConstellationSystem {
               r = 70 + rnd() * (pass === 3 ? 90 : 45);
             }
             if (pass >= 4) {
-              // last: farther around its place (with its own kind of things)
+              // then: farther around its place (with its own kind of things)
               base = center;
               r = Math.sqrt(rnd()) * (rMax * (pass === 5 ? 2.8 : 2.2));
+            }
+            if (pass === 6) {
+              // the very last resort: anywhere on the island, with whatever the place there has
+              base = { x: 0, z: 20 };
+              r = Math.sqrt(rnd()) * 480;
             }
             const vx = base.x + Math.cos(ang) * r, vz = base.z + Math.sin(ang) * r;
             if (Math.hypot(vx, vz - 20) > 520) continue; // stay on the island
@@ -985,7 +996,7 @@ export class ConstellationSystem {
     if (gy === null) return this.no('ground') || null;
     if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return this.no('spire') || null; // the Spire's island and landings
     if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return this.no('crater') || null;
-    const spacing = SPOT_SPACING * (pass === 5 ? 0.55 : pass >= 3 ? 0.65 : pass === 2 ? 0.8 : 1);
+    const spacing = SPOT_SPACING * (pass >= 5 ? 0.55 : pass >= 3 ? 0.65 : pass === 2 ? 0.8 : 1);
     if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return this.no('spacing') || null;
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
     if (this.world.forest.crownNear(eye, 2.2)) return this.no('crown') || null;
@@ -1033,6 +1044,7 @@ export class ConstellationSystem {
     const kinds = rockMode ? rockKinds : crownKinds;
     this.curArea = area;
     this.ownOnly = true;
+    this.anyMaterial = false;
     const spot = this.spotFor(area, vx, vz, 0);
     if (!spot) return false;
     const { gy, eye } = spot;
@@ -1330,6 +1342,7 @@ export class ConstellationSystem {
   /** the picture being placed: its place, and whether it must keep to its grounds */
   private curArea: AreaId | null = null;
   private ownOnly = false;
+  private anyMaterial = false;
 
   /** the crowns grown so far (a later tree must not hide an earlier picture, nor grow into them) */
   private grownCrowns: { c: THREE.Vector3; e: THREE.Vector3; r: number }[] = [];
@@ -1384,6 +1397,7 @@ export class ConstellationSystem {
   private tryPlace(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number, pass: number): boolean {
     this.curArea = area;
     this.ownOnly = pass < 4;
+    this.anyMaterial = pass >= 6;
     const spot = this.spotFor(area, vx, vz, pass);
     if (!spot) return false;
     const { gy, eye } = spot;
@@ -1473,7 +1487,7 @@ export class ConstellationSystem {
     // drawn there (it stays a drawing from everywhere), one across crowns at many depths does not
     // never mostly on the ground: a picture spread on the ground is either lost in it or, near
     // you, a bright patch of flowers — the crowns, walls and rocks carry pictures far better
-    if (count.ground / total > (pass < 5 ? 0.35 : 0.55)) return this.no('flat');
+    if (count.ground / total > (pass < 5 ? 0.35 : pass === 5 ? 0.55 : 0.65)) return this.no('flat');
     // up in the crowns: across several trees at different depths, never one crown carrying it all
     // (a picture on one crown would still be a picture on that crown from everywhere)
     if (count.tree / total > 0.3) {
@@ -1482,7 +1496,7 @@ export class ConstellationSystem {
         const k = `${Math.round((r.tx ?? 0) * 10)},${Math.round((r.tz ?? 0) * 10)}`;
         trees.set(k, (trees.get(k) ?? 0) + r.samples.length);
       }
-      if (trees.size < 2 || Math.max(...trees.values()) / total > 0.7) {
+      if (trees.size < 2 || Math.max(...trees.values()) / total > (pass >= 6 ? 0.85 : 0.7)) {
         if ((globalThis as { __growDebug?: boolean }).__growDebug && grown) console.log('one crown', JSON.stringify({ grown: grown.length, trees: [...trees.entries()], total, count }));
         return this.no('one crown');
       }
@@ -1510,7 +1524,7 @@ export class ConstellationSystem {
     // (a picture of cracks on walls must cross walls at different depths: never all on one wall)
     const onWalls = (count.wall + count.rock) / Math.max(1, total);
     const inCrowns = count.tree / Math.max(1, total);
-    const needSplit = onWalls > 0.4 || inCrowns > 0.3 ? 0.45 : [0.3, 0.2, 0.12, 0, 0, 0][pass];
+    const needSplit = onWalls > 0.4 || inCrowns > 0.3 ? (pass >= 6 ? 0.3 : 0.45) : [0.3, 0.2, 0.12, 0, 0, 0, 0][pass];
     if (split < Math.floor(def.threads.length * needSplit)) return this.no('breaks');
     const shift = this.shapeShift(eye, fwd, right, up, lines);
     // (a picture lying on the ground keeps its shape from aside unless the ground rolls under it:

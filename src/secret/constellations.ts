@@ -355,6 +355,8 @@ export interface CItem {
   u: { uLit: { value: number }; uReveal: { value: number } };
   /** the knots of the puzzle (one per point of the picture), shown once it lights up */
   knots: THREE.InstancedMesh;
+  /** a thin thread of light along each line, only once the picture is lit (so it reads clearly then) */
+  rays: THREE.Mesh;
   sprites: THREE.Sprite[];
   orb: THREE.Mesh;
   orbBase: THREE.Vector3;
@@ -1903,6 +1905,23 @@ export class ConstellationSystem {
     knots.frustumCulled = false;
     knots.visible = false;
     g.add(knots);
+    // threads of light between the points (straight from the spot, wherever their depths), lit only
+    const rp: number[] = [];
+    for (const th of def.threads) {
+      const a = starPos[th.a], b = starPos[th.b];
+      const mid = a.clone().add(b).multiplyScalar(0.5);
+      const side = new THREE.Vector3().crossVectors(b.clone().sub(a), mid.clone().sub(eye)).normalize();
+      const wa = side.clone().multiplyScalar(a.distanceTo(eye) * 0.0016), wb = side.clone().multiplyScalar(b.distanceTo(eye) * 0.0016);
+      const q = [a.clone().sub(wa), a.clone().add(wa), b.clone().add(wb), b.clone().sub(wb)];
+      for (const k of [0, 1, 2, 0, 2, 3]) rp.push(q[k].x, q[k].y, q[k].z);
+    }
+    const rg = new THREE.BufferGeometry();
+    rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3));
+    const rays = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.3, 1.15, 0.9), transparent: true, opacity: 0, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide }));
+    rays.renderOrder = 20;
+    rays.frustumCulled = false;
+    rays.visible = false;
+    g.add(rays);
     // glyphs: sized by distance so they all look the same from the spot
     const sprites: THREE.Sprite[] = [];
     def.stars.forEach((st, i) => {
@@ -1932,7 +1951,7 @@ export class ConstellationSystem {
     this.group.add(g);
     const centroid = starPos.reduce((acc, q) => acc.add(q), new THREE.Vector3()).multiplyScalar(1 / n);
     this.items.push({
-      def, area, group: g, strokes: null, cloud: null, place: null, paints: [], paintGlow: Array.from({ length: MAX_PAINT_LINES }, () => new THREE.Color(0, 0, 0)), lineRanges: [], u, knots, sprites, orb, orbBase, lines,
+      def, area, group: g, strokes: null, cloud: null, place: null, paints: [], paintGlow: Array.from({ length: MAX_PAINT_LINES }, () => new THREE.Color(0, 0, 0)), lineRanges: [], u, knots, rays, sprites, orb, orbBase, lines,
       state: initialState(def), solved: false, revealed: false, reveal: 0, hold: 0,
       view: { spot: new THREE.Vector3(eye.x, gy, eye.z), eye: eye.clone(), dir: fwd.clone() },
       center: centroid, radius: 3, starPos, lit: new THREE.Color('#ffd9a0'), blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false, alpha: 0, drawnOn: {},
@@ -2171,6 +2190,8 @@ export class ConstellationSystem {
       // the puzzle's knots, glyphs and orb exist only while the picture is lit
       const show = (it.revealed || this.blaze) && lit > 0.02;
       it.knots.visible = show;
+      it.rays.visible = show;
+      (it.rays.material as THREE.MeshBasicMaterial).opacity = 0.42 * lit;
       it.orb.visible = show && !it.solved;
       if (it.orb.visible) {
         const bob = Math.sin(t * 1.6 + it.orbBase.x) * 0.04 * Math.max(1, it.orbBase.distanceTo(it.view.eye) / 6);

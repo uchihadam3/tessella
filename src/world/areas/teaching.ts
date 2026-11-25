@@ -574,6 +574,47 @@ export function buildWeave(world: World, pm: PanelManager): AreaCtx {
   const rotb = -ax.ang;
   solidBox(b, M.plaster(), bh.x, by - 0.5, bh.z, 12, 5.2, 8, rotb, { walk: false });
   b.batch.add(gableRoof(12, 8, 3.4, 0.6), M.roofTerracotta(), mtx(bh.x, by + 4.7, bh.z, rotb));
+  {
+    // windows with teal shutters, a big barn door facing the path, timber corners: a lived-in barn
+    const loc = (lx: number, lz: number) => ({ x: bh.x + lx * Math.cos(rotb) + lz * Math.sin(rotb), z: bh.z - lx * Math.sin(rotb) + lz * Math.cos(rotb) });
+    const glass = mat('barnGlass', { color: '#1d2530', roughness: 0.25, metalness: 0.3, detail: 0.02, scale: 2 });
+    const shutter = mat('barnShutter', { color: '#3f7f7a', roughness: 0.75, detail: 0.15, scale: 1, pattern: 'grain' });
+    const frame = M.woodDark();
+    const winSide = (lx: number, side: number) => {
+      const p = loc(lx, side * 4.02), q = loc(lx, side * 4.05);
+      b.batch.add(G.box(1.15, 1.35, 0.06), frame, mtx(p.x, by + 2.3, p.z, rotb));
+      b.batch.add(G.box(0.9, 1.1, 0.05), glass, mtx(q.x, by + 2.3, q.z, rotb));
+      for (const sx of [-0.88, 0.88]) {
+        const r = loc(lx + sx, side * 4.05);
+        b.batch.add(G.box(0.5, 1.3, 0.05), shutter, mtx(r.x, by + 2.3, r.z, rotb));
+      }
+    };
+    for (const side of [-1, 1]) for (const lx of [-3.6, 0, 3.6]) winSide(lx, side);
+    const endItem = (lx: number, lz: number, w: number, h: number, y: number, m: THREE.Material, t = 0.06) => {
+      const p = loc(lx, lz);
+      b.batch.add(G.box(t, h, w), m, mtx(p.x, y, p.z, rotb));
+    };
+    // barn door on the end that faces the path (toward the hub), with a lintel and cross braces
+    endItem(-6.03, 0, 3.0, 3.4, by + 1.2, frame, 0.08);
+    endItem(-6.07, 0, 2.7, 3.1, by + 1.05, M.wood(), 0.06);
+    endItem(-6.1, 0, 3.3, 0.28, by + 2.75, frame, 0.08);
+    for (const k of [-1, 1]) {
+      const p = loc(-6.1, k * 0.67);
+      b.batch.add(G.box(0.05, 0.16, 1.75), frame, mtx(p.x, by + 1.05, p.z, rotb).multiply(new THREE.Matrix4().makeRotationX(k * 0.95)));
+    }
+    // round-ish window up in each gable
+    for (const lx of [-6.03, 6.03]) {
+      endItem(lx, 0, 1.1, 1.1, by + 5.6, frame, 0.07);
+      endItem(lx + Math.sign(lx) * 0.03, 0, 0.85, 0.85, by + 5.6, glass, 0.05);
+    }
+    endItem(6.03, 0, 1.15, 1.35, by + 2.3, frame);
+    endItem(6.06, 0, 0.9, 1.1, by + 2.3, glass, 0.05);
+    // timber corner posts
+    for (const lx of [-6, 6]) for (const lz of [-4, 4]) {
+      const p = loc(lx, lz);
+      b.batch.add(G.box(0.32, 5.2, 0.32), frame, mtx(p.x, by + 2.1, p.z, rotb));
+    }
+  }
   a.exclude(bh.x, bh.z, 9);
   // fabrics drying on lines (colourful)
   const colors = ['#b993ff', '#e7c35a', '#e05a5a', '#5aa9e0', '#7fd18b'];

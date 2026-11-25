@@ -97,18 +97,29 @@ export interface Waypoint {
   z: number;
 }
 
-/** Guide stones: fast-travel points (attuned on first visit). */
+/**
+ * Arrival point for an area: on the approach from the Courtyard, `back` metres before the area's
+ * centre, i.e. a few steps in front of its first (teaching) panels with the gateway behind them.
+ */
+function approach(id: AreaId, back: number): { x: number; z: number } {
+  const A = ANCHORS[id];
+  const dx = A.x - HUB.x, dz = A.z - HUB.z;
+  const l = Math.hypot(dx, dz);
+  return { x: +(A.x - (dx / l) * back).toFixed(1), z: +(A.z - (dz / l) * back).toFixed(1) };
+}
+
+/** Guide stones: fast-travel points (attuned on first visit). Arrival faces the area. */
 export const WAYSTONES: Waypoint[] = [
   { id: 'hub', area: 'hub', x: 8, z: 52 },
   { id: 'prologue', area: 'prologue', x: 6, z: 248 },
-  { id: 'kinship', area: 'kinship', x: -184, z: -98 },
-  { id: 'measure', area: 'measure', x: 184, z: -98 },
-  { id: 'mold', area: 'mold', x: 76, z: -238 },
-  { id: 'weave', area: 'weave', x: -76, z: -238 },
-  { id: 'contour', area: 'contour', x: -132, z: 160 },
-  { id: 'mosaic', area: 'mosaic', x: 132, z: 160 },
-  { id: 'twins', area: 'twins', x: -206, z: 40 },
-  { id: 'beacon', area: 'beacon', x: 256, z: 50 },
+  { id: 'kinship', area: 'kinship', ...approach('kinship', 62) },
+  { id: 'measure', area: 'measure', ...approach('measure', 64) },
+  { id: 'mold', area: 'mold', ...approach('mold', 56) },
+  { id: 'weave', area: 'weave', ...approach('weave', 56) },
+  { id: 'contour', area: 'contour', ...approach('contour', 60) },
+  { id: 'mosaic', area: 'mosaic', ...approach('mosaic', 56) },
+  { id: 'twins', area: 'twins', ...approach('twins', 76) },
+  { id: 'beacon', area: 'beacon', ...approach('beacon', 46) },
   { id: 'citadel', area: 'citadel', x: 6, z: -340 },
 ];
 

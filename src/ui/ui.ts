@@ -201,7 +201,9 @@ export class UI {
       const w = WAYSTONES.find((x) => x.id === ws.dataset.id);
       if (!w) return;
       this.fadeTo(1, 400).then(() => {
-        this.game.teleport(w.x, w.z);
+        // arrive looking into the area
+        const A = ANCHORS[w.area];
+        this.game.teleport(w.x, w.z, Math.atan2(-(A.x - w.x), -(A.z - w.z)));
         this.resume();
         this.fadeTo(0, 700);
       });

@@ -914,7 +914,7 @@ function propRegions(m: Model, c: Ctx, simple: boolean): boolean {
   }
 
   // kinship connectivity
-  if (m.gems.length && !simple) {
+  if (m.gems.length) {
     for (let k = 0; k < m.gems.length; k++) {
       const tiles = m.gems[k];
       let s = U;
@@ -1096,7 +1096,40 @@ export function insightPath(p: PuzzleDef, maxLookahead = 30): InsightPath {
         }
         if (tag) break;
       }
+      if (!tag) {
+        // deeper "what if": follow the consequences with every deduction the player knows
+        for (const u of cand) {
+          for (const v of [0, 1]) {
+            const trial = Int8Array.from(val);
+            trial[u] = v;
+            if (!propagate(m, trial, false)) {
+              val[u] = 1 - v;
+              tag = 'lookahead';
+              break;
+            }
+          }
+          if (tag) break;
+        }
+      }
       if (tag) looks++;
+    }
+    if (!tag && m.twins.length) {
+      // open twin puzzles: the colour of a copy is often free — pick one that still has a solution
+      // (a free choice, not an insight) and keep reasoning about where the copies fit
+      const u = m.twins.flatMap((t) => t.tiles).find((t) => val[t] === U);
+      if (u !== undefined) {
+        for (const v of [1, 0]) {
+          const q: PuzzleDef = { ...p, cells: p.cells.map((cell, i) => (i === u ? { ...cell, lock: v as 0 | 1 } : val[i] !== U && !cell.hole && cell.lock === undefined ? { ...cell, lock: val[i] as 0 | 1 } : cell)) };
+          if (solve(q, { maxSolutions: 1, maxNodes: 20000, timeLimitMs: 2000 }).solutions.length) {
+            val[u] = v;
+            break;
+          }
+        }
+        if (val[u] !== U) {
+          if (!propagate(m, val, true)) return { solved: false, basicRoot, steps, determined: (known(val) - start) / free };
+          continue;
+        }
+      }
     }
     if (!tag) break;
     const mid = known(val);
@@ -1238,4 +1271,12 @@ export function gradeDifficulty(p: PuzzleDef): { simpleSolved: boolean; fullSolv
   if (!simple.propagationOnly) score += 1.5;
   if (!full.propagationOnly) score += 1.5 + Math.log2(1 + full.nodes) * 0.6;
   return { simpleSolved: simple.propagationOnly, fullSolved: full.propagationOnly, nodes: full.nodes, free, score: Math.max(1, Math.min(10, Math.round(score))) };
+}
+
+/** Debug helper: the board after the beginner's (basic) deductions; -1 = unknown. */
+export function basicFixpoint(p: PuzzleDef): Int8Array {
+  const m = compile(p);
+  const val = Int8Array.from(m.base);
+  propagate(m, val, true);
+  return val;
 }

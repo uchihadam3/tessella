@@ -1,81 +1,37 @@
 {
- "score": 74.67297297297297,
+ "score": 101.33116883116884,
  "trace": [
-  [
-   "weave",
-   2
-  ],
-  [
-   "beacon",
-   10
-  ],
-  [
-   "regions",
-   5
-  ],
-  [
-   "mosaic",
-   1
-  ],
-  [
-   "weave",
-   2
-  ],
-  [
-   "beacon",
-   4
-  ],
-  [
-   "regions",
-   1
-  ],
-  [
-   "beacon",
-   4
-  ],
-  [
-   "weave",
-   5
-  ],
-  [
-   "beacon",
-   1
-  ],
   [
    "contour",
    1
   ],
   [
-   "regions",
-   1
-  ],
-  [
    "beacon",
-   5
+   35
   ],
   [
-   "regions",
-   1
-  ],
-  [
-   "beacon",
-   2
-  ],
-  [
-   "regions",
-   2
-  ],
-  [
-   "beacon",
-   5
-  ],
-  [
-   "regions",
+   "contour",
    2
   ],
   [
    "weave",
    1
+  ],
+  [
+   "beacon",
+   2
+  ],
+  [
+   "regions",
+   6
+  ],
+  [
+   "beacon",
+   2
+  ],
+  [
+   "regions",
+   9
   ],
   [
    "beacon",
@@ -90,29 +46,36 @@
    3
   ],
   [
+   "mosaic",
+   1
+  ],
+  [
+   "beacon",
+   6
+  ],
+  [
+   "weave",
+   1
+  ],
+  [
+   "beacon",
+   1
+  ],
+  [
    "regions",
    1
   ],
   [
    "beacon",
-   4
-  ],
-  [
-   "regions",
-   1
-  ],
-  [
-   "beacon",
-   7
+   3
   ]
  ],
  "compact": {
-  "grid": "b3 fA x2 . . . m3 . b3\n. . . . . . . . .\n. . . . . . . . @a\n. . . . @b . . . .\n. . @a . b5 . . . .\n. @a . b10 . b10 . . .\n. . . . . . . . .\n. . b5 @b @c . b5 @b .\ntm . . c2 @c @c . tm .",
+  "grid": "m3 . . . x2 . . . tm\ntm b7 . . . @c . b7 .\nfA* @b . . . . . . .\n. . . . . . . . .\nb7 . . . . . @c @c b7\n@b . . . . . . . .\n. . . . . . . . .\n. . . @a . . . . .\n@a . . . . . . c0 .",
   "shapes": {
-   "A": "xxx"
+   "A": "x/x/x"
   },
-  "rows": "-|-|-|-|-|-|-|-|1 1",
-  "cols": "-|-|1 1 2|6|-|-|-|-|-"
- },
- "note": "O Cofre Escondido — as oito linguagens da ilha (Farol, Forma, Mosaico, Medida, Afinidade, Gêmeos, Contorno e Trama) num só painel 9×9, solução única, resolvível sem nenhum chute. A resposta desenha um monumento simétrico: dois faróis nos cantos de cima e uma tocha no centro. Percepções, em ordem: (1) os fios da Trama e a conta dos sete faróis acendem as primeiras luzes — mas quase nada se decide só com isso; (2) a barra de três da Forma, lá no canto, só encaixa de um jeito, e esse encaixe destrava de uma vez quase trinta ladrilhos; (3) as famílias de gemas só conseguem se unir por gargalos — quatro cortes, um puxando o outro; (4) por fim, as luas gêmeas: a cópia só cabe de um lado, e a última sombra fecha a simetria."
+  "rows": "-|-|-|-|-|-|-|1 1|-",
+  "cols": "-|-|-|-|-|-|-|-|-"
+ }
 }

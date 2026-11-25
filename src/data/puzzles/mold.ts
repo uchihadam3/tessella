@@ -65,12 +65,12 @@ const P: AreaPuzzles = {
       grid: `
         fI .  .  .
         .  .  .  .
-        .  .  fT .
-        .  fO .  .
+        fT .  .  .
+        .  .  fO .
       `,
       shapes: { I: 'xxxx', T: 'xxx/.x.', O: 'x' },
       difficulty: 4,
-      note: 'Portão: a barra, o T e uma pedra sozinha dividem a pedreira — o resto é sombra.',
+      note: 'Portão: a barra só deita no topo; o T, preso na beira, só cabe de um jeito — e a pedra sozinha fica cercada por ele.',
     }),
   ],
   // </hand>
@@ -78,147 +78,145 @@ const P: AreaPuzzles = {
   practice: [
     puzzle('mold.practice.1', {
       grid: `
-        .  fA fB .  fC
-        .  .  #  .  .
-        .  .  fB .  .
-        .  #  #  .  .
-        fB #  .  fD #
+        .  fA .  .
+        .  #  .  .
+        fA .  .  fB
+        fA .  fA fA
       `,
-      shapes: {A: 'xx/x./x.',B: 'x',C: 'xx',D: 'xx/x.'},
+      shapes: {A: 'x',B: 'x./xx/.x'},
       difficulty: 3,
-      note: "seq A1/4 — só existe um encaixe. Um molde esculpido na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde.",
+      note: "seq A1/4 — só existe um encaixe. Três moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde.",
     }),
     puzzle('mold.practice.2', {
       grid: `
-        fA .  . fA .
-        .  .  . .  .
-        .  .  . .  .
-        .  fB . .  .
-        .  .  . .  fC
+        .  .  fA fB .
+        .  .  fB .  .
+        fB .  .  .  fB
+        .  .  .  fC .
+        .  fD .  .  .
       `,
-      shapes: {A: 'x/x',B: 'xx/x./x.',C: '.x/xx'},
+      shapes: {A: 'xx/x.',B: 'x',C: '.x/xx',D: 'xx'},
       difficulty: 4,
-      note: "seq A2/4 — só existe um encaixe. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
+      note: "seq A2/4 — só existe um encaixe. Quatro moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde; (um \"e se?\" no caminho).",
     }),
     puzzle('mold.practice.3', {
       grid: `
-        .  . .  .  .
-        fA . .  .  .
-        fB . .  #  fC
-        fB . .  .  .
-        .  . fD fE .
+        .  .  fA .  fA
+        fA .  .  .  .
+        .  .  .  fB .
+        .  .  .  .  fC
+        .  fD .  .  .
       `,
-      shapes: {A: 'xx/x.',B: 'x',C: 'xx/.x',D: 'x/x',E: 'xx/xx'},
+      shapes: {A: 'x',B: 'xx',C: 'xx/xx',D: 'x./x./xx'},
       difficulty: 4,
-      note: "seq A3/4 — só existe um encaixe. Quatro moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
+      note: "seq A3/4 — só existe um encaixe. Dois moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde.",
     }),
     puzzle('mold.practice.4', {
       grid: `
-        .  fA . . .
+        .  .  . . fA
         .  .  . . .
         .  .  . . fB
-        fA fC . . .
-        .  #  . . .
+        .  fC . . .
+        fD .  . . fE
       `,
-      shapes: {A: 'x/x',B: 'x/x/x',C: 'xxx/..x'},
+      shapes: {A: 'xxxx',B: 'x/x',C: 'xx/xx',D: 'xx',E: 'x'},
       difficulty: 5,
-      note: "seq A4/4 — só existe um encaixe. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
+      note: "seq A4/4 — só existe um encaixe. Dois moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (um \"e se?\" no caminho).",
     }),
     puzzle('mold.practice.5', {
       grid: `
         .  .  .  .  .
-        .  fA .  .  .
-        fB .  .  fC .
-        fB .  fD fB .
-        .  .  .  #  .
+        .  fA fB .  fB
+        fC .  .  .  .
+        .  .  .  fB fB
+        .  fB .  .  .
       `,
-      shapes: {A: 'xx/x.',B: 'x',C: '.x/xx/.x',D: 'xx'},
+      shapes: {A: 'xxx/.x.',B: 'x',C: 'x/x'},
       difficulty: 3,
-      note: "seq B1/4 — a forma esculpida na sombra. Quatro moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde.",
+      note: "seq B1/4 — a forma esculpida na sombra. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída.",
     }),
     puzzle('mold.practice.6', {
       grid: `
-        . fA .  .  .
-        . .  .  .  .
-        . #  fB .  fC
-        . fB .  fD .
-        . fB .  .  fB
+        fA .  . .  fB
+        .  fB . .  fB
+        #  fB . .  fB
+        fC .  . fD .
+        .  .  . .  #
       `,
-      shapes: {A: 'xx/x./x.',B: 'x',C: 'xx/.x/.x',D: '.x/xx'},
+      shapes: {A: 'xx/x.',B: 'x',C: 'x/x',D: 'xx/xx'},
       difficulty: 4,
-      note: "seq B2/4 — a forma esculpida na sombra. Três moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
+      note: "seq B2/4 — a forma esculpida na sombra. Seis moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
     }),
     puzzle('mold.practice.7', {
       grid: `
-        fA .  .  fB .
-        fA .  .  .  fB
-        .  fA .  .  .
-        .  .  .  .  .
-        fC .  fA .  fC
+        .  fA . .  .
+        .  .  . .  .
+        .  #  . .  fB
+        fC .  . fD .
+        .  fC . .  fC
       `,
-      shapes: {A: 'x',B: 'xx',C: 'x/x'},
+      shapes: {A: 'xx/x./x.',B: 'xx/.x/.x',C: 'x',D: '.x/xx'},
       difficulty: 4,
-      note: "seq B3/4 — a forma esculpida na sombra. Seis moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
+      note: "seq B3/4 — a forma esculpida na sombra. Quatro moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
     }),
     puzzle('mold.practice.8', {
       grid: `
-        fA . .  .  .
-        .  . .  .  .
-        .  . fB fC .
-        .  . fD .  .
-        fD . .  .  #
+        .  . .  fA .
+        .  . fB .  .
+        .  . .  fC #
+        fD . .  .  fE
+        .  . fC .  .
       `,
-      shapes: {A: 'x',B: 'xx/.x/.x',C: 'x./x./xx',D: 'x/x'},
+      shapes: {A: 'xx./.xx',B: 'x./xx',C: 'x',D: 'xx',E: 'x/x'},
       difficulty: 5,
-      note: "seq B4/4 — a forma esculpida na sombra. Quatro moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
+      note: "seq B4/4 — a forma esculpida na sombra. Cinco moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.practice.9', {
       grid: `
-        .  .  .  . fA
-        .  .  fB . .
-        fA .  .  . .
-        fC fD .  . .
-        .  #  .  . fA
+        .  .  fA fB
+        fA .  .  .
+        #  .  .  .
+        .  fC .  fA
       `,
-      shapes: {A: 'x',B: 'xx/.x',C: 'x/x',D: '..x/xxx'},
+      shapes: {A: 'x',B: '.x/xx',C: 'xx'},
       difficulty: 3,
-      note: "seq C1/4 — a peça incompleta só tem uma saída. Cinco moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde.",
+      note: "seq C1/4 — a peça incompleta só tem uma saída. Quatro moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde.",
     }),
     puzzle('mold.practice.10', {
       grid: `
-        # .  fA .  .
-        . .  fB .  #
-        . fC .  .  fD
-        . .  .  .  #
-        . fD .  fE .
+        .  fA . .  fA
+        .  fB . fA .
+        fC .  . #  .
+        .  .  # .  .
+        .  fA . .  fD
       `,
-      shapes: {A: 'xx/.x',B: 'x',C: 'x./xx',D: 'xx',E: 'x/x'},
+      shapes: {A: 'x',B: 'x./xx/.x',C: 'x./xx/x.',D: 'x/x/x'},
       difficulty: 4,
-      note: "seq C2/4 — a peça incompleta só tem uma saída. Dois moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: o molde incompleto só tem uma saída; e por fim: só existe um encaixe para o molde.",
+      note: "seq C2/4 — a peça incompleta só tem uma saída. Cinco moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.practice.11', {
       grid: `
-        .  .  fA fB .
-        .  .  .  .  .
-        fC .  .  .  .
-        .  .  .  .  fB
+        fA .  .  .  fB
+        .  .  .  #  fC
         .  fD .  .  .
+        fD .  .  fD fC
+        .  .  fD #  .
       `,
-      shapes: {A: 'x./xx',B: 'x',C: 'x/x/x/x',D: 'xxx'},
+      shapes: {A: 'xxx',B: 'xx',C: 'x/x',D: 'x'},
       difficulty: 4,
-      note: "seq C3/4 — a peça incompleta só tem uma saída. Um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída.",
+      note: "seq C3/4 — a peça incompleta só tem uma saída. Seis moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.practice.12', {
       grid: `
-        fA .  . .  .
-        .  .  . .  fB
-        .  fC . fD #
-        .  .  . .  .
-        .  .  # fE .
+        .  .  .  . .
+        fA .  .  . fB
+        .  .  .  . .
+        .  .  fC . fD
+        .  fA .  . .
       `,
-      shapes: {A: 'xxx/x..',B: 'x/x',C: 'x./xx/x.',D: 'x',E: '.x/xx'},
+      shapes: {A: 'xx',B: 'xxx/..x',C: 'x',D: 'x/x/x'},
       difficulty: 5,
-      note: "seq C4/4 — a peça incompleta só tem uma saída. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída.",
+      note: "seq C4/4 — a peça incompleta só tem uma saída. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
     }),
   ],
   trial: [
@@ -236,39 +234,39 @@ const P: AreaPuzzles = {
     }),
     puzzle('mold.trial.2', {
       grid: `
-        fA* . .  fB fC .
-        .   . .  .  .  #
-        .   . .  .  .  fD*
-        .   # fE .  .  fF
-        #   . .  .  .  .
+        .  fA .  fB* fA .
+        .  .  .  .   .  .
+        .  .  .  fA  #  fA
+        fA fC #  .   .  fD
+        .  .  fA .   .  .
       `,
-      shapes: {A: 'xx/x./x.',B: '.x./xxx/x..',C: 'x',D: 'xxx',E: '.x./xxx',F: 'xxx/.xx'},
+      shapes: {A: 'x',B: 'xx',C: '.x/xx/.x',D: 'xx/.x'},
       difficulty: 6,
-      note: "seq D2/4 — o anel deixa girar — mas só um giro cabe. Dois moldes que giram e três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída.",
+      note: "seq D2/4 — o anel deixa girar — mas só um giro cabe. Um molde que gira e quatro moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde.",
     }),
     puzzle('mold.trial.3', {
       grid: `
-        .  fA .   fB .  .
-        .  .  .   .  .  .
-        .  .  .   .  .  .
-        .  .  fC* .  .  fD*
-        fE fB .   .  fB fB
+        .  # .   fA . fB*
+        fC . fA  .  . .
+        .  . .   .  . .
+        fA . .   .  . fD*
+        #  . fE* .  . .
       `,
-      shapes: {A: 'xx/xx',B: 'x',C: 'x/x',D: '.x/xx/.x',E: 'xx/xx/x.'},
+      shapes: {A: 'x',B: 'xx/.x/.x',C: 'x../xx./.xx',D: '.x/xx',E: '.xx/xx.'},
       difficulty: 6,
-      note: "seq D3/4 — o anel deixa girar — mas só um giro cabe. Dois moldes que giram e seis moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (um \"e se?\" no caminho).",
+      note: "seq D3/4 — o anel deixa girar — mas só um giro cabe. Três moldes que giram e quatro moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (2 \"e se?\" no caminho).",
     }),
     puzzle('mold.trial.4', {
       grid: `
-        . fA . .   .  fB
-        . .  . fC  .  .
-        . .  . .   fA .
-        . .  . .   .  fD
-        . .  . fE* .  .
+        .   .  .  . .  .
+        fA* .  .  . .  fB
+        .   .  .  . fC .
+        .   fD fE # fE .
+        .   #  .  . fC .
       `,
-      shapes: {A: 'x',B: 'xxxx/..x.',C: '..xx/xxx.',D: 'x/x',E: 'xxx'},
+      shapes: {A: 'xx/x.',B: 'xx/.x',C: 'x',D: 'x./xx/x.',E: '.x/xx/.x'},
       difficulty: 7,
-      note: "seq D4/4 — o anel deixa girar — mas só um giro cabe. Um molde que gira e um molde esculpido na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
+      note: "seq D4/4 — o anel deixa girar — mas só um giro cabe. Um molde que gira e cinco moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde.",
     }),
     puzzle('mold.trial.5', {
       grid: `
@@ -284,27 +282,27 @@ const P: AreaPuzzles = {
     }),
     puzzle('mold.trial.6', {
       grid: `
-        .  .  .   fA . .
-        fB .  .   .  # fB
-        .  .  .   fC . .
-        .  fB .   #  . .
-        .  .  fD* .  . .
+        .  .  fA .  . #
+        .  .  .  .  . fB
+        fC .  .  fD . .
+        fD #  .  #  . .
+        .  fD fD .  . .
       `,
-      shapes: {A: 'xx/xx/x.',B: 'x',C: 'xxx/..x/..x',D: '.x/xx'},
+      shapes: {A: 'xx',B: '.x/xx/xx',C: 'x/x/x',D: 'x'},
       difficulty: 6,
-      note: "seq E2/4 — na luz o molde não cabe. Um molde que gira e dois moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
+      note: "seq E2/4 — na luz o molde não cabe. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída.",
     }),
     puzzle('mold.trial.7', {
       grid: `
-        fA .  . .   .  .
-        .  .  . fB* .  fC
-        .  .  . .   fC .
-        .  .  . .   .  fB
-        fC fD . .   .  .
+        .  . .   . . .
+        fA . fB* . . .
+        .  . .   . # fC
+        .  . fD  . . .
+        fE . .   . . .
       `,
-      shapes: {A: 'xx/xx/.x',B: 'x/x',C: 'x',D: 'xxx'},
+      shapes: {A: 'x./x./xx',B: 'xxxx/.x..',C: '..x/xxx/.x.',D: 'x./xx',E: 'x'},
       difficulty: 6,
-      note: "seq E3/4 — na luz o molde não cabe. Um molde que gira e seis moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
+      note: "seq E3/4 — na luz o molde não cabe. Um molde que gira e um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (um \"e se?\" no caminho).",
     }),
     puzzle('mold.trial.8', {
       grid: `
@@ -320,109 +318,108 @@ const P: AreaPuzzles = {
     }),
     puzzle('mold.trial.9', {
       grid: `
-        .   . .  fA .  .
-        .   . .  .  fB .
-        .   . fC fC .  .
-        fD* . .  fC #  fC
-        .   . fC .  .  fC
-        fC  . fC .  .  fC
+        fA . .  .  .
+        .  . .  .  .
+        .  . .  .  fB
+        fC . .  fC #
+        .  . fC .  fC
       `,
-      shapes: {A: 'xx/.x',B: 'x./xx',C: 'x',D: 'x/x/x/x'},
+      shapes: {A: 'xx/xx/.x',B: 'xx/.x/.x',C: 'x'},
       difficulty: 5,
-      note: "seq F1/4 — um encaixe decide o outro. Um molde que gira e seis moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
+      note: "seq F1/4 — um encaixe decide o outro. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.trial.10', {
       grid: `
-        .   . fA fB . .
-        .   . .  .  . fB
-        .   . .  fC . .
-        fD* . .  fB # .
-        .   . .  .  . fE
-        fF  . .  fB . .
+        .   . .  fA . fB
+        .   . .  .  . .
+        .   . fB fB . .
+        fC* . .  .  # fB
+        .   . fB .  . fB
+        fB  . fB fD . .
       `,
-      shapes: {A: 'xxx/x..',B: 'x',C: 'xx',D: 'x/x',E: 'x/x/x',F: 'xxx'},
+      shapes: {A: 'xx/.x',B: 'x',C: 'x/x/x/x',D: 'xx'},
       difficulty: 6,
-      note: "seq F2/4 — um encaixe decide o outro. Um molde que gira e cinco moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: o molde incompleto só tem uma saída; e por fim: só existe um encaixe para o molde.",
+      note: "seq F2/4 — um encaixe decide o outro. Um molde que gira e sete moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde; (um \"e se?\" no caminho).",
     }),
     puzzle('mold.trial.11', {
       grid: `
-        .  . .  .  #   .
-        .  . fA fB .   fB
-        fC . .  .  .   .
-        .  . .  .  .   .
-        .  # .  .  fD* .
-        fA . fE #  fB  .
+        fA .  . fB . .
+        #  .  . .  . fA
+        .  .  . .  . .
+        #  .  . .  . fC
+        fD .  # .  . .
+        .  fA . fA . .
       `,
-      shapes: {A: 'x./xx',B: 'x',C: 'x/x/x/x',D: 'xx/.x',E: 'xx/x.'},
+      shapes: {A: 'x',B: 'xx/xx',C: '.x/xx/.x',D: '.x/.x/xx/x.'},
       difficulty: 6,
-      note: "seq F3/4 — um encaixe decide o outro. Um molde que gira e quatro moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída.",
+      note: "seq F3/4 — um encaixe decide o outro. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (2 \"e se?\" no caminho).",
     }),
     puzzle('mold.trial.12', {
       grid: `
-        fA . .   fB fC .
-        .  . .   #  .  .
-        .  . fD* .  fE #
-        .  . .   .  .  .
-        fF . .   .  .  .
-        fF . fD* .  .  .
+        .  fA* .  .  fB .
+        .  .   .  .  .  #
+        .  .   .  .  .  .
+        .  .   .  .  .  fC
+        .  .   .  fD .  .
+        fE .   fC .  .  .
       `,
-      shapes: {A: 'xx./xxx',B: 'xx',C: 'xx/x.',D: 'xxx',E: 'x./xx/.x',F: 'x'},
+      shapes: {A: 'x../x../xxx',B: 'xxx/xx.',C: 'x',D: 'xx/.x',E: 'x/x'},
       difficulty: 7,
-      note: "seq F4/4 — um encaixe decide o outro. Dois moldes que giram e três moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: o molde incompleto só tem uma saída; e por fim: só existe um encaixe para o molde.",
+      note: "seq F4/4 — um encaixe decide o outro. Um molde que gira e um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; (3 \"e se?\" no caminho).",
     }),
   ],
   mastery: [
     puzzle('mold.mastery.1', {
       grid: `
+        .   .   fA .  fB .
+        fC* .   fA .  fA .
+        #   fD* .  .  .  fA
+        .   .   .  fA .  .
+        .   .   .  #  fA .
+        .   fE* .  .  fA .
+      `,
+      shapes: {A: 'x',B: 'xx/.x',C: 'xx',D: 'x/x/x',E: 'x./x./xx'},
+      difficulty: 7,
+      note: "seq G1/4 — pentominós que giram, na luz e na sombra. Três moldes que giram e seis moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde.",
+    }),
+    puzzle('mold.mastery.2', {
+      grid: `
         .  .  .  .   fA .
         .  .  fB .   .  .
         .  fC .  .   fA fA
-        #  fA fA .   .  .
+        #  .  fA .   .  .
         .  fA .  .   .  fA
         fA .  .  fD* .  fA
       `,
       shapes: {A: 'x',B: 'xx/x.',C: 'x./xx',D: 'xx'},
       difficulty: 7,
-      note: "seq G1/4 — pentominós que giram, na luz e na sombra. Um molde que gira e oito moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
-    }),
-    puzzle('mold.mastery.2', {
-      grid: `
-        fA* . . .  fB  fB
-        .   . . fC .   .
-        fD  . . .  fE* .
-        .   . # .  .   .
-        fB  . . .  .   .
-        .   . . fF .   #
-      `,
-      shapes: {A: 'xx',B: 'x',C: 'x./x./x./xx',D: 'xx/x.',E: 'x/x/x',F: 'x../xxx'},
-      difficulty: 7,
-      note: "seq G2/4 — pentominós que giram, na luz e na sombra. Dois moldes que giram e quatro moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
+      note: "seq G2/4 — pentominós que giram, na luz e na sombra. Um molde que gira e oito moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
     }),
     puzzle('mold.mastery.3', {
       grid: `
-        .   fA fB .  . fC
-        .   .  .  #  . .
-        fD* .  .  .  . .
-        .   .  .  .  . .
-        .   .  fC .  . fE
-        fC  .  #  fF . .
+        .  .   fA .  . fA
+        .  .   .  .  . .
+        fB .   fC .  . fD
+        .  .   .  .  . .
+        .  .   .  fA . .
+        .  fE* .  .  . fA
       `,
-      shapes: {A: 'x./xx/.x',B: 'xxx',C: 'x',D: 'x/x',E: 'xx/.x',F: 'xx'},
+      shapes: {A: 'x',B: 'x/x/x',C: 'xx./.xx/..x',D: '.x/.x/xx',E: 'xx'},
       difficulty: 8,
-      note: "seq G3/4 — pentominós que giram, na luz e na sombra. Um molde que gira e um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
+      note: "seq G3/4 — pentominós que giram, na luz e na sombra. Um molde que gira e seis moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (3 \"e se?\" no caminho).",
     }),
     puzzle('mold.mastery.4', {
       grid: `
-        .   . fA . . fB*
-        fC  . .  . . .
-        fC  . .  . . .
-        .   . .  . . fD*
-        .   . .  . . .
-        fE* . fF . . fG*
+        .  .  . .  . fA*
+        fB .  . .  . #
+        #  fC . .  . fA
+        .  .  # fD . .
+        fC .  # .  . .
+        .  fA . .  . fE
       `,
-      shapes: {A: '.x/xx',B: 'xx',C: 'x',D: 'xx/.x/.x',E: 'x/x',F: 'xx/x./xx',G: '.x./xx./.xx'},
+      shapes: {A: 'xx',B: 'xxx/..x',C: 'x',D: 'x/x/x',E: 'x/x'},
       difficulty: 8,
-      note: "seq G4/4 — pentominós que giram, na luz e na sombra. Quatro moldes que giram e seis moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
+      note: "seq G4/4 — pentominós que giram, na luz e na sombra. Um molde que gira e três moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde; (um \"e se?\" no caminho).",
     }),
     puzzle('mold.mastery.5', {
       grid: `
@@ -439,62 +436,48 @@ const P: AreaPuzzles = {
     }),
     puzzle('mold.mastery.6', {
       grid: `
-        .  .  .  fA .  .  fB
-        .  fA .  .  .  .  .
-        fC .  fA .  .  .  .
-        .  .  .  .  fD .  fA
-        .  .  .  .  .  fA fE
-        .  fA fA .  fA .  .
+        .  . fA .  #  .  .
+        fA . .  .  .  fA fB
+        .  . fA fA .  .  fC
+        fD . .  .  fA #  .
+        fA . .  .  .  .  fE
+        .  . .  fA .  .  .
       `,
-      shapes: {A: 'x',B: '.xx/xx.',C: 'x./xx/x./x.',D: 'xx',E: '.x/xx'},
+      shapes: {A: 'x',B: 'xx/.x',C: 'x/x',D: 'xx./.xx',E: '.x/xx'},
       difficulty: 7,
-      note: "seq H2/4 — a pedreira inteira: encaixe por exclusão. Nove moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
+      note: "seq H2/4 — a pedreira inteira: encaixe por exclusão. Cinco moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.mastery.7', {
       grid: `
-        fA .  .   .   .  .   .
-        .  fB .   .   #  fC* .
-        .  .  fD* .   fB .   .
-        .  .  .   fE* .  .   fB
-        .  .  .   .   .  .   .
-        fF .  .   .   .  .   fC
+        .  .  .  fA .   . .
+        .  .  .  .  fB  . .
+        fC .  fC .  .   . .
+        #  .  .  .  fD* . .
+        .  fE .  .  .   . .
+        .  .  .  fC .   . fC
       `,
-      shapes: {A: 'xx/x.',B: 'x',C: 'xx',D: 'xx/.x/xx',E: 'xx/xx/.x',F: '.x./.x./xxx'},
+      shapes: {A: 'xxx/..x',B: 'x../xxx/.x.',C: 'x',D: 'x./xx/.x',E: 'xxx'},
       difficulty: 8,
-      note: "seq H3/4 — a pedreira inteira: encaixe por exclusão. Três moldes que giram e três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída.",
+      note: "seq H3/4 — a pedreira inteira: encaixe por exclusão. Um molde que gira e um molde esculpido na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
     }),
     puzzle('mold.mastery.8', {
       grid: `
-        .   . .   .  .   .   .
-        fA* . .   fB .   fC* .
-        .   . fD* .  fE* #   .
-        fB  . .   #  .   .   fF
-        fB  . .   .  .   .   .
-        .   . fG* fB .   fH  .
+        .  fA .  . fB .   .
+        .  .  fB . .  fA* .
+        .  fB .  . .  .   .
+        #  .  .  . .  fC* .
+        fD .  fE . .  .   fF
+        .  .  .  . fB .   .
       `,
-      shapes: {A: 'x/x',B: 'x',C: 'xxx/.x.',D: 'x./xx/x.',E: 'x./xx',F: 'x/x/x',G: 'xx/x.',H: 'xx/.x'},
+      shapes: {A: 'xx',B: 'x',C: 'xxx',D: 'x./xx',E: 'xx/.x',F: 'x/x'},
       difficulty: 8,
-      note: "seq H4/4 — a pedreira inteira: encaixe por exclusão. Cinco moldes que giram e cinco moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
+      note: "seq H4/4 — a pedreira inteira: encaixe por exclusão. Dois moldes que giram e um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; (6 \"e se?\" no caminho).",
     }),
   ],
   heart: [
     puzzle('mold.heart.1', {
       grid: `
-        .  fA .  .   .   fB .
-        .  .  .  fC* .   .  .
-        fD .  fA .   .   fA fA
-        .  .  .  fE  fF  .  .
-        .  .  #  .   .   .  .
-        .  .  fA #   .   .  fB
-        fA .  .  #   fG* .  .
-      `,
-      shapes: {A: 'x',B: 'xx/.x',C: 'xx/x.',D: 'x./xx/xx',E: '.x/xx/.x',F: 'x./xx/x.',G: 'x./xx'},
-      difficulty: 8,
-      note: "Obra-prima 1/6. Dois moldes que giram e nove moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
-    }),
-    puzzle('mold.heart.2', {
-      grid: `
-        fA .  fA .  fB .  .
+        .  .  fA .  fB .  .
         fA .  .  .  .  .  .
         .  #  .  fA .  fC .
         fA fA .  .  .  .  .
@@ -504,53 +487,11 @@ const P: AreaPuzzles = {
       `,
       shapes: {A: 'x',B: 'xx/x.',C: 'xx',D: 'x/x/x',E: '..x/xxx',F: 'xx/xx'},
       difficulty: 8,
-      note: "Obra-prima 2/6. Quatro moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
+      note: "Obra-prima 1/6. Oito moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
     }),
-    puzzle('mold.heart.3', {
+    puzzle('mold.heart.2', {
       grid: `
-        .  .  .  .   . .  #
-        .  .  .  fA* . .  .
-        .  fB .  fC* . .  fD*
-        fE .  fE .   . fF .
-        #  .  .  .   . .  .
-        .  .  fG .   . .  .
-        fE .  .  .   . .  fF
-      `,
-      shapes: {A: 'xxx/.xx',B: 'xx./.xx/.x.',C: 'xx',D: '.x/xx/.x/.x',E: 'x',F: 'x/x',G: 'xxx./..xx'},
-      difficulty: 9,
-      note: "Obra-prima 3/6. Três moldes que giram e oito moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde; (2 \"e se?\" no caminho).",
-    }),
-    puzzle('mold.heart.4', {
-      grid: `
-        #  fA fB . .   .  .
-        .  fC .  . .   .  .
-        .  .  .  . fD* .  fE
-        fF .  .  . .   .  fA
-        .  fG .  . .   .  .
-        .  .  .  . .   fH .
-        #  .  .  . fA  .  fI
-      `,
-      shapes: {A: 'x',B: 'xx/.x/.x',C: 'xx/x.',D: 'x/x/x',E: 'x/x',F: 'x../x../xxx',G: 'x./xx',H: 'x./xx/x.',I: '.x/xx'},
-      difficulty: 9,
-      note: "Obra-prima 4/6. Um molde que gira e cinco moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
-    }),
-    puzzle('mold.heart.5', {
-      grid: `
-        .  . fA* .  . .  fB
-        .  . .   fC . .  .
-        .  . .   .  . .  .
-        .  . .   .  . fC .
-        .  . fD* .  . .  .
-        fE . .   .  . .  .
-        fF . .   #  . .  fG
-      `,
-      shapes: {A: 'xx/xx/.x',B: 'x',C: 'x/x/x',D: 'x../xx./.xx',E: 'x./x./xx/x.',F: '.x/xx',G: 'xxx/.xx'},
-      difficulty: 10,
-      note: "Obra-prima 5/6. Dois moldes que giram e seis moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: o molde incompleto só tem uma saída; e por fim: só existe um encaixe para o molde.",
-    }),
-    puzzle('mold.heart.6', {
-      grid: `
-        .   fA . . .  .  fA
+        .   fA . . .  .  .
         fA  #  . . fB fC fD
         fA  .  . . .  .  .
         fA  .  . . .  .  .
@@ -559,8 +500,64 @@ const P: AreaPuzzles = {
         .   .  . . .  .  fD
       `,
       shapes: {A: 'x',B: 'x../xxx/.x.',C: '..x/.xx/xx.',D: 'x/x',E: 'x.x/xxx'},
+      difficulty: 8,
+      note: "Obra-prima 2/6. Um molde que gira e quatro moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
+    }),
+    puzzle('mold.heart.3', {
+      grid: `
+        fA .  .  . .   .  .
+        .  .  fB # .   fC .
+        .  fB .  . fB  .  fD
+        .  .  fE . .   .  .
+        fB .  .  . fB  .  .
+        .  .  .  . .   .  fD
+        fB .  .  . fF* .  .
+      `,
+      shapes: {A: 'xx/x.',B: 'x',C: 'xxx/.x.',D: 'x/x',E: 'x/x/x',F: 'xx'},
+      difficulty: 9,
+      note: "Obra-prima 3/6. Um molde que gira. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
+    }),
+    puzzle('mold.heart.4', {
+      grid: `
+        #  .  fA . .   .  .
+        .  .  .  . .   .  fB
+        fC .  .  . fD* .  .
+        fE .  .  . .   .  fF
+        .  fG .  . .   .  .
+        .  .  .  . .   fH .
+        #  .  .  . fF  .  fI
+      `,
+      shapes: {A: 'xx/.x/.x',B: 'x/x',C: 'xx/x.',D: 'x/x/x',E: 'x../x../xxx',F: 'x',G: 'x./xx',H: 'x./xx/x.',I: '.x/xx'},
+      difficulty: 9,
+      note: "Obra-prima 4/6. Um molde que gira e cinco moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
+    }),
+    puzzle('mold.heart.5', {
+      grid: `
+        .  .   fA* .  . .   fB
+        .  .   .   fC . fC* .
+        .  .   .   .  . .   .
+        .  fD* .   .  . .   .
+        .  .   .   .  . .   .
+        fE .   .   .  . .   .
+        fF .   .   #  . .   fG
+      `,
+      shapes: {A: 'xx/xx/.x',B: 'x',C: 'x/x/x',D: 'x../xx./.xx',E: 'x./x./xx/x.',F: '.x/xx',G: 'xxx/.xx'},
       difficulty: 10,
-      note: "Obra-prima 6/6. Um molde que gira e quatro moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: o molde incompleto só tem uma saída; e por fim: só existe um encaixe para o molde.",
+      note: "Obra-prima 5/6. Três moldes que giram e seis moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: o molde incompleto só tem uma saída; e por fim: só existe um encaixe para o molde; (2 \"e se?\" no caminho).",
+    }),
+    puzzle('mold.heart.6', {
+      grid: `
+        .  .  .   .   . .  #
+        .  .  .   fA* . .  .
+        .  fB .   .   . .  fC*
+        fD .  fD  .   . .  .
+        #  .  .   .   . fE .
+        .  .  .   fF* . .  .
+        fD .  fG* .   . .  fE
+      `,
+      shapes: {A: 'xxx/.xx',B: 'xx./.xx/.x.',C: '.x/xx/.x/.x',D: 'x',E: 'x/x',F: 'xxx./..xx',G: 'xx'},
+      difficulty: 10,
+      note: "Obra-prima 6/6. Quatro moldes que giram e sete moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: o molde incompleto só tem uma saída; e por fim: só existe um encaixe para o molde; (3 \"e se?\" no caminho).",
     }),
   ],
   secret: [],

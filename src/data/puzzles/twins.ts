@@ -55,13 +55,13 @@ const P: AreaPuzzles = {
     }),
     puzzle('twins.intro.7', {
       grid: `
-        Lts L  # .  ts
-        D   D  # .  .
-        Ltm D  # .  tm'
-        L   L  # .  .
+        Ltm L  # .  .  tm'
+        D   L  # .  .  .
+        Lts D  # .  ts .
+        L   L  # .  .  .
       `,
       difficulty: 4,
-      note: 'Portão: um par direto e um par espelhado atravessam o lago.',
+      note: 'Portão: um par direto e um par espelhado atravessam o lago — o espelho vira o L do avesso.',
     }),
   ],
   // </hand>
@@ -69,20 +69,20 @@ const P: AreaPuzzles = {
   practice: [
     puzzle('twins.practice.1', {
       grid: `
-        D   D D   # .  # .
-        Ltm D L   # .  . .
-        L   D D   # tm . .
-        D   L Lts # .  . ts
+        L Ltm D   # .  .  .
+        D D   D   # tm .  .
+        D L   L   # .  ts .
+        D L   Lts # .  .  .
       `,
       difficulty: 3,
-      note: "seq A1/4 — a cópia só cabe num lugar. Dois pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra.",
+      note: "seq A1/4 — a cópia só cabe num lugar. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; a luz pode copiar a sombra.",
     }),
     puzzle('twins.practice.2', {
       grid: `
-        L D   D   # . . ts
-        D D   L   # . . .
-        D D   Ltm # . . .
-        L Lts D   # . . tm
+        D Lts L # tm .  .
+        L D   D # .  .  .
+        D Ltm L # .  .  .
+        L D   D # #  ts .
       `,
       difficulty: 4,
       note: "seq A2/4 — a cópia só cabe num lugar. Dois pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra.",
@@ -109,10 +109,10 @@ const P: AreaPuzzles = {
     }),
     puzzle('twins.practice.5', {
       grid: `
-        Dts D L   # . . ts
-        L   L Dtm # . . .
-        D   L D   # . . .
-        L   L L   # . . tm
+        D L   L   # . .  .
+        D D   D   # . .  ts
+        D L   Ltm # . tm .
+        L Dts D   # . .  .
       `,
       difficulty: 3,
       note: "seq B1/4 — a luz pode copiar a sombra. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; a luz pode copiar a sombra.",
@@ -129,40 +129,40 @@ const P: AreaPuzzles = {
     }),
     puzzle('twins.practice.7', {
       grid: `
-        Ltm L L # . . ts
-        Dts D D # . . .
-        L   L L # . . .
-        L   L L # . . tm
+        Dts D L   # . . ts
+        L   L Dtm # . . .
+        D   L D   # . . .
+        L   L L   # . . tm
       `,
       difficulty: 4,
       note: "seq B3/4 — a luz pode copiar a sombra. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; a luz pode copiar a sombra.",
     }),
     puzzle('twins.practice.8', {
       grid: `
-        D   L   L # tm . .
-        Dts L   D # .  . .
-        L   D   L # ts . .
-        L   Dtm L # .  . .
+        L L   D   # .  ts .
+        D D   L   # .  .  .
+        D Dts Ltm # .  .  .
+        L L   D   # tm .  .
       `,
       difficulty: 5,
       note: "seq B4/4 — a luz pode copiar a sombra. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; a luz pode copiar a sombra.",
     }),
     puzzle('twins.practice.9', {
       grid: `
-        Lts L   D # tm' .   .
-        D   D   D # .   .   .
-        D   D   L # .   ts' .
-        D   Ltm L # .   .   .
+        D   L Ltm # .  ts' .
+        D   D D   # .  .   .
+        L   L L   # .  .   .
+        Dts D D   # tm .   .
       `,
       difficulty: 3,
       note: "seq C1/4 — o espelho inverte a forma. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.practice.10', {
       grid: `
-        L D   D   # . .   .
-        D Ltm L   # . tm' .
-        L D   D   # . ts' .
-        L L   Lts # . .   .
+        Lts L L # . . ts'
+        D   D D # . . .
+        Ltm L L # . # tm'
+        L   D D # . . .
       `,
       difficulty: 4,
       note: "seq C2/4 — o espelho inverte a forma. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
@@ -179,34 +179,34 @@ const P: AreaPuzzles = {
     }),
     puzzle('twins.practice.12', {
       grid: `
-        L   D L   # ts' . .
-        D   D L   # .   # .
-        D   D Ltm # tm  . .
-        Lts L D   # .   . .
+        D   L   D # # .   .
+        D   Ltm D # . tm' .
+        Lts D   D # . .   .
+        L   L   L # . .   ts'
       `,
       difficulty: 5,
-      note: "seq C4/4 — o espelho inverte a forma. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
+      note: "seq C4/4 — o espelho inverte a forma. Um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o símbolo espelhado inverte a forma.",
     }),
   ],
   trial: [
     puzzle('twins.trial.1', {
       grid: `
-        L   Dtm D # . .  .  tl
-        Lts D   D # . .  .  .
-        D   L   L # . .  .  .
-        L   D   D # . .  .  .
-        Ltl D   L # . tm ts .
+        L   D   L # # . .  .
+        Dtm L   D # . . .  .
+        D   Ltl D # . . .  tl
+        L   D   L # . . ts .
+        D   Lts L # . . .  tm
       `,
       difficulty: 5,
-      note: "seq D1/4 — três cópias que precisam caber juntas. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; a luz pode copiar a sombra.",
+      note: "seq D1/4 — três cópias que precisam caber juntas. Três pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra.",
     }),
     puzzle('twins.trial.2', {
       grid: `
-        D   D   Ltm # .  # .  .
-        Lts D   L   # .  . tm .
-        L   D   D   # tl . .  ts
-        D   Ltl L   # .  . .  .
-        D   D   D   # #  . .  .
+        L   Ltm D # # .  .  .
+        D   D   L # . .  .  .
+        D   L   L # . .  .  tm
+        L   D   D # # .  ts .
+        Ltl Dts L # . tl .  .
       `,
       difficulty: 6,
       note: "seq D2/4 — três cópias que precisam caber juntas. Três pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra.",
@@ -235,16 +235,38 @@ const P: AreaPuzzles = {
     }),
     puzzle('twins.trial.5', {
       grid: `
+        D Ltm D # ts . .  .
+        D L   . # .  . #  .
+        . Dts L # .  . .  .
+        L .   D # .  . .  #
+        . .   L # .  . tm .
+      `,
+      difficulty: 5,
+      note: "seq E1/4 — o modelo incompleto: a forma também se deduz. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; a luz pode copiar a sombra.",
+    }),
+    puzzle('twins.trial.6', {
+      grid: `
+        .   D   . # .  # . .
+        D   Ltm L # .  . . .
+        .   D   D # ts . . .
+        .   L   D # .  . . tm
+        Dts .   D # .  . . .
+      `,
+      difficulty: 6,
+      note: "seq E2/4 — o modelo incompleto: a forma também se deduz. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; a luz pode copiar a sombra.",
+    }),
+    puzzle('twins.trial.7', {
+      grid: `
         . Ltm D   # .  . . ts
         D D   L   # .  . . .
         . D   D   # .  . . .
         L D   Lts # tm . . .
         D D   L   # .  . # .
       `,
-      difficulty: 5,
-      note: "seq E1/4 — o modelo incompleto: a forma também se deduz. Dois pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados.",
+      difficulty: 6,
+      note: "seq E3/4 — o modelo incompleto: a forma também se deduz. Dois pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados.",
     }),
-    puzzle('twins.trial.6', {
+    puzzle('twins.trial.8', {
       grid: `
         L   Ltm L # .  . .  .
         .   D   D # ts . .  .
@@ -252,30 +274,8 @@ const P: AreaPuzzles = {
         Lts D   . # .  . tm .
         L   D   . # .  . .  .
       `,
-      difficulty: 6,
-      note: "seq E2/4 — o modelo incompleto: a forma também se deduz. Dois pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados.",
-    }),
-    puzzle('twins.trial.7', {
-      grid: `
-        L   D   D # . . . tm
-        Ltm .   D # . . . .
-        D   L   L # . . . .
-        .   .   . # . . . ts
-        .   Dts L # . . . .
-      `,
-      difficulty: 6,
-      note: "seq E3/4 — o modelo incompleto: a forma também se deduz. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; a luz pode copiar a sombra.",
-    }),
-    puzzle('twins.trial.8', {
-      grid: `
-        D   L   D # . . .  .
-        .   .   L # . . .  .
-        Dtm Lts . # . . .  .
-        L   .   D # . . tm .
-        D   D   . # . . ts .
-      `,
       difficulty: 7,
-      note: "seq E4/4 — o modelo incompleto: a forma também se deduz. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; a luz pode copiar a sombra.",
+      note: "seq E4/4 — o modelo incompleto: a forma também se deduz. Dois pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados.",
     }),
     puzzle('twins.trial.9', {
       grid: `
@@ -290,25 +290,25 @@ const P: AreaPuzzles = {
     }),
     puzzle('twins.trial.10', {
       grid: `
-        D   D   D   # .  .   .  .
-        L   L   D   # .  .   .  .
-        Lts Dtm L   # .  tm' .  .
-        L   D   Ltl # ts .   tl .
-        D   L   D   # .  .   .  .
+        L L   D   # .   . . tm'
+        L Dtm L   # .   # . .
+        L D   Lts # .   . . ts'
+        L L   D   # .   . . .
+        D Dtl L   # tl' . . .
       `,
       difficulty: 6,
       note: "seq F2/4 — espelhos e sombras atravessando o lago. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.trial.11', {
       grid: `
-        D   D   D   # #   . .   .
-        D   Ltm L   # .   . tl' .
-        L   D   D   # tm' . .   ts'
-        L   D   L   # .   . .   .
-        Lts D   Ltl # .   . .   .
+        D   L Ltl # . .  .   ts
+        Dts L D   # . .  .   .
+        L   D D   # . .  .   #
+        D   L Ltm # . tm tl' .
+        L   D D   # . .  .   .
       `,
       difficulty: 6,
-      note: "seq F3/4 — espelhos e sombras atravessando o lago. Um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o símbolo espelhado inverte a forma.",
+      note: "seq F3/4 — espelhos e sombras atravessando o lago. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.trial.12', {
       grid: `
@@ -325,96 +325,96 @@ const P: AreaPuzzles = {
   mastery: [
     puzzle('twins.mastery.1', {
       grid: `
-        D   L Ltl D # .  .   .  .
-        D   D .   L # .  ts' tl .
-        L   D .   D # .  .   .  .
-        Dts L .   L # .  .   .  .
-        D   D .   L # .  .   .  .
-        L   D Ltm L # tm .   .  .
+        . .   L   L   # tm . .  .
+        L Ltm D   Dtl # .  . .  tl'
+        D L   D   D   # .  . ts .
+        D .   Lts L   # .  . .  .
+        D D   .   L   # .  . .  .
+        . L   D   L   # #  . .  .
       `,
       difficulty: 7,
-      note: "seq G1/4 — modelos incompletos e espelhados. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
+      note: "seq G1/4 — modelos incompletos e espelhados. Um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma.",
     }),
     puzzle('twins.mastery.2', {
       grid: `
-        . L   Dtl D   # .  .   .   .
-        . Dts L   .   # .  ts' tl' .
-        L D   .   .   # .  #   .   .
-        . L   L   Ltm # .  .   .   .
-        L D   D   .   # tm .   .   .
-        L .   D   L   # .  .   #   .
+        .   L .   D # ts  .   . .
+        L   D D   L # tl' .   . .
+        D   L Dts . # .   .   . .
+        .   . L   D # .   tm' . .
+        Ltm L D   L # .   .   . .
+        L   D Ltl L # .   .   . .
       `,
       difficulty: 7,
       note: "seq G2/4 — modelos incompletos e espelhados. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.mastery.3', {
       grid: `
-        D   D Lts . # . .  .  .
-        .   D .   L # . .  .  .
-        .   L D   D # . ts .  .
-        Dtm . L   . # . .  tl .
-        D   L .   . # . .  .  tm'
-        Ltl L .   D # . .  .  .
+        D D   L   D   # .  ts' . .
+        L D   L   Ltm # .  .   # .
+        . D   D   D   # .  .   . .
+        D .   L   D   # .  .   . tm
+        L D   Dts .   # .  .   . .
+        L Ltl D   D   # tl .   . .
       `,
       difficulty: 8,
-      note: "seq G3/4 — modelos incompletos e espelhados. Um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma.",
+      note: "seq G3/4 — modelos incompletos e espelhados. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.mastery.4', {
       grid: `
-        D   .   . L   # . ts . .
-        L   L   D Dtl # . .  . .
-        D   Lts . .   # . .  . tm'
-        .   .   . L   # . .  . .
-        D   D   L D   # . .  . .
-        Dtm L   L .   # . .  . tl'
+        L   D Ltm L   # .   . tl .
+        D   L L   D   # .   . .  .
+        L   D L   .   # ts' . .  .
+        .   . D   L   # .   . .  .
+        Ltl L D   Lts # tm  . .  .
+        L   L D   L   # .   . .  .
       `,
       difficulty: 8,
       note: "seq G4/4 — modelos incompletos e espelhados. Um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma.",
     }),
     puzzle('twins.mastery.5', {
       grid: `
-        D D   L   Ltd # . td .  . tm
-        . Ltm D   D   # . .  .  . .
-        D D   Ltl L   # . .  .  . .
-        D D   D   D   # # .  .  . tl
-        D L   D   L   # . .  .  . .
-        D .   Lts D   # . .  ts . .
+        L   .   .   L # . .   .  td .
+        Lts D   D   D # . .   .  .  ts'
+        D   D   L   D # . tm' .  .  .
+        D   D   Ltm D # . .   .  .  .
+        Ltd L   D   L # . .   tl .  .
+        D   Dtl L   D # . #   .  .  .
       `,
       difficulty: 7,
-      note: "seq H1/4 — o lago inteiro: quatro pares. Quatro pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados.",
+      note: "seq H1/4 — o lago inteiro: quatro pares. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.mastery.6', {
       grid: `
-        L   Ltl D   L   # #  . .   tl .
-        .   .   L   D   # tm . .   .  ts
-        .   L   L   Dts # .  . .   .  .
-        D   L   L   D   # .  . .   .  .
-        Ltd D   L   L   # .  . td' .  .
-        L   D   Dtm D   # .  . .   #  .
+        L   . D L   # tl' . . td' .
+        L   . . Lts # .   . . .   .
+        Dtd D L D   # .   . . tm  .
+        L   L D L   # .   . . .   .
+        Ltm D L L   # #   . . .   ts'
+        D   L D Dtl # .   . # .   .
       `,
       difficulty: 7,
       note: "seq H2/4 — o lago inteiro: quatro pares. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.mastery.7', {
       grid: `
-        L   .   .   L # . .   .  td .
-        Lts D   D   D # . .   .  .  ts'
-        D   D   L   D # . tm' .  .  .
-        .   D   Ltm D # . .   .  .  .
-        Ltd L   D   L # . .   tl .  .
-        .   Dtl L   D # . #   .  .  .
+        . Dts L   D   # tm' .  . . .
+        L .   D   L   # .   .  . # .
+        D L   Dtm L   # .   td . . .
+        L L   D   Ltd # .   .  . . .
+        D Dtl L   .   # .   .  . . tl'
+        L D   D   L   # ts  .  . . .
       `,
       difficulty: 8,
       note: "seq H3/4 — o lago inteiro: quatro pares. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.mastery.8', {
       grid: `
-        L D   L Dts # .   .   .  . .
-        . Dtl . .   # .   tl  .  . .
-        D L   . Ltd # .   .   .  . .
-        D L   D L   # ts' .   .  . .
-        D Ltm D L   # .   td' tm . .
-        D .   D D   # #   .   .  . .
+        L Ltd D Ltl # . tl .   . .
+        D D   L L   # . .  tm  . .
+        D Ltm D .   # . .  #   . .
+        . L   L D   # . ts td' . .
+        L D   L D   # . .  .   . .
+        . Dts D L   # . .  .   . .
       `,
       difficulty: 8,
       note: "seq H4/4 — o lago inteiro: quatro pares. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
@@ -423,75 +423,75 @@ const P: AreaPuzzles = {
   heart: [
     puzzle('twins.heart.1', {
       grid: `
-        . . Dts L   # . . . .   .
-        . L .   L   # . . . tl' .
-        . . .   Dtl # . # . .   tm'
-        L L .   L   # . . . .   ts
-        L D .   Dtm # . . . .   .
-        . L .   L   # . . . .   .
+        Ltl L   D L # .  . # .   .
+        D   L   L D # tl . . .   .
+        L   Dtm D L # .  . . tm  .
+        Dts .   D L # .  . . .   .
+        D   D   L . # .  . . ts' .
+        L   L   D D # .  . . .   .
       `,
       difficulty: 8,
       note: "Obra-prima 1/6. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.heart.2', {
       grid: `
-        D   L D   Dts # . .   .   . .
-        .   L D   L   # . tl' .   . ts
-        L   L D   L   # . .   .   . .
-        L   . .   .   # . .   .   . .
-        .   . Ltm D   # . .   tm' . .
-        Dtl D L   D   # . .   .   . .
+        L Ltm D   D   # . .  .   . .
+        L D   D   L   # . .  tm' . .
+        D .   L   Dts # . .  .   . .
+        L D   L   D   # . .  .   . .
+        L D   Ltl D   # . .  tl  . .
+        . D   D   L   # . ts .   . .
       `,
       difficulty: 8,
-      note: "Obra-prima 2/6. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
+      note: "Obra-prima 2/6. Um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma.",
     }),
     puzzle('twins.heart.3', {
       grid: `
-        D   L   L   L # .  . .   .  .
-        L   D   Dtm . # .  . ts' .  .
-        L   Ltl .   . # .  . .   .  .
-        D   D   .   . # .  . .   .  .
-        .   .   D   . # .  . .   .  .
-        Lts L   .   . # tl . .   tm .
+        D   Ltm . L   # .   .   . .   .
+        .   D   D D   # ts' .   . #   .
+        D   D   L L   # .   .   . .   .
+        Lts D   L L   # .   .   . .   .
+        L   L   D D   # .   tl' . tm' .
+        L   .   L Dtl # .   .   . .   .
       `,
       difficulty: 9,
       note: "Obra-prima 3/6. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.heart.4', {
       grid: `
-        . D   D D   # .  .  . .  #
-        . .   L Ltm # .  ts . .  .
-        D L   D D   # .  .  . tm .
-        D .   D .   # .  .  . .  .
-        . Lts D Ltl # tl .  . .  .
-        . L   D .   # .  .  . .  .
+        L   D   D D # .   . .   . .
+        Lts .   D L # tl' . tm' . .
+        D   Dtm L L # .   . .   . .
+        D   L   . D # .   . .   . .
+        Ltl L   D D # .   . .   . ts'
+        L   D   D D # .   . .   . .
       `,
       difficulty: 9,
-      note: "Obra-prima 4/6. Três pares atravessam o lago. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados.",
+      note: "Obra-prima 4/6. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
     puzzle('twins.heart.5', {
       grid: `
-        D   .   Dtl D # .   . . . tm
-        D   Lts L   D # .   . . . .
-        D   .   D   L # tl' . . . .
-        .   .   .   . # .   . . . .
-        Ltm .   L   . # ts' . . . .
-        .   D   .   D # .   . . . .
+        D D   L   L   # tl .  .  . .
+        D D   L   D   # .  .  .  . .
+        L Dts L   .   # .  .  tm . .
+        L L   D   Ltm # .  ts .  . .
+        L D   L   L   # .  .  .  . .
+        . D   Dtl L   # .  .  .  . .
       `,
       difficulty: 10,
-      note: "Obra-prima 5/6. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
+      note: "Obra-prima 5/6. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; a luz pode copiar a sombra.",
     }),
     puzzle('twins.heart.6', {
       grid: `
-        D L   L   L # tl . . .  .
-        L D   Ltl D # .  . . .  .
-        . Lts .   L # ts . . tm .
-        L Dtm .   L # .  . . .  .
-        . D   L   . # .  . . .  .
-        . .   L   . # .  . . .  .
+        L   Ltl . L   # . .   .   . tl'
+        L   .   D L   # . .   .   # .
+        Dtd L   D L   # . .   .   . .
+        D   D   L Ltm # . .   td  . .
+        .   Lts D D   # . tm' ts' # .
+        L   L   L L   # . .   .   . .
       `,
       difficulty: 10,
-      note: "Obra-prima 6/6. A luz copia a sombra. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; a luz pode copiar a sombra.",
+      note: "Obra-prima 6/6. A luz copia a sombra e um par espelhado. Ahá: a cópia só cabe num lugar — e o encaixe de uma decide o espaço da outra; o modelo não está todo travado: a forma também se deduz pelos dois lados; o símbolo espelhado inverte a forma; a luz pode copiar a sombra.",
     }),
   ],
   secret: [],

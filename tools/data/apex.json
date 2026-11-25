@@ -1,0 +1,85 @@
+{
+ "score": 101.36666666666667,
+ "trace": [
+  [
+   "contour",
+   1
+  ],
+  [
+   "weave",
+   3
+  ],
+  [
+   "beacon",
+   19
+  ],
+  [
+   "regions",
+   5
+  ],
+  [
+   "weave",
+   2
+  ],
+  [
+   "beacon",
+   8
+  ],
+  [
+   "regions",
+   1
+  ],
+  [
+   "beacon",
+   3
+  ],
+  [
+   "regions",
+   5
+  ],
+  [
+   "beacon",
+   1
+  ],
+  [
+   "regions",
+   1
+  ],
+  [
+   "beacon",
+   7
+  ],
+  [
+   "mosaic",
+   1
+  ],
+  [
+   "beacon",
+   6
+  ],
+  [
+   "weave",
+   2
+  ],
+  [
+   "beacon",
+   2
+  ],
+  [
+   "regions",
+   2
+  ],
+  [
+   "beacon",
+   6
+  ]
+ ],
+ "compact": {
+  "grid": ". . . . . . @b . fA\n. . . . . . . @b .\ntm . b11 x5 . . b11 c1 tm'\n. b6 . . . . . b6 .\n. @b . . . . . . .\n. . . . . . . . .\n. . . b7 @c b7 @c . .\n. . . . . m9 . . .\n. @a . . . . @a . .",
+  "shapes": {
+   "A": "xx/.x/.x"
+  },
+  "rows": "-|-|-|-|-|-|-|-|1 1",
+  "cols": "-|-|-|-|-|-|-|4|-"
+ }
+}

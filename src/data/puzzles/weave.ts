@@ -216,7 +216,7 @@ const P: AreaPuzzles = {
       rows: '4|0|1 2 1|1 2 1|6|2 2',
       cols: '4|1 2|1 3|1 3|1 2|4',
       difficulty: 3,
-      note: "seq C1/4 — tapeçarias simétricas. .",
+      note: "seq C1/4 — tapeçarias simétricas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. .",
     }),
     puzzle('weave.practice.10', {
       grid: `
@@ -227,10 +227,10 @@ const P: AreaPuzzles = {
         . . . . . .
         . . . . . .
       `,
-      rows: '6|2 2|0|6|1 2 1|4',
-      cols: '2 2|2 1 1|1 3|1 3|2 1 1|2 2',
+      rows: '1 1|1 1|4|4|6|1 2 1',
+      cols: '1 2|4|4|4|4|1 2',
       difficulty: 4,
-      note: "seq C2/4 — tapeçarias simétricas. .",
+      note: "seq C2/4 — tapeçarias simétricas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. .",
     }),
     puzzle('weave.practice.11', {
       grid: `
@@ -241,10 +241,10 @@ const P: AreaPuzzles = {
         . . . . . .
         . . . . . .
       `,
-      rows: '1 2 1|6|4|1 2 1|1 1|0',
-      cols: '2 1|2 1|4|4|2 1|2 1',
+      rows: '4|0|2 2|0|6|6',
+      cols: '1 2|1 1 2|1 2|1 2|1 1 2|1 2',
       difficulty: 4,
-      note: "seq C3/4 — tapeçarias simétricas. .",
+      note: "seq C3/4 — tapeçarias simétricas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. .",
     }),
     puzzle('weave.practice.12', {
       grid: `
@@ -255,10 +255,10 @@ const P: AreaPuzzles = {
         . . . . . .
         . . . . . .
       `,
-      rows: '2 2|6|1 2 1|2 2|0|6',
-      cols: '4 1|2 1 1|2 1|2 1|2 1 1|4 1',
+      rows: '0|2 2|1 2 1|1 2 1|6|2',
+      cols: '4|1 1|4|4|1 1|4',
       difficulty: 5,
-      note: "seq C4/4 — tapeçarias simétricas. .",
+      note: "seq C4/4 — tapeçarias simétricas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. .",
     }),
   ],
   trial: [
@@ -272,28 +272,12 @@ const P: AreaPuzzles = {
         . . . . . . .
         # # . . . # #
       `,
-      rows: '1|3|5|5|5|7|1',
-      cols: '1|4|5|7|5|4|1',
+      rows: '1 1|3|5|5|5|7|1',
+      cols: '1|-|6|6|6|4|1',
       difficulty: 5,
-      note: "seq D1/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: o sino do vale.",
+      note: "seq D1/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: o sino do vale; uma linha ficou sem fio: ela se lê pelas que a cruzam; Ahá: um \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.trial.2', {
-      grid: `
-        # . . . . #
-        . . . . . .
-        # . . . . #
-        . . . . . .
-        . . . . . .
-        . . . . . .
-        . . . . . .
-        . . . . . .
-      `,
-      rows: '2|4|2|2|4|4|4|6',
-      cols: '1|1 4|8|8|1 4|1',
-      difficulty: 6,
-      note: "seq D2/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: o farol visto do vale.",
-    }),
-    puzzle('weave.trial.3', {
       grid: `
         # . . # . . #
         . . . . . . .
@@ -306,9 +290,9 @@ const P: AreaPuzzles = {
       rows: '1 1|3 3|5|3|1|1 1 1|3',
       cols: '1|3 1|3 1|5|3 1|3 1|1',
       difficulty: 6,
-      note: "seq D3/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: uma flor de lavanda.",
+      note: "seq D2/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: uma flor de lavanda; Ahá: um \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
-    puzzle('weave.trial.4', {
+    puzzle('weave.trial.3', {
       grid: `
         # . . . . . . #
         . . . . . . . .
@@ -317,24 +301,43 @@ const P: AreaPuzzles = {
         . . . . . . . .
         . . # . . # . .
       `,
-      rows: '4|6|8|8|1 2 1|1 1',
+      rows: '-|6|8|-|1 2 1|1 1',
       cols: '2 1|4|4|5|5|4|4|2 1',
+      difficulty: 6,
+      note: "seq D3/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: a tartaruga do lago; duas linhas ficaram sem fio: elas se leem pelas que as cruzam; Ahá: um \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
+    }),
+    puzzle('weave.trial.4', {
+      grid: `
+        # . . . . #
+        . . . . . .
+        # . . . . #
+        . . . . . .
+        . . . . . .
+        . . . . . .
+        . . . . . .
+        . . . . . .
+      `,
+      rows: '-|-|2|2|4|4|-|6',
+      cols: '1 1|2 1|8|8|2 1|1 1',
       difficulty: 7,
-      note: "seq D4/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: a tartaruga do lago.",
+      note: "seq D4/4 — fios partidos: a sequência não atravessa o buraco. Fios partidos: o farol visto do vale; três linhas ficaram sem fio: elas se leem pelas que as cruzam; Ahá: dois \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.trial.5', {
       grid: `
-        . # # . . # # .
-        . . . . . . . .
-        . . . . . . . .
-        . . . . . . . .
-        . . . # # . . .
-        . . . . . . . .
+        # # . . . . . # #
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
       `,
-      rows: '1 2 1|2 2 2|8|8|1 1 1 1|8',
-      cols: '6|3 1|4|4 1|4 1|4|3 1|6',
+      rows: '0|4|1 1|1 2 1|1 1 1 1|1 1 2 1|1 1 1|1 1 1|9',
+      cols: '2|4 1|1 2|1 2 1|1 1 1 1|1 1 1 1|1 2 1|1 2|4 1',
       difficulty: 5,
-      note: "seq E1/4 — fios partidos em desenhos maiores. Fios partidos: uma coroa — lembrança da Cidadela.",
+      note: "seq E1/4 — fios partidos em desenhos maiores. Fios partidos: o caracol da horta, com a casa nas costas; Ahá: um \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.trial.6', {
       grid: `
@@ -347,28 +350,12 @@ const P: AreaPuzzles = {
         # # . . . . # #
         . . . . . . . .
       `,
-      rows: '2|4|6|4|6|8|2|2',
-      cols: '1|1 2|5|8|8|5|1 2|1',
+      rows: '2|4|6|4|6|1 2 1|2|2',
+      cols: '1|1 1|4|8|8|4|1 1|1',
       difficulty: 6,
-      note: "seq E2/4 — fios partidos em desenhos maiores. Fios partidos: a árvore do moinho.",
+      note: "seq E2/4 — fios partidos em desenhos maiores. Fios partidos: a árvore do moinho; Ahá: um \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.trial.7', {
-      grid: `
-        # . . # # . . #
-        . . . . . . . .
-        . . . . . . . .
-        . . . . . . . .
-        . . . . . . . .
-        . . . . . . . .
-        . . . . . . . .
-        # . . . . . . #
-      `,
-      rows: '2 2|8|1 2 1|1 4 1|8|6|2 2|1 1',
-      cols: '4|2 3|2 5|5|5|2 5|2 3|4',
-      difficulty: 6,
-      note: "seq E3/4 — fios partidos em desenhos maiores. Fios partidos: a coruja do celeiro.",
-    }),
-    puzzle('weave.trial.8', {
       grid: `
         . . . # # . . .
         . . . . . . . .
@@ -379,10 +366,26 @@ const P: AreaPuzzles = {
         . . . . . . . .
         . . . . . . . .
       `,
-      rows: '1 1 1 1|8|6|2 2|2 2|6|2 2|8',
-      cols: '2 1|7|8|2 1 1|2 1 1|8|7|2 1',
+      rows: '1 1|-|6|2 2|-|6|1 1|8',
+      cols: '2 1|5 1|7|2 1 1|2 1 1|7|5 1|2 1',
+      difficulty: 6,
+      note: "seq E3/4 — fios partidos em desenhos maiores. Fios partidos: as torres da Cidadela ao longe; duas linhas ficaram sem fio: elas se leem pelas que as cruzam; Ahá: um \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
+    }),
+    puzzle('weave.trial.8', {
+      grid: `
+        # . . # # . . #
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        # . . . . . . #
+      `,
+      rows: '2 2|2 2|1 2 1|-|8|6|2 2|1 1',
+      cols: '4|2 3|1 5|4|4|1 5|2 3|4',
       difficulty: 7,
-      note: "seq E4/4 — fios partidos em desenhos maiores. Fios partidos: as torres da Cidadela ao longe.",
+      note: "seq E4/4 — fios partidos em desenhos maiores. Fios partidos: a coruja do celeiro; uma linha ficou sem fio: ela se lê pelas que a cruzam; Ahá: um \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.trial.9', {
       grid: `
@@ -398,7 +401,7 @@ const P: AreaPuzzles = {
       rows: '1 1 1 1|1 1|6|2 2 2|1 1|4|2|1 1',
       cols: '1 2|2|3 1 1|2 2|2 2|3 1 1|2|1 2',
       difficulty: 5,
-      note: "seq F1/4 — \"e se?\": a sequência ali não fecharia. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq F1/4 — \"e se?\": a sequência ali não fecharia. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.trial.10', {
       grid: `
@@ -411,10 +414,10 @@ const P: AreaPuzzles = {
         . . . . . . . .
         . . . . . . . .
       `,
-      rows: '1 4 1|2 2 2|0|6|1 1|2|2 2|1 4 1',
-      cols: '2 1 1|1 1 1|1 1 2|2 1 1 1|2 1 1 1|1 1 2|1 1 1|2 1 1',
+      rows: '6|2 2 2|0|1 1|6|0|0|0',
+      cols: '1 1|2 1|1 1|2 1|2 1|1 1|2 1|1 1',
       difficulty: 6,
-      note: "seq F2/4 — \"e se?\": a sequência ali não fecharia. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq F2/4 — \"e se?\": a sequência ali não fecharia. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.trial.11', {
       grid: `
@@ -427,10 +430,10 @@ const P: AreaPuzzles = {
         . . . . . . . .
         . . . . . . . .
       `,
-      rows: '1 4 1|2|4|1 1|4|2 2 2|1 1|2',
-      cols: '1 1|1 2|1 1 1|3 2 1|3 2 1|1 1 1|1 2|1 1',
+      rows: '2|8|1 1 1 1|1 1|2 2 2|6|1 2 1|1 2 1',
+      cols: '4|1 4|2 1|2 4|2 4|2 1|1 4|4',
       difficulty: 6,
-      note: "seq F3/4 — \"e se?\": a sequência ali não fecharia. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq F3/4 — \"e se?\": a sequência ali não fecharia. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.trial.12', {
       grid: `
@@ -446,60 +449,60 @@ const P: AreaPuzzles = {
       rows: '2|1 2 1|4|1 1 1 1|1 1|0|8|1 1',
       cols: '2 2|1 1|2 1|3 1|3 1|2 1|1 1|2 2',
       difficulty: 7,
-      note: "seq F4/4 — \"e se?\": a sequência ali não fecharia. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq F4/4 — \"e se?\": a sequência ali não fecharia. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
   ],
   mastery: [
     puzzle('weave.mastery.1', {
       grid: `
         . . . . . . . . .
+        . . . . . # . . .
         . . . . . . . . .
         . . . . . . . . .
+        . . . . . . . . #
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . #
+        . . . . . . . . .
+      `,
+      rows: '2 3 2|3 3|5|1 1 1|8|1 1 1 1|1 1 1|3 3|7',
+      cols: '2 2 1|2 2 2|2 1 2|1 1 2 2|1 3 1 1|1 1 2 2|2 1 2|2 2 2|2 1 1',
+      difficulty: 7,
+      note: "seq G1/4 — tapeçarias partidas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
+    }),
+    puzzle('weave.mastery.2', {
+      grid: `
+        . . . . . . . # .
+        . . . . . . . . .
+        . . . . . . . . .
+        . # . . . . . . .
+        . . . . . . . . #
+        # . . . # . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . # . . . . . . .
+      `,
+      rows: '2 1 1|1 1 1|3 1 3|5|3 2|1 1 1 1|5|1 1|1 3 1',
+      cols: '1 1 1 1|1 1 2|4 1|1 4|4 1 1|1 4|4 1|1 2|1 1 1',
+      difficulty: 7,
+      note: "seq G2/4 — tapeçarias partidas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
+    }),
+    puzzle('weave.mastery.3', {
+      grid: `
+        . . # . . . . . .
         . . . . . . . . .
         . . . . . . . . .
         . . . . . . . . .
         . . . . . . # . .
         . . . . . . . . .
         . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
       `,
-      rows: '1 5 1|1 1 1|1 1 1 1|1 1 1 1|3|0|1 1 1 1|1 1 1|2 1 2',
-      cols: '4 3|1|1 1 1|1 2|2 1 3|1 2|1 1|1|4 3',
-      difficulty: 7,
-      note: "seq G1/4 — tapeçarias partidas. Ahá: imagine a sequência ali — o fio não fecharia.",
-    }),
-    puzzle('weave.mastery.2', {
-      grid: `
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        # . . . . . . . #
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . # . # . .
-        . . . . . . . . .
-        . # . . . . . . .
-      `,
-      rows: '2 2|7|1 1 1 1|1 1 1|1 3 1|4 4|1 1|2 3 2|1 1 1 1 1',
-      cols: '1 1 2|1 2 1|2 1 1 1|3 4|1 2 2|3 4|2 1 1 1|1 2 1|1 1 2',
-      difficulty: 7,
-      note: "seq G2/4 — tapeçarias partidas. Ahá: imagine a sequência ali — o fio não fecharia.",
-    }),
-    puzzle('weave.mastery.3', {
-      grid: `
-        . . . . . . . . .
-        . . # . . . . . .
-        . . # . . . . . .
-        # . . . . . . # .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . #
-      `,
-      rows: '1 2 2 1|1 3 1|1 1 1|1 1 1|1 1|1 1 1 1|2 2|1 1 1 1|2 1 2',
-      cols: '1 1 1 1|1 2 1|1 1 3|2 1|3 1|2 1|1 1 3|1 2 1|1 1 1 1',
+      rows: '1 1 1 1|1 1 1 1|1 1|1 1 1|4|3 1 3|7|0|2 2',
+      cols: '1 1 1 1|2 2 1|3|2 1 1|4|2 1 1|2|2 2 1|1 1 1 1',
       difficulty: 8,
-      note: "seq G3/4 — tapeçarias partidas. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq G3/4 — tapeçarias partidas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.mastery.4', {
       grid: `
@@ -516,7 +519,7 @@ const P: AreaPuzzles = {
       rows: '1|3|2 2|1 1 1 1|1|2 2|4 4|1 5 1|1 2 2 1',
       cols: '1 3|1 1 1|1 4|1 1 4|2 1|1 1 4|1 4|1 1|1 3',
       difficulty: 8,
-      note: "seq G4/4 — tapeçarias partidas. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq G4/4 — tapeçarias partidas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.mastery.5', {
       grid: `
@@ -534,7 +537,7 @@ const P: AreaPuzzles = {
       rows: '8|0|8|1 4 1|1 1|1 2 2 1|1 1|2 1 1 2|2 4 2|2 2 2',
       cols: '1 1 3|1 1 4|1 1 1|1 4 2|1 2 2|1 2 2|1 4 2|1 1 1|1 1 4|1 1 3',
       difficulty: 7,
-      note: "seq H1/4 — o grande tear: deduções cruzadas. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq H1/4 — o grande tear: deduções cruzadas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.mastery.6', {
       grid: `
@@ -549,10 +552,10 @@ const P: AreaPuzzles = {
         . . . . . . . . . .
         . . . . . . . . . .
       `,
-      rows: '1 1|1 2 2 1|2 4 2|1 4 1|2 1 1 2|2 2|2|3 3|1 1 1 1|1 1 1 1',
-      cols: '3 2 2|4 1|1 2|4 1 1|2 1|2 1|4 1 1|1 2|4 1|3 2 2',
+      rows: '0|1 1 1 1|8|2|1 1|10|2 2|1 1|10|0',
+      cols: '1 1 1|1 2 2|1 2 1|2 2 1|2 1 1|2 1 1|2 2 1|1 2 1|1 2 2|1 1 1',
       difficulty: 7,
-      note: "seq H2/4 — o grande tear: deduções cruzadas. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq H2/4 — o grande tear: deduções cruzadas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.mastery.7', {
       grid: `
@@ -567,10 +570,10 @@ const P: AreaPuzzles = {
         . . . . . . . . . .
         . . . . . . . . . .
       `,
-      rows: '1 2 1|2 2|2 2|2 1 1 2|3 3|1 1 1 1|1 1|1 2 1|4|1 2 1',
-      cols: '1 2 2|1 3 1|2 1|2 1 1|1 3|1 3|2 1 1|2 1|1 3 1|1 2 2',
+      rows: '3 2 3|2 2 2|1 1 1 1|2 2|1 1 2 1 1|1 2 1|1 1|6|4|1 2 1',
+      cols: '1 2 1|4|2 2 2|1 2|2 2 3|2 2 3|1 2|2 2 2|4|1 2 1',
       difficulty: 8,
-      note: "seq H3/4 — o grande tear: deduções cruzadas. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq H3/4 — o grande tear: deduções cruzadas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
     puzzle('weave.mastery.8', {
       grid: `
@@ -585,29 +588,30 @@ const P: AreaPuzzles = {
         . . . . . . . . . .
         . . . . . . . . . .
       `,
-      rows: '3 3|1 1|1 2 1|1 1 1 1|2 2 2|2 2|1 1|6|3 3|1 2 1',
-      cols: '1 2 1|3 1 2|1 1 1 2|3|1 1 1 1|1 1 1 1|3|1 1 1 2|3 1 2|1 2 1',
+      rows: '1 1|6|1 2 1|1 1 1 1|1 4 1|2 2 2|3 2 3|3 2 3|3 3|1 1',
+      cols: '1 5|1 1 5|1 1 3|1 1|2 4|2 4|1 1|1 1 3|1 1 5|1 5',
       difficulty: 8,
-      note: "seq H4/4 — o grande tear: deduções cruzadas. Ahá: imagine a sequência ali — o fio não fecharia.",
+      note: "seq H4/4 — o grande tear: deduções cruzadas. As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro. Ahá: imagine a sequência ali — o fio não fecharia.",
     }),
   ],
   heart: [
     puzzle('weave.heart.1', {
       grid: `
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
-        . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
+        . . . . . . . . . .
       `,
-      rows: '1|1 1 1|5|7|9|7|5|1 1 1|1',
-      cols: '1|1 3 1|5|5|9|5|5|1 3 1|1',
+      rows: '2|4|6|4|-|8|10|1 2 1|2|4',
+      cols: '2|2|1 3|6 1|10|10|6 1|1 3|2|2',
       difficulty: 8,
-      note: "Obra-prima 1/6. O sol sobre o vale. Ahá: cruzar linhas e colunas até o desenho aparecer.",
+      note: "Obra-prima 1/6. O grande pinheiro do vale; uma linha ficou sem fio: ela se lê pelas que a cruzam; Ahá: três \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.heart.2', {
       grid: `
@@ -622,28 +626,27 @@ const P: AreaPuzzles = {
         . . . . . . . . . .
         . . . . . . . . . .
       `,
-      rows: '2|4|6|4|6|8|10|2|2|4',
-      cols: '1|2|1 3|6 1|10|10|6 1|1 3|2|1',
+      rows: '4 1|8|3 3|4 4|10|8|7|6|4|2',
+      cols: '-|-|7|9|2 6|2 6|9|7|7|2',
       difficulty: 8,
-      note: "Obra-prima 2/6. O grande pinheiro do vale. Ahá: cruzar linhas e colunas até o desenho aparecer.",
+      note: "Obra-prima 2/6. O mapa da ilha — com o lago no meio; duas linhas ficaram sem fio: elas se leem pelas que as cruzam; Ahá: três \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.heart.3', {
       grid: `
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
-        . . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
+        . . . . . . . . .
       `,
-      rows: '1|2|3|4|5|1|10|8|6|4',
-      cols: '1|2|3|4|10|4 4|3 4|2 3|1 2|1',
+      rows: '-|1 1 1|5|-|9|7|5|1 1 1|-',
+      cols: '1|1 3 1|5|5|9|5|5|1 3 1|1',
       difficulty: 9,
-      note: "Obra-prima 3/6. O navio que trouxe os construtores. Ahá: cruzar linhas e colunas até o desenho aparecer.",
+      note: "Obra-prima 3/6. O sol sobre o vale; três linhas ficaram sem fio: elas se leem pelas que as cruzam; Ahá: três \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.heart.4', {
       grid: `
@@ -658,10 +661,10 @@ const P: AreaPuzzles = {
         . . . . . . . . . .
         . . . . . . . . . .
       `,
-      rows: '2 2|2 2|2 2|4|4|4|1 2 1|4|6|8',
-      cols: '1|2 1|2 1 2|4 3|7|7|4 3|2 1 2|2 1|1',
+      rows: '2 2|2 2|2 2|4|4|4|1 1|4|6|8',
+      cols: '1|2 1|2 1 2|4 3|3 3|3 3|4 3|2 1 2|-|1',
       difficulty: 9,
-      note: "Obra-prima 4/6. O grande moinho. Ahá: cruzar linhas e colunas até o desenho aparecer.",
+      note: "Obra-prima 4/6. O grande moinho; uma linha ficou sem fio: ela se lê pelas que a cruzam; Ahá: três \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.heart.5', {
       grid: `
@@ -676,10 +679,10 @@ const P: AreaPuzzles = {
         . . . . . . . . . .
         . . . . . . . . . .
       `,
-      rows: '4|8|3 3|4 4|10|9|7|6|4|2',
-      cols: '2|5|7|9|2 6|2 6|9|7|6|3',
+      rows: '2|4|2 2|2 2|-|-|2 2 2|2 2|4|2',
+      cols: '2|4|2 2|2 2 2|2 3 2|2 3 2|2 2 2|2 2|4|2',
       difficulty: 10,
-      note: "Obra-prima 5/6. O mapa da ilha — com o lago no meio. Ahá: cruzar linhas e colunas até o desenho aparecer.",
+      note: "Obra-prima 5/6. O emblema dos nove ladrilhos; duas linhas ficaram sem fio: elas se leem pelas que as cruzam; Ahá: quatro \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
     puzzle('weave.heart.6', {
       grid: `
@@ -694,10 +697,10 @@ const P: AreaPuzzles = {
         . . . . . . . . . .
         . . . . . . . . . .
       `,
-      rows: '2|4|2 2|2 2 2|2 4 2|2 4 2|2 2 2|2 2|4|2',
-      cols: '2|4|2 2|2 2 2|2 4 2|2 4 2|2 2 2|2 2|4|2',
+      rows: '1 1|2 2|3 3|1 2 2 1|1 4 1|1 1 1 1|2 2|1 1|2|2',
+      cols: '5|2 1|2 1|5|-|1 2|5|2 1|2 1|5',
       difficulty: 10,
-      note: "Obra-prima 6/6. O emblema dos nove ladrilhos. Ahá: cruzar linhas e colunas até o desenho aparecer.",
+      note: "Obra-prima 6/6. A raposa do bosque, orelhas em pé; uma linha ficou sem fio: ela se lê pelas que a cruzam; Ahá: seis \"e se?\" — imagine a sequência ali: o fio cruzado não fecharia.",
     }),
   ],
   secret: [],

@@ -7,32 +7,6 @@ const P: AreaPuzzles = {
   ascent: [
     puzzle('spire.ascent.1', {
       grid: `
-        .  . . . . .
-        .  . . . . .
-        .  . . . . .
-        tm . . . . .
-        .  . . . . tm
-        .  . . . . .
-      `,
-      rows: '1 2|4|4|2 1|1 2|2 1',
-      cols: '-|5|3|3 1|2 2|-',
-      difficulty: 8,
-      note: "Gêmeos + Trama: tudo o que a ilha ensinou, junto. Ahá: a cópia só cabe num lugar; (2 \"e se?\" no caminho).",
-    }),
-    puzzle('spire.ascent.2', {
-      grid: `
-        .  c2 .  .  b4 .
-        c1 .  .  .  .  .
-        .  .  c1 b5 c2 .
-        .  b7 .  .  .  .
-        c1 .  c1 .  .  .
-        .  .  .  .  .  .
-      `,
-      difficulty: 8,
-      note: "Contorno + Farol: tudo o que a ilha ensinou, junto. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (6 \"e se?\" no caminho).",
-    }),
-    puzzle('spire.ascent.3', {
-      grid: `
         .  . . . . . fA
         #  . . . . . .
         .  . . . . . .
@@ -47,7 +21,21 @@ const P: AreaPuzzles = {
       difficulty: 8,
       note: "Forma + Medida + Trama: tudo o que a ilha ensinou, junto. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde.",
     }),
-    puzzle('spire.ascent.4', {
+    puzzle('spire.ascent.2', {
+      grid: `
+        .  . . . . .
+        .  . . . . .
+        .  . . . . .
+        tm . . . . .
+        .  . . . . tm
+        .  . . . . .
+      `,
+      rows: '1 2|4|4|2 1|1 2|2 1',
+      cols: '-|5|3|3 1|2 2|-',
+      difficulty: 8,
+      note: "Gêmeos + Trama: tudo o que a ilha ensinou, junto. Ahá: a cópia só cabe num lugar; (2 \"e se?\" no caminho).",
+    }),
+    puzzle('spire.ascent.3', {
       grid: `
         .  .  . .  .  . .
         .  .  . .  .  . .
@@ -60,6 +48,18 @@ const P: AreaPuzzles = {
       shapes: {A: '.x./xxx/.x.'},
       difficulty: 8,
       note: "Forma + Farol + Mosaico: tudo o que a ilha ensinou, junto. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde.",
+    }),
+    puzzle('spire.ascent.4', {
+      grid: `
+        .  c2 .  .  b4 .
+        c1 .  .  .  .  .
+        .  .  c1 b5 c2 .
+        .  b7 .  .  .  .
+        c1 .  c1 .  .  .
+        .  .  .  .  .  .
+      `,
+      difficulty: 8,
+      note: "Contorno + Farol: tudo o que a ilha ensinou, junto. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (6 \"e se?\" no caminho).",
     }),
     puzzle('spire.ascent.5', {
       grid: `
@@ -127,30 +127,6 @@ const P: AreaPuzzles = {
     }),
     puzzle('spire.drums.2', {
       grid: `
-        .  m1 m3 .  .  .  .
-        m1 .  .  .  .  .  .
-        .  .  m1 m1 .  m6 .
-        .  .  .  .  m1 .  .
-        m9 .  .  m5 m9 .  .
-      `,
-      wrap: true,
-      difficulty: 8,
-      note: "Tambor: a borda esquerda encosta na direita — Medida dando a volta. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (6 \"e se?\" no caminho).",
-    }),
-    puzzle('spire.drums.3', {
-      grid: `
-        . .  c3 c2 .  c3 c2
-        . .  c2 c1 c3 .  c1
-        . .  c3 c1 .  c3 c1
-        . c2 .  c3 .  .  c3
-        . c2 .  c1 .  .  c3
-      `,
-      wrap: true,
-      difficulty: 8,
-      note: "Tambor: a borda esquerda encosta na direita — Contorno dando a volta. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
-    }),
-    puzzle('spire.drums.4', {
-      grid: `
         .  .  .  c0 .  .  .  c2
         .  c1 .  .  .  c1 fA c2
         .  .  c1 .  .  .  .  .
@@ -162,7 +138,7 @@ const P: AreaPuzzles = {
       difficulty: 9,
       note: "Tambor: a borda esquerda encosta na direita — Contorno + Forma dando a volta. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde; (2 \"e se?\" no caminho).",
     }),
-    puzzle('spire.drums.5', {
+    puzzle('spire.drums.3', {
       grid: `
         .  @b x3 .  @a .  x2 @b
         @j .  .  .  x3 .  x3 .
@@ -173,6 +149,30 @@ const P: AreaPuzzles = {
       wrap: true,
       difficulty: 9,
       note: "Tambor: a borda esquerda encosta na direita — Afinidade + Mosaico dando a volta. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: um gargalo: o único caminho que liga as gemas.",
+    }),
+    puzzle('spire.drums.4', {
+      grid: `
+        . .  c3 c2 .  c3 c2
+        . .  c2 c1 c3 .  c1
+        . .  c3 c1 .  c3 c1
+        . c2 .  c3 .  .  c3
+        . c2 .  c1 .  .  c3
+      `,
+      wrap: true,
+      difficulty: 8,
+      note: "Tambor: a borda esquerda encosta na direita — Contorno dando a volta. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
+    }),
+    puzzle('spire.drums.5', {
+      grid: `
+        .  m1 m3 .  .  .  .
+        m1 .  .  .  .  .  .
+        .  .  m1 m1 .  m6 .
+        .  .  .  .  m1 .  .
+        m9 .  .  m5 m9 .  .
+      `,
+      wrap: true,
+      difficulty: 8,
+      note: "Tambor: a borda esquerda encosta na direita — Medida dando a volta. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (6 \"e se?\" no caminho).",
     }),
     puzzle('spire.drums.6', {
       grid: `
@@ -191,61 +191,6 @@ const P: AreaPuzzles = {
   mirrors: [
     puzzle('spire.mirrors.1', {
       grid: `
-        .  c3 c1 .  . .
-        .  c3 .  .  . .
-        .  .  .  c1 . .
-        m3 .  .  .  . .
-        .  c1 .  .  . .
-        .  c1 .  .  . c2
-      `,
-      mirror: 'v',
-      difficulty: 8,
-      note: "Espelho (vertical): cada toque acende também o reflexo, então a resposta é simétrica — Contorno + Medida. Ahá: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (7 \"e se?\" no caminho).",
-    }),
-    puzzle('spire.mirrors.2', {
-      grid: `
-        x1 @a .  x3 .  .
-        .  .  @b .  x7 .
-        @c @b @b .  .  .
-        @c .  x2 .  .  @a
-        .  .  .  .  .  .
-        .  .  .  .  .  .
-      `,
-      mirror: 'h',
-      difficulty: 8,
-      note: "Espelho (horizontal): cada toque acende também o reflexo, então a resposta é simétrica — Mosaico + Afinidade. Ahá: um gargalo: o único caminho que liga as gemas; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (um \"e se?\" no caminho).",
-    }),
-    puzzle('spire.mirrors.3', {
-      grid: `
-        c2 .  .  c3 c2 .
-        .  .  c2 .  .  .
-        c3 .  .  .  .  .
-        .  .  .  .  .  .
-        .  fA .  .  .  c2
-        fB .  .  .  .  .
-      `,
-      shapes: {A: 'xx/.x',B: 'x./xx'},
-      mirror: 'rot',
-      difficulty: 8,
-      note: "Espelho (rotação): cada toque acende também o reflexo, então a resposta é simétrica — Contorno + Forma. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
-    }),
-    puzzle('spire.mirrors.4', {
-      grid: `
-        .  .  . fA .  .  .
-        x3 .  . .  .  .  .
-        .  .  . .  x5 .  fB
-        .  .  . .  c3 .  .
-        .  fC . x6 .  c2 .
-        c1 .  . .  .  .  .
-        .  .  . .  .  .  .
-      `,
-      shapes: {A: 'xxx',B: 'x./xx/.x',C: 'x'},
-      mirror: 'rot',
-      difficulty: 9,
-      note: "Espelho (rotação): cada toque acende também o reflexo, então a resposta é simétrica — Forma + Mosaico + Contorno. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde; (4 \"e se?\" no caminho).",
-    }),
-    puzzle('spire.mirrors.5', {
-      grid: `
         .  .  @a .  . .  .
         .  .  .  .  . .  .
         .  .  .  .  . .  .
@@ -260,7 +205,7 @@ const P: AreaPuzzles = {
       difficulty: 9,
       note: "Espelho (vertical): cada toque acende também o reflexo, então a resposta é simétrica — Afinidade + Medida + Trama. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
-    puzzle('spire.mirrors.6', {
+    puzzle('spire.mirrors.2', {
       grid: `
         m2 .  .  .  .  .  .
         @b .  @b .  .  .  .
@@ -274,20 +219,79 @@ const P: AreaPuzzles = {
       difficulty: 9,
       note: "Espelho (horizontal): cada toque acende também o reflexo, então a resposta é simétrica — Medida + Afinidade + Mosaico. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: um gargalo: o único caminho que liga as gemas; e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (2 \"e se?\" no caminho).",
     }),
+    puzzle('spire.mirrors.3', {
+      grid: `
+        x1 @a .  x3 .  .
+        .  .  @b .  x7 .
+        @c @b @b .  .  .
+        @c .  x2 .  .  @a
+        .  .  .  .  .  .
+        .  .  .  .  .  .
+      `,
+      mirror: 'h',
+      difficulty: 8,
+      note: "Espelho (horizontal): cada toque acende também o reflexo, então a resposta é simétrica — Mosaico + Afinidade. Ahá: um gargalo: o único caminho que liga as gemas; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (um \"e se?\" no caminho).",
+    }),
+    puzzle('spire.mirrors.4', {
+      grid: `
+        c2 .  .  c3 c2 .
+        .  .  c2 .  .  .
+        c3 .  .  .  .  .
+        .  .  .  .  .  .
+        .  fA .  .  .  c2
+        fB .  .  .  .  .
+      `,
+      shapes: {A: 'xx/.x',B: 'x./xx'},
+      mirror: 'rot',
+      difficulty: 8,
+      note: "Espelho (rotação): cada toque acende também o reflexo, então a resposta é simétrica — Contorno + Forma. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
+    }),
+    puzzle('spire.mirrors.5', {
+      grid: `
+        .  .  . fA .  .  .
+        x3 .  . .  .  .  .
+        .  .  . .  x5 .  fB
+        .  .  . .  c3 .  .
+        .  fC . x6 .  c2 .
+        c1 .  . .  .  .  .
+        .  .  . .  .  .  .
+      `,
+      shapes: {A: 'xxx',B: 'x./xx/.x',C: 'x'},
+      mirror: 'rot',
+      difficulty: 9,
+      note: "Espelho (rotação): cada toque acende também o reflexo, então a resposta é simétrica — Forma + Mosaico + Contorno. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde; (4 \"e se?\" no caminho).",
+    }),
+    puzzle('spire.mirrors.6', {
+      grid: `
+        .  c3 c1 .  . .
+        .  c3 .  .  . .
+        .  .  .  c1 . .
+        m3 .  .  .  . .
+        .  c1 .  .  . .
+        .  c1 .  .  . c2
+      `,
+      mirror: 'v',
+      difficulty: 8,
+      note: "Espelho (vertical): cada toque acende também o reflexo, então a resposta é simétrica — Contorno + Medida. Ahá: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (7 \"e se?\" no caminho).",
+    }),
   ],
   apex: [
     puzzle('spire.apex.1', {
       grid: `
-        @j  @a @b .  c0 .  .
-        m26 .  .  .  .  @b m17
-        .   .  @a .  .  @b x3
-        .   .  c1 .  .  x5 x5
-        @c  .  .  .  .  .  .
-        @c  .  .  .  .  c0 .
-        m5  c1 .  c1 .  .  .
+        . . .  .  @a .  .   @a
+        . . .  @a .  .  .   .
+        . . .  .  @j .  .   .
+        . . .  @j .  .  .   fA
+        . . .  @c @c .  m12 @b
+        . . #  .  .  .  .   .
+        . . .  .  .  .  @c  @b
+        . . c3 .  .  @b .   .
       `,
-      difficulty: 9,
-      note: "Afinidade + Contorno + Medida + Mosaico: tudo o que a ilha ensinou, junto. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: um gargalo: o único caminho que liga as gemas; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (8 \"e se?\" no caminho).",
+      shapes: {A: 'x'},
+      rows: '1|3|3 1|-|1 1|-|1 2 1|1 6',
+      cols: '1 2 2|-|2 1|-|-|1 1 3|-|-',
+      difficulty: 10,
+      note: "Afinidade + Forma + Medida + Contorno + Trama: tudo o que a ilha ensinou, junto. Ahá: um gargalo: o único caminho que liga as gemas; depois: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (5 \"e se?\" no caminho).",
     }),
     puzzle('spire.apex.2', {
       grid: `
@@ -306,20 +310,16 @@ const P: AreaPuzzles = {
     }),
     puzzle('spire.apex.3', {
       grid: `
-        . . .  .  @a .  .   @a
-        . . .  @a .  .  .   .
-        . . .  .  @j .  .   .
-        . . .  @j .  .  .   fA
-        . . .  @c @c .  m12 @b
-        . . #  .  .  .  .   .
-        . . .  .  .  .  @c  @b
-        . . c3 .  .  @b .   .
+        @j  @a @b .  c0 .  .
+        m26 .  .  .  .  @b m17
+        .   .  @a .  .  @b x3
+        .   .  c1 .  .  x5 x5
+        @c  .  .  .  .  .  .
+        @c  .  .  .  .  c0 .
+        m5  c1 .  c1 .  .  .
       `,
-      shapes: {A: 'x'},
-      rows: '1|3|3 1|-|1 1|-|1 2 1|1 6',
-      cols: '1 2 2|-|2 1|-|-|1 1 3|-|-',
-      difficulty: 10,
-      note: "Afinidade + Forma + Medida + Contorno + Trama: tudo o que a ilha ensinou, junto. Ahá: um gargalo: o único caminho que liga as gemas; depois: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (5 \"e se?\" no caminho).",
+      difficulty: 9,
+      note: "Afinidade + Contorno + Medida + Mosaico: tudo o que a ilha ensinou, junto. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: um gargalo: o único caminho que liga as gemas; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (8 \"e se?\" no caminho).",
     }),
     puzzle('spire.apex.4', {
       grid: `

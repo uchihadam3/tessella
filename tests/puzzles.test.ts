@@ -6,7 +6,8 @@ import { AREAS, VAULT_PUZZLE_ID, type AreaId } from '../src/data/areas';
 import { PUZZLES } from '../src/data/puzzles/index';
 import { initialState, pressSet } from '../src/puzzle/board';
 import { check, geometryOf, lintPuzzle } from '../src/puzzle/rules';
-import { bruteForce, solve } from '../src/puzzle/solver';
+import { bruteForce, insightPath, solve } from '../src/puzzle/solver';
+import { gentleMax } from '../tools/calibrate';
 import { fuzz } from '../tools/fuzz-solver';
 
 declare const test: (name: string, fn: () => void) => void;
@@ -74,4 +75,17 @@ test('solver finds the intro solutions quickly', () => {
   const res = solve(p, { maxSolutions: 2 });
   assert.equal(res.solutions.length, 1);
   assert.equal(bruteForce(p).length, 1);
+});
+
+test('calibration: intro panels and sequence openers are gentle', () => {
+  for (const area of Object.values(PUZZLES)) {
+    for (const list of Object.values(area)) {
+      for (const p of list) {
+        const max = gentleMax(p.id);
+        if (max === null) continue;
+        const steps = insightPath(p, 30).steps.length;
+        assert.ok(steps <= max, `${p.id} needs ${steps} insights (at most ${max} for its slot)`);
+      }
+    }
+  }
 });

@@ -136,6 +136,16 @@ if (!onlyArea) {
     '- **Afinidade e Gêmeos** aceitam várias soluções (qualquer uma vale), mas o núcleo é forçado: a cor de cada família / o encaixe de cada cópia.',
     '- `soluções`: `1` = única; `1~` = única a menos de trocar luz e sombra (regras cegas à cor); `2`/`3+` = várias.',
     '',
+    '## Calibração da dificuldade',
+    '',
+    '- A dificuldade (1–10) é **medida**: é o número de percepções que o caminho de `insightPath` usa (`tools/relabel.ts`): ' +
+      '0 = só ler a regra (1–2), 1 → 3, 2 → 4, 3 → 5, 4–5 → 6, 6–7 → 7, 8–10 → 8, 11–14 → 9, 15+ → 10, ' +
+      'limitada pela faixa do lugar (introdução 1–4, prática 2–6, provação 3–8, maestria 5–9, coração 6–10; Cidadela, Eco e Torre têm faixas próprias; o Cofre é 10).',
+    '- Toda introdução e todo painel que abre uma sequência de prática usam no máximo 2 percepções (provação: 3; maestria: 6); ' +
+      'nenhum painel de rótulo 7+ se resolve com 1 percepção só (`tools/calibrate.ts`).',
+    '- As sequências e os grupos finais estão em ordem de esforço medido; o último painel da Torre e o Cofre são os picos.',
+    '- Limite do modelo: o Eco (toques que se somam, como "lights out") é tratado como dedução básica, então placas de eco puras medem 0 percepções.',
+    '',
   ];
   for (const area of AREAS) {
     const groups = rows[area.id];

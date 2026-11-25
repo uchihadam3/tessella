@@ -115,7 +115,7 @@ const P: AreaPuzzles = {
       `,
       target: '0110/1001/0000/0100',
       difficulty: 5,
-      note: "seq B1/3 — cristais mudos. Ahá: o cristal mudo só mudam pela soma das ressonâncias dos vizinhos.",
+      note: "seq B1/3 — cristais mudos. Ahá: o cristal mudo só muda pela soma das ressonâncias dos vizinhos.",
     }),
     puzzle('echo.practice.5', {
       grid: `
@@ -126,7 +126,7 @@ const P: AreaPuzzles = {
       `,
       target: '0011/1000/0101/0101',
       difficulty: 6,
-      note: "seq B2/3 — cristais mudos. Ahá: o cristal mudo só mudam pela soma das ressonâncias dos vizinhos.",
+      note: "seq B2/3 — cristais mudos. Ahá: o cristal mudo só muda pela soma das ressonâncias dos vizinhos.",
     }),
     puzzle('echo.practice.6', {
       grid: `
@@ -179,14 +179,14 @@ const P: AreaPuzzles = {
   trial: [
     puzzle('echo.trial.1', {
       grid: `
-        .        .          m15              m6{n,s}        m1
-        ~m15     .          .{n,s}           .{ne,nw,se,sw} .
-        .{ne,sw} .{ne,sw}   .{e,w}           .{ne,nw,se,sw} .{e,w}
-        m15      m3         m15{ne,nw,se,sw} m6{ne,sw}      m15{n,s,e,w}
-        m15      ~m3{nw,se} .                m15{nw,se}     ~.
+        .                 .{e,w} ~.{n,s,e,w} ~.{e,w}    ~.{e,w}     ~.
+        ~m24{ne,nw,se,sw} .      .           .{n,s,e,w} m1          .
+        .{n,s}            ~.     .{n,s,e,w}  m4         .           ~.{ne,sw}
+        .{n,s,e,w}        .      m4          .{n,s}     m1          .
+        .{n,s,e,w}        .      .{n,s,e,w}  .          ~.{n,s,e,w} .
       `,
       difficulty: 7,
-      note: "seq D1/3 — eco + Medida: o tamanho pedido tem de ser alcançável. Eco + Medida. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (4 \"e se?\" no caminho).",
+      note: "seq D1/3 — eco + Medida: o tamanho pedido tem de ser alcançável. Eco + Medida. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz.",
     }),
     puzzle('echo.trial.2', {
       grid: `
@@ -201,27 +201,16 @@ const P: AreaPuzzles = {
     }),
     puzzle('echo.trial.3', {
       grid: `
-        .                 .{e,w} ~.{n,s,e,w} ~.{e,w}    ~.{e,w}     ~.
-        ~m24{ne,nw,se,sw} .      .           .{n,s,e,w} m1          .
-        .{n,s}            ~.     .{n,s,e,w}  m4         .           ~.{ne,sw}
-        .{n,s,e,w}        .      m4          .{n,s}     m1          .
-        .{n,s,e,w}        .      .{n,s,e,w}  .          ~.{n,s,e,w} .
+        .        .          m15              m6{n,s}        m1
+        ~m15     .          .{n,s}           .{ne,nw,se,sw} .
+        .{ne,sw} .{ne,sw}   .{e,w}           .{ne,nw,se,sw} .{e,w}
+        m15      m3         m15{ne,nw,se,sw} m6{ne,sw}      m15{n,s,e,w}
+        m15      ~m3{nw,se} .                m15{nw,se}     ~.
       `,
       difficulty: 7,
-      note: "seq D3/3 — eco + Medida: o tamanho pedido tem de ser alcançável. Eco + Medida. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz.",
+      note: "seq D3/3 — eco + Medida: o tamanho pedido tem de ser alcançável. Eco + Medida. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (4 \"e se?\" no caminho).",
     }),
     puzzle('echo.trial.4', {
-      grid: `
-        c1{n,s}    c2     c3     .               ~.{n,s}
-        .          .{n,s} .      c4{e,w}         .{n,s}
-        ~.{nw,se}  .      .{e,w} ~c2{ne,sw}      ~.
-        .{n,s,e,w} c2     .      .               c3
-        c0         c2     .      c3{ne,nw,se,sw} .{e,w}
-      `,
-      difficulty: 7,
-      note: "seq E1/3 — eco + Contorno: bordas que os ecos conseguem desenhar. Eco + Contorno. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
-    }),
-    puzzle('echo.trial.5', {
       grid: `
         .           c4         ~.         ~.             ~.{n,s}
         c1          .          ~.{ne,sw}  .{ne,nw,se,sw} ~.
@@ -230,6 +219,17 @@ const P: AreaPuzzles = {
         ~.{n,s,e,w} .{n,s,e,w} ~.         .              c1
       `,
       difficulty: 8,
+      note: "seq E1/3 — eco + Contorno: bordas que os ecos conseguem desenhar. Eco + Contorno. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
+    }),
+    puzzle('echo.trial.5', {
+      grid: `
+        c1{n,s}    c2     c3     .               ~.{n,s}
+        .          .{n,s} .      c4{e,w}         .{n,s}
+        ~.{nw,se}  .      .{e,w} ~c2{ne,sw}      ~.
+        .{n,s,e,w} c2     .      .               c3
+        c0         c2     .      c3{ne,nw,se,sw} .{e,w}
+      `,
+      difficulty: 7,
       note: "seq E2/3 — eco + Contorno: bordas que os ecos conseguem desenhar. Eco + Contorno. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
     }),
     puzzle('echo.trial.6', {
@@ -245,17 +245,6 @@ const P: AreaPuzzles = {
     }),
     puzzle('echo.trial.7', {
       grid: `
-        ~.{nw,se} ~x2{e,w} .{ne,sw}  x2           ~.
-        .{n,s}    .{e,w}   .{n,s}    ~.{n,s,e,w}  ~.
-        .         ~x4      .{ne,sw}  x1{nw,se}    ~x1
-        ~.        .        .         .            .{e,w}
-        ~.        .{nw,se} x2{ne,sw} ~x1{n,s,e,w} .{e,w}
-      `,
-      difficulty: 8,
-      note: "seq F1/3 — eco + Mosaico: janelas alcançáveis. Eco + Mosaico. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (4 \"e se?\" no caminho).",
-    }),
-    puzzle('echo.trial.8', {
-      grid: `
         ~.{nw,se} .               x2             x2{n,s,e,w}  x1
         ~.        .               ~.{e,w}        .            ~.{ne,sw}
         .{ne,sw}  x5{ne,nw,se,sw} x5{nw,se}      ~.           .
@@ -263,7 +252,18 @@ const P: AreaPuzzles = {
         x3        .               .{e,w}         ~x3{n,s,e,w} ~.{n,s}
       `,
       difficulty: 8,
-      note: "seq F2/3 — eco + Mosaico: janelas alcançáveis. Eco + Mosaico. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (3 \"e se?\" no caminho).",
+      note: "seq F1/3 — eco + Mosaico: janelas alcançáveis. Eco + Mosaico. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (3 \"e se?\" no caminho).",
+    }),
+    puzzle('echo.trial.8', {
+      grid: `
+        ~.{nw,se} ~x2{e,w} .{ne,sw}  x2           ~.
+        .{n,s}    .{e,w}   .{n,s}    ~.{n,s,e,w}  ~.
+        .         ~x4      .{ne,sw}  x1{nw,se}    ~x1
+        ~.        .        .         .            .{e,w}
+        ~.        .{nw,se} x2{ne,sw} ~x1{n,s,e,w} .{e,w}
+      `,
+      difficulty: 8,
+      note: "seq F2/3 — eco + Mosaico: janelas alcançáveis. Eco + Mosaico. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (4 \"e se?\" no caminho).",
     }),
     puzzle('echo.trial.9', {
       grid: `
@@ -280,55 +280,6 @@ const P: AreaPuzzles = {
   heart: [
     puzzle('echo.heart.1', {
       grid: `
-        x0{n,s} ~.        x1         ~x1{n,s}        .{nw,se} .{ne,sw}
-        .       x1        .{n,s,e,w} .               ~.{e,w}  c0
-        ~.      c2{e,w}   ~.         ~.{ne,nw,se,sw} .        .{n,s}
-        .       c3{ne,sw} .{n,s}     ~.              x3       .
-        .       x2        ~.{nw,se}  .{nw,se}        .{ne,sw} x3{n,s}
-        .       .{ne,sw}  .          ~c2             .        ~x1{ne,nw,se,sw}
-      `,
-      difficulty: 9,
-      note: "Obra-prima 1/5. Eco + Contorno + Mosaico: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (5 \"e se?\" no caminho).",
-    }),
-    puzzle('echo.heart.2', {
-      grid: `
-        fA{n,s,e,w} m3         .{nw,se}    ~.{e,w}    .            ~.
-        .{n,s}      ~.         .           .{nw,se}   m1{ne,sw}    .
-        .           .{n,s}     ~.{n,s}     .          ~m1{n,s,e,w} ~m6{ne,nw,se,sw}
-        .{e,w}      m23{nw,se} ~.          .          ~.{e,w}      .{n,s,e,w}
-        .           .          ~.{n,s}     .{n,s,e,w} ~.{ne,sw}    m6
-        ~.          .          ~.{n,s,e,w} ~m23       .            ~.{e,w}
-      `,
-      shapes: {A: 'xx/x.'},
-      difficulty: 9,
-      note: "Obra-prima 2/5. Eco + Medida + Forma: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um número que não cabe de um lado da luz só pode estar do outro; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (4 \"e se?\" no caminho).",
-    }),
-    puzzle('echo.heart.3', {
-      grid: `
-        .{nw,se}       c0{nw,se}  .{e,w}         .              .          @a{n,s}
-        @b{n,s}        @b         c4             @b             .{n,s,e,w} .
-        ~.             ~c2{nw,se} ~.             .{ne,nw,se,sw} c2{n,s}    ~.{n,s}
-        .{n,s,e,w}     .{e,w}     .{nw,se}       .{nw,se}       .          .
-        .{ne,nw,se,sw} .{ne,sw}   .              ~c0{ne,sw}     .          c0{nw,se}
-        ~c1{n,s,e,w}   c0{e,w}    .{ne,nw,se,sw} .              @a         .
-      `,
-      difficulty: 10,
-      note: "Obra-prima 3/5. Eco + Afinidade + Contorno: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
-    }),
-    puzzle('echo.heart.4', {
-      grid: `
-        .      ~x2        x0             .               .{n,s,e,w}  ~.          .
-        .      ~.{n,s}    ~x1            ~.              x4{nw,se}   .           ~x1
-        .{n,s} .{n,s,e,w} ~.{ne,sw}      x4{ne,nw,se,sw} .{n,s,e,w}  ~.          .{e,w}
-        .      ~x3{e,w}   .              ~.{ne,sw}       m5{n,s,e,w} .           m29{ne,nw,se,sw}
-        x2     x3         .{ne,sw}       .               .           ~.{n,s,e,w} .
-        ~.     x2         .{ne,nw,se,sw} .{e,w}          .{e,w}      ~.          ~x0
-      `,
-      difficulty: 10,
-      note: "Obra-prima 4/5. Eco + Mosaico + Medida: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um número que não cabe de um lado da luz só pode estar do outro; depois: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (6 \"e se?\" no caminho).",
-    }),
-    puzzle('echo.heart.5', {
-      grid: `
         .              .               .{n,s}      .{nw,se}       .              .              ~.
         .{n,s,e,w}     ~.{n,s,e,w}     .           .              .{ne,nw,se,sw} .{n,s}         .{ne,sw}
         .              ~.{n,s}         ~.{n,s,e,w} @a             .{ne,sw}       .{ne,nw,se,sw} ~.
@@ -340,7 +291,56 @@ const P: AreaPuzzles = {
       rows: '1 1|1|1|1|0|1|3',
       cols: '-|-|1|-|1 2|2 1|-',
       difficulty: 10,
-      note: "Obra-prima 5/5. Eco + Afinidade + Contorno + Trama: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um gargalo: o único caminho que liga as gemas; (2 \"e se?\" no caminho).",
+      note: "Obra-prima 1/5. Eco + Afinidade + Contorno + Trama: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um gargalo: o único caminho que liga as gemas; (2 \"e se?\" no caminho).",
+    }),
+    puzzle('echo.heart.2', {
+      grid: `
+        .{nw,se}       c0{nw,se}  .{e,w}         .              .          @a{n,s}
+        @b{n,s}        @b         c4             @b             .{n,s,e,w} .
+        ~.             ~c2{nw,se} ~.             .{ne,nw,se,sw} c2{n,s}    ~.{n,s}
+        .{n,s,e,w}     .{e,w}     .{nw,se}       .{nw,se}       .          .
+        .{ne,nw,se,sw} .{ne,sw}   .              ~c0{ne,sw}     .          c0{nw,se}
+        ~c1{n,s,e,w}   c0{e,w}    .{ne,nw,se,sw} .              @a         .
+      `,
+      difficulty: 10,
+      note: "Obra-prima 2/5. Eco + Afinidade + Contorno: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
+    }),
+    puzzle('echo.heart.3', {
+      grid: `
+        x0{n,s} ~.        x1         ~x1{n,s}        .{nw,se} .{ne,sw}
+        .       x1        .{n,s,e,w} .               ~.{e,w}  c0
+        ~.      c2{e,w}   ~.         ~.{ne,nw,se,sw} .        .{n,s}
+        .       c3{ne,sw} .{n,s}     ~.              x3       .
+        .       x2        ~.{nw,se}  .{nw,se}        .{ne,sw} x3{n,s}
+        .       .{ne,sw}  .          ~c2             .        ~x1{ne,nw,se,sw}
+      `,
+      difficulty: 9,
+      note: "Obra-prima 3/5. Eco + Contorno + Mosaico: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (5 \"e se?\" no caminho).",
+    }),
+    puzzle('echo.heart.4', {
+      grid: `
+        fA{n,s,e,w} m3         .{nw,se}    ~.{e,w}    .            ~.
+        .{n,s}      ~.         .           .{nw,se}   m1{ne,sw}    .
+        .           .{n,s}     ~.{n,s}     .          ~m1{n,s,e,w} ~m6{ne,nw,se,sw}
+        .{e,w}      m23{nw,se} ~.          .          ~.{e,w}      .{n,s,e,w}
+        .           .          ~.{n,s}     .{n,s,e,w} ~.{ne,sw}    m6
+        ~.          .          ~.{n,s,e,w} ~m23       .            ~.{e,w}
+      `,
+      shapes: {A: 'xx/x.'},
+      difficulty: 9,
+      note: "Obra-prima 4/5. Eco + Medida + Forma: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um número que não cabe de um lado da luz só pode estar do outro; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (4 \"e se?\" no caminho).",
+    }),
+    puzzle('echo.heart.5', {
+      grid: `
+        .      ~x2        x0             .               .{n,s,e,w}  ~.          .
+        .      ~.{n,s}    ~x1            ~.              x4{nw,se}   .           ~x1
+        .{n,s} .{n,s,e,w} ~.{ne,sw}      x4{ne,nw,se,sw} .{n,s,e,w}  ~.          .{e,w}
+        .      ~x3{e,w}   .              ~.{ne,sw}       m5{n,s,e,w} .           m29{ne,nw,se,sw}
+        x2     x3         .{ne,sw}       .               .           ~.{n,s,e,w} .
+        ~.     x2         .{ne,nw,se,sw} .{e,w}          .{e,w}      ~.          ~x0
+      `,
+      difficulty: 10,
+      note: "Obra-prima 5/5. Eco + Mosaico + Medida: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um número que não cabe de um lado da luz só pode estar do outro; depois: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (6 \"e se?\" no caminho).",
     }),
   ],
   secret: [],

@@ -15,13 +15,15 @@ import { fileURLToPath } from 'node:url';
 import { AREA_BY_ID, type AreaId } from '../src/data/areas';
 import { buildGeometry, computeRegions, puzzle } from '../src/puzzle/board';
 import { beaconSight, geometryOf } from '../src/puzzle/rules';
-import { solve } from '../src/puzzle/solver';
+import { insightPath, solve } from '../src/puzzle/solver';
 import type { PuzzleDef } from '../src/puzzle/types';
 import { curate, insightNote, pool, poolSpec, score, showScore, stats, type Level } from './lib/curate';
 import { generate, generateKinship, generatePond, type Candidate, type Kind, type PondSpec, type Spec } from './lib/gen';
 import { PICTURES } from './lib/pictures';
 import { rng, type Rng } from './lib/random-puzzle';
 import { toSource } from './lib/show';
+import citadelExisting from '../src/data/puzzles/citadel';
+import spireExisting from '../src/data/puzzles/spire';
 import { weaveFromPicture } from './weave-check';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -31,6 +33,10 @@ const ECHO_DIRS = [['n', 's', 'e', 'w'], ['e', 'w'], ['n', 's'], ['ne', 'nw', 's
 type EchoSpec = NonNullable<Spec['echo']>;
 const echoDirs = (list: number[]): EchoSpec['dirs'] => list.map((i) => [...ECHO_DIRS[i]]) as EchoSpec['dirs'];
 const LOOK: Record<Level, number> = { practice: 2, trial: 4, heart: 8 };
+/** calibration: how many insights a sequence opener may use (practice = teaching pace) */
+const OPENER_MAX: Record<Level, number> = { practice: 2, trial: 3, heart: 6 };
+/** calibration: a sequence stays inside its slot — at most this many insights (mastery sequences use 'heart') */
+const STEP_CAP: Record<Level, number> = { practice: 6, trial: 10, heart: 14 };
 
 // ── helpers ───────────────────────────────────────────
 
@@ -104,13 +110,13 @@ function group(area: AreaId, g: string, level: Level, spec: Spec, tries: number,
 }
 
 /** Best single candidate for one slot (used by the combination areas). */
-function slot(area: AreaId, key: string, level: Level, spec: Spec, tries: number, accept?: (p: PuzzleDef, s: Uint8Array) => boolean, minNamed = 1): Candidate[] {
+function slot(area: AreaId, key: string, level: Level, spec: Spec, tries: number, accept?: (p: PuzzleDef, s: Uint8Array) => boolean, minNamed = 1, minSteps = 0): Candidate[] {
   const r = seeded(area, key);
   const s2: Spec = { ...spec, fairLook: spec.fairLook ?? LOOK[level], accept: (p, sol) => (!spec.accept || spec.accept(p, sol)) && (!accept || accept(p, sol)) };
-  const list = poolSpec(r, s2, tries, level === 'heart' ? 12 : 8);
+  const list = poolSpec(r, s2, tries, Number(process.env.POOL ?? (level === 'heart' ? 12 : 8)));
   const maxBasic = level === 'heart' ? 0.6 : level === 'trial' ? 0.8 : 1;
-  const hard = list.filter((c) => stats(c).solved && stats(c).named.length >= minNamed && stats(c).basicRoot <= maxBasic);
-  const good = hard.length ? hard : list.filter((c) => stats(c).solved && stats(c).named.length >= minNamed);
+  const hard = list.filter((c) => stats(c).solved && stats(c).named.length >= minNamed && stats(c).basicRoot <= maxBasic && stats(c).steps >= minSteps);
+  const good = hard.length ? hard : list.filter((c) => stats(c).solved && stats(c).named.length >= minNamed && stats(c).steps >= minSteps);
   const pickFrom = good.length ? good : list.filter((c) => stats(c).solved);
   if (!pickFrom.length) throw new Error(`${area}.${key}: no fair candidate (${list.length} in pool)`);
   return [pickFrom.sort((a, b) => showScore(b) - showScore(a))[0]];
@@ -195,6 +201,8 @@ interface Seq {
   tries: number;
   lang: string;
   feature?: (c: Candidate) => string | undefined;
+  /** a gentler generator (smaller board, fewer clues) for the sequence's opener */
+  openMake?: (r: Rng) => Candidate | null;
 }
 
 const fair = (c: Candidate, level: Level) => {
@@ -219,7 +227,7 @@ function runSeq(area: AreaId, s: Seq, n = 4, open = false): Candidate[] {
     if (seen.has(key)) continue;
     seen.add(key);
     if (!open && !fair(c, s.level)) continue;
-    if (!s.fit(c)) continue;
+    if (!s.fit(c) || stats(c).steps > STEP_CAP[s.level]) continue;
     fits.push(c);
   }
   if (fits.length < n) {
@@ -230,25 +238,56 @@ function runSeq(area: AreaId, s: Seq, n = 4, open = false): Candidate[] {
       const c = s.make(r);
       if (!c) continue;
       if (!open && !fair(c, s.level)) continue;
-      if (stats(c).steps < 1) continue;
+      if (stats(c).steps < 1 || stats(c).steps > STEP_CAP[s.level]) continue;
       extra.push(c);
     }
     console.warn(`  ${area} seq ${s.key}: ${fits.length} fitting + ${extra.length} relaxed`);
     fits.push(...extra.sort((a, b) => stats(b).named.length - stats(a).named.length).slice(0, n - fits.length));
   }
   if (fits.length < n) throw new Error(`${area} seq ${s.key} (${s.title}): only ${fits.length}/${n} fitting candidates`);
-  fits.sort((a, b) => score(a) - score(b));
-  const out: Candidate[] = [];
-  for (let i = 0; i < n; i++) out.push(fits[Math.round((i * (fits.length - 1)) / (n - 1))]);
-  return [...new Set(out)].length === n ? out : fits.slice(-n);
+  // calibration: a sequence opens gently (practice openers use at most 2 insights) and climbs
+  const gentle = (c: Candidate) => stats(c).steps * 10 - stats(c).basicRoot;
+  fits.sort((a, b) => gentle(a) - gentle(b));
+  const openerMax = OPENER_MAX[s.level];
+  if (stats(fits[0]).steps > openerMax) {
+    const t2 = Date.now();
+    const mk = s.openMake ?? s.make;
+    let gentlest: Candidate | null = null;
+    for (let k = 0; k < s.tries * 3 && Date.now() - t2 < budget; k++) {
+      const c = mk(r);
+      if (!c || (!open && !fair(c, s.level)) || !s.fit(c) || stats(c).steps < 1) continue;
+      if (!gentlest || gentle(c) < gentle(gentlest)) gentlest = c;
+      if (stats(c).steps <= openerMax) break;
+    }
+    if (gentlest && gentle(gentlest) < gentle(fits[0])) fits.unshift(gentlest);
+    if (stats(fits[0]).steps > openerMax) console.warn(`  ${area} seq ${s.key}: gentlest opener still uses ${stats(fits[0]).steps} insights`);
+  }
+  const rest = fits.slice(1);
+  const out: Candidate[] = [fits[0]];
+  for (let i = 1; i < n; i++) out.push(rest[Math.round(((i - 1) * (rest.length - 1)) / Math.max(1, n - 2))] ?? rest[rest.length - 1]);
+  const uniq = [...new Set(out)];
+  if (uniq.length < n) for (const c of rest) { if (uniq.length >= n) break; if (!uniq.includes(c)) uniq.push(c); }
+  return uniq.slice(0, n).sort((a, b) => gentle(a) - gentle(b));
 }
 
+/** what a panel without any named insight asks for (pure reading of the rule) */
+const PLAIN: Record<string, string> = {
+  weave: 'cada fio, lido sozinho e depois cruzado com os outros, já decide o desenho',
+  beacon: 'basta contar o que cada farol enxerga',
+  contour: 'basta ler cada placa com cuidado',
+  mosaic: 'basta contar cada janela com cuidado',
+  measure: 'basta contar as regiões com cuidado',
+  mold: 'basta encaixar as peças com cuidado',
+  gem: 'basta separar e unir as famílias',
+  twin: 'basta copiar a forma do outro lado',
+};
 function seqNote(s: Seq, i: number, n: number, c: Candidate): string {
-  return `seq ${s.key}${i + 1}/${n} — ${s.title}. ${insightNote(c, s.lang, s.feature?.(c))}`;
+  const note = insightNote(c, s.lang, s.feature?.(c));
+  return `seq ${s.key}${i + 1}/${n} — ${s.title}. ${note === '.' ? `${cap(PLAIN[s.lang] ?? 'leitura direta da regra')}.` : note}`;
 }
 
 /** practice = A,B,C; trial = D,E,F; mastery = G,H; heart = showpieces from `heartMake`. */
-function teaching(area: AreaId, seqs: Seq[], heartMake: (r: Rng) => Candidate | null, heartTries: number, lang: string, feature?: (c: Candidate) => string | undefined, open = false, heartMs = Number(process.env.SEQ_MS ?? 120_000) * 2): Groups {
+function teaching(area: AreaId, seqs: Seq[], heartMake: (r: Rng) => Candidate | null, heartTries: number, lang: string, feature?: (c: Candidate) => string | undefined, open = false, heartMs = Number(process.env.SEQ_MS ?? 120_000) * 2, heartMin = 0): Groups {
   const out: Groups = {};
   const byGroup: Record<string, Seq[]> = { practice: seqs.slice(0, 3), trial: seqs.slice(3, 6), mastery: seqs.slice(6, 8) };
   const diffs: Record<string, [number, number]> = { practice: [3, 5], trial: [5, 7], mastery: [7, 8] };
@@ -272,7 +311,12 @@ function teaching(area: AreaId, seqs: Seq[], heartMake: (r: Rng) => Candidate | 
   const r = seeded(area, 'heart');
   const tH = Date.now();
   const poolH = pool(r, () => (Date.now() - tH > heartMs ? null : heartMake(r)), heartTries, 24).filter((c) => open || fair(c, 'heart'));
-  const shows = poolH.sort((a, b) => showScore(b) - showScore(a)).slice(0, cnt(area, 'heart')).sort((a, b) => showScore(a) - showScore(b));
+  // showpieces must be genuinely hard (calibration): prefer the ones with at least `heartMin` insights
+  const hardH = poolH.filter((c) => stats(c).steps >= heartMin);
+  if (hardH.length < cnt(area, 'heart')) console.warn(`  ${area} hearts: only ${hardH.length} with >= ${heartMin} insights`);
+  const picked = hardH.sort((a, b) => showScore(b) - showScore(a)).slice(0, cnt(area, 'heart'));
+  for (const c of poolH.filter((x) => !picked.includes(x)).sort((a, b) => stats(b).steps - stats(a).steps)) if (picked.length < cnt(area, 'heart')) picked.push(c);
+  const shows = picked.sort((a, b) => stats(a).steps * 10 - stats(a).basicRoot - (stats(b).steps * 10 - stats(b).basicRoot));
   out.heart = finish(shows, area, 'heart', [8, 10], (c, i) => `Obra-prima ${i + 1}/${shows.length}. ${insightNote(c, lang, feature?.(c))}`);
   return out;
 }
@@ -302,7 +346,10 @@ function kinship(): Groups {
     S('G', 'cor e caminho ao mesmo tempo', 'heart', K(7, 6, [5, 6], 2), (c) => stats(c).named.length >= 2, 1000),
     S('H', 'seis famílias num bosque apertado', 'heart', K(7, 7, [6, 6], 2), (c) => stats(c).named.length >= 2, 1000),
   ];
-  return teaching(A, seqs, K(7, 7, [5, 6], 2, 0.06), 900, 'gem', feature, true);
+  // calibration: openers are the gentlest instance of the sequence's idea (smaller wood, fewer families)
+  for (const q of seqs.slice(0, 3)) q.openMake = K(4, 4, [3, 3], 1, 0.03);
+  for (const q of seqs.slice(3, 6)) q.openMake = K(5, 5, [3, 4], 2, 0.05);
+  return teaching(A, seqs, K(7, 7, [5, 6], 2, 0.06), 900, 'gem', feature, true, undefined, 5);
 }
 
 function measure(): Groups {
@@ -321,7 +368,10 @@ function measure(): Groups {
     S('G', 'saídas e espaços exatos encadeados', 'heart', M(7, 7, 15, 11, 'heart'), (c) => hasNamed(c, 'measure-exit') && hasNamed(c, 'measure-fill'), 1300),
     S('H', 'tudo junto: luz, sombra e números que não cabem', 'heart', M(7, 7, 15, 11, 'heart'), (c) => stats(c).named.length >= 3 || (stats(c).named.length >= 2 && looks(c) >= 1), 1300),
   ];
-  return teaching(A, seqs, M(7, 7, 15, 11, 'heart'), 1500, 'measure', measureFeature);
+  // calibration: openers are the gentlest instance of the sequence's idea (a smaller board)
+  [M(4, 4, 8, 4, 'practice'), M(4, 4, 11, 3, 'practice'), M(4, 4, 10, 3, 'practice'), M(4, 4, 9, 3, 'trial'), M(5, 5, 14, 4, 'trial'), M(5, 5, 10, 5, 'trial'), M(6, 6, 12, 8, 'heart'), M(6, 6, 12, 8, 'heart')]
+    .forEach((mk, i) => (seqs[i].openMake = mk));
+  return teaching(A, seqs, M(7, 7, 15, 11, 'heart'), 1500, 'measure', measureFeature, false, undefined, 10);
 }
 
 function mold(): Groups {
@@ -346,7 +396,11 @@ function mold(): Groups {
     S('G', 'pentominós que giram, na luz e na sombra', 'heart', F(6, 6, 5, 0.4, 4, true, 16, 'heart'), (c) => stats(c).named.length >= 2, 1400),
     S('H', 'a pedreira inteira: encaixe por exclusão', 'heart', F(7, 6, 5, 0.25, 4, false, 16, 'heart'), (c) => stats(c).named.length >= 2 && stats(c).basicRoot <= 0.5, 1400),
   ];
-  return teaching(A, seqs, F(7, 7, 5, 0.3, 5, false, 18, 'heart'), 1500, 'mold', moldFeature);
+  // calibration: openers are the gentlest instance of the sequence's idea (a smaller quarry)
+  [F(4, 4, 4, 0, 2, false, 10, 'practice'), F(4, 4, 4, 0, 2, false, 10, 'practice'), F(4, 4, 4, 0, 2, false, 10, 'practice'),
+    F(5, 5, 4, 0.4, 3, true, 12, 'trial'), F(5, 5, 4, 0.3, 3, false, 12, 'trial'), F(5, 5, 5, 0.3, 3, false, 12, 'trial'),
+    F(6, 5, 5, 0.4, 3, true, 14, 'heart'), F(6, 5, 5, 0.25, 4, false, 14, 'heart')].forEach((mk, i) => (seqs[i].openMake = mk));
+  return teaching(A, seqs, F(7, 7, 5, 0.3, 5, false, 18, 'heart'), 1500, 'mold', moldFeature, false, undefined, 7);
 }
 
 function contour(): Groups {
@@ -427,10 +481,34 @@ function beacon(): Groups {
     S('D', 'só um farol alcança aquela luz', 'trial', B(6, 6, [3, 4], 0.06, 'trial'), (c) => hasNamed(c, 'beacon-single'), 5000),
     S('E', 'feixes que se cruzam contam para os dois', 'trial', B(6, 6, [3, 4], 0.06, 'trial'), (c) => crossing(c) && stats(c).steps >= 1, 5000),
     S('F', '"e se?": um farol veria demais', 'trial', B(6, 6, [3, 4], 0.08, 'trial'), (c) => looks(c) >= 1, 5000),
-    S('G', 'a costa inteira: fontes, cruzamentos e rochas', 'heart', B(7, 7, [4, 6], 0.06, 'heart'), (c) => stats(c).steps >= 1 && crossing(c) && stats(c).basicRoot <= 0.85, 9000),
-    S('H', 'faróis que dependem uns dos outros', 'heart', B(7, 7, [5, 6], 0.04, 'heart'), (c) => seesEach(c) && stats(c).steps >= 1, 9000),
+    // calibration: mastery and showpieces need at least three real insights (rivets pin the coast down
+    // without deciding it, so the counting has to travel between beacons)
+    S('G', 'a costa inteira: fontes, cruzamentos e rochas', 'heart', B(7, 7, [4, 6], 0.06, 'heart', 3), (c) => stats(c).steps >= 3 && crossing(c) && stats(c).basicRoot <= 0.8, 9000),
+    S('H', 'faróis que dependem uns dos outros', 'heart', B(7, 7, [5, 6], 0.04, 'heart', 3), (c) => seesEach(c) && stats(c).steps >= 3, 9000),
   ];
-  return teaching(A, seqs, B(7, 7, [5, 6], 0.05, 'heart'), 6000, 'beacon', feature);
+  const heartB = B(7, 7, [5, 6], 0.05, 'heart', 3);
+  const SEQ = Number(process.env.SEQ_MS ?? 120_000);
+  return teaching(A, seqs, (r) => { const c = heartB(r); return c && stats(c).steps >= 4 ? c : null; }, 20000, 'beacon', feature, false, SEQ * 6, 4);
+}
+
+/** Weave pictures hardened by tools/harden-weave.ts (a few threads removed, at most a few outline
+ *  pixels moved) so that they need real cross-line reasoning ("e se?"). */
+const HARD_PATH = join(root, 'tools/data/weave-hard.json');
+const HARD: Record<string, { looks: number; flips: number; pruned: number; pic: string[]; compact: Record<string, unknown> }> = existsSync(HARD_PATH) ? JSON.parse(readFileSync(HARD_PATH, 'utf8')) : {};
+function hardPic(name: string, minLooks: number): Candidate {
+  const h = HARD[`${name}@${minLooks}`];
+  if (!h) throw new Error(`weave: no hardened ${name}@${minLooks} in tools/data/weave-hard.json (run tools/harden-weave.ts)`);
+  const p = puzzle('w', h.compact as never);
+  const res = solve(p, { maxSolutions: 2, maxNodes: 400000 });
+  if (res.solutions.length !== 1) throw new Error(`hardened picture ${name} not unique`);
+  const missing = (p.rowClues ?? []).filter((x) => x === null).length + (p.colClues ?? []).filter((x) => x === null).length;
+  const c: Candidate = { p, sol: res.solutions[0], glyphs: 0, rivets: 0, nodes: res.nodes, simple: res.propagationOnly, sols: 1, score: 0 };
+  const lk = stats(c).looks;
+  const bits = [PICTURES[name].note.replace(/\.$/, '')];
+  if (missing) bits.push(missing === 1 ? 'uma linha ficou sem fio: ela se lê pelas que a cruzam' : `${NF(missing)} linhas ficaram sem fio: elas se leem pelas que as cruzam`);
+  bits.push(`Ahá: ${lk === 1 ? 'um "e se?"' : `${N(lk)} "e se?"`} — imagine a sequência ali: o fio cruzado não fecharia`);
+  p.note = bits.join('; ') + '.';
+  return c;
 }
 
 function weave(): Groups {
@@ -447,13 +525,21 @@ function weave(): Groups {
     };
     return generate(r, { w, h, kinds: ['weave'], holes, fullWeave: true, state: symState, fairLook: LOOK[level] });
   };
+  const gentleW = (c: Candidate) => stats(c).steps * 10 - stats(c).basicRoot;
   const pics = (names: string[], title: string, key: string, extra = ''): PuzzleDef[] =>
     weaveSet(names).map((c, i) => { c.p.note = `seq ${key}${i + 1}/4 — ${title}. ${c.p.note}${extra}`; return c.p; });
+  const hardPics = (list: [string, number][], title: string, key: string): PuzzleDef[] =>
+    list.map(([name, min]) => hardPic(name, min)).sort((a, b) => gentleW(a) - gentleW(b))
+      .map((c, i) => { c.p.note = `seq ${key}${i + 1}/4 — ${title}. ${c.p.note}`; return c.p; });
+  const symmetric = 'As colunas se espelham: se a resposta é única, o desenho também é simétrico — o que vale de um lado vale do outro';
   const tap = (key: string, title: string, w: number, h: number, holes: number, level: Level, fit: (c: Candidate) => boolean, tries = 900): PuzzleDef[] => {
-    const s: Seq = { key, title, level, make: tapestry(w, h, holes, level), fit, tries, lang: 'weave' };
+    const s: Seq = { key, title, level, make: tapestry(w, h, holes, level), fit, tries, lang: 'weave', feature: () => symmetric };
     return runSeq(A, s).map((c, i) => { c.p.note = seqNote(s, i, 4, c); return c.p; });
   };
   const ids = (list: PuzzleDef[], g: string, diff: [number, number]) => list.map((p, i) => { p.id = `${A}.${g}.${i + 1}`; p.difficulty = Math.round(diff[0] + ((diff[1] - diff[0]) * (i % 4)) / 3); return p; });
+  // calibration: trial pictures need 1–3 cross-line contradictions, mastery tapestries at least two
+  // (or one on a board a beginner cannot start), showpieces three or more
+  const hearts = (['sun', 'pine', 'fox', 'windmill', 'island', 'emblem'] as const).map((n) => hardPic(n, 3)).sort((a, b) => gentleW(a) - gentleW(b));
   return {
     practice: ids([
       ...pics(['leaf', 'mushroom', 'sailboat', 'anchor'], 'a sequência mais longa de uma linha cobre o meio dela', 'A'),
@@ -461,17 +547,19 @@ function weave(): Groups {
       ...tap('C', 'tapeçarias simétricas', 6, 6, 0, 'practice', (c) => stats(c).basicRoot >= 0.6),
     ], 'practice', [3, 5]),
     trial: ids([
-      ...pics(['bell', 'lighthouse', 'flower', 'turtle'], 'fios partidos: a sequência não atravessa o buraco', 'D'),
-      ...pics(['crown', 'tree', 'owl', 'castle'], 'fios partidos em desenhos maiores', 'E'),
+      ...hardPics([['bell', 1], ['lighthouse', 1], ['flower', 1], ['turtle', 1]], 'fios partidos: a sequência não atravessa o buraco', 'D'),
+      ...hardPics(WEAVE_E, 'fios partidos em desenhos maiores', 'E'),
       ...tap('F', '"e se?": a sequência ali não fecharia', 8, 8, 0, 'trial', (c) => looks(c) >= 1, 1200),
     ], 'trial', [5, 7]),
     mastery: ids([
-      ...tap('G', 'tapeçarias partidas', 9, 9, 0.05, 'heart', (c) => stats(c).basicRoot < 0.9 || looks(c) >= 1, 1200),
-      ...tap('H', 'o grande tear: deduções cruzadas', 10, 10, 0, 'heart', (c) => looks(c) >= 2, 1400),
+      ...tap('G', 'tapeçarias partidas', 9, 9, 0.05, 'heart', (c) => looks(c) >= 2 || (looks(c) >= 1 && stats(c).basicRoot < 0.8), 1600),
+      ...tap('H', 'o grande tear: deduções cruzadas', 10, 10, 0, 'heart', (c) => looks(c) >= 2, 1600),
     ], 'mastery', [7, 8]),
-    heart: finish(weaveSet(['sun', 'pine', 'ship', 'windmill', 'island', 'emblem']), A, 'heart', [8, 10], (c, i) => `Obra-prima ${i + 1}/6. ${c.p.note!} Ahá: cruzar linhas e colunas até o desenho aparecer.`),
+    heart: finish(hearts, A, 'heart', [8, 10], (c, i) => `Obra-prima ${i + 1}/6. ${c.p.note!}`),
   };
 }
+/** trial E pictures (bigger drawings with broken threads) */
+const WEAVE_E: [string, number][] = (process.env.WEAVE_E ?? 'tree:1,owl:1,castle:1,snail:1').split(',').map((x) => { const [n, l] = x.split(':'); return [n, Number(l)]; });
 
 function twins(): Groups {
   const A: AreaId = 'twins';
@@ -501,9 +589,15 @@ function twins(): Groups {
     S('D', 'três cópias que precisam caber juntas', 'trial', { ...base, h: 5, right: 4, pairs: 3 }, (c) => pairsOf(c) === 3, 1100),
     S('E', 'o modelo incompleto: a forma também se deduz', 'trial', { ...base, h: 5, right: 4, pairs: 2, dropRivets: 0.4 }, (c) => partial(c), 1100),
     S('F', 'espelhos e sombras atravessando o lago', 'trial', { ...base, h: 5, right: 4, pairs: 3, mirrorP: 0.6, darkP: 0.5 }, (c) => mirrored(c) && pairsOf(c) === 3, 1100),
-    S('G', 'modelos incompletos e espelhados', 'heart', { h: 6, left: 4, right: 4, pairs: 3, sizes: [3, 5], mirrorP: 0.5, dropRivets: 0.45, darkP: 0.4, holes: 0.03 }, (c) => partial(c) && mirrored(c), 1200),
-    S('H', 'o lago inteiro: quatro pares', 'heart', { h: 6, left: 4, right: 5, pairs: 4, sizes: [2, 4], mirrorP: 0.4, dropRivets: 0.3, darkP: 0.4, holes: 0.03 }, (c) => pairsOf(c) === 4, 1200),
+    // calibration: mastery panels must need several real placements the model can follow (>= 3 insights)
+    S('G', 'modelos incompletos e espelhados', 'heart', { h: 6, left: 4, right: 4, pairs: 3, sizes: [3, 5], mirrorP: 0.5, dropRivets: 0.25, darkP: 0.4, holes: 0.03 }, (c) => partial(c) && mirrored(c) && stats(c).steps >= 3, 1600),
+    S('H', 'o lago inteiro: quatro pares', 'heart', { h: 6, left: 4, right: 5, pairs: 4, sizes: [2, 4], mirrorP: 0.4, dropRivets: 0.15, darkP: 0.4, holes: 0.03 }, (c) => pairsOf(c) === 4 && stats(c).steps >= 4, 1600),
   ];
+  // calibration: openers are the gentlest instance of the sequence's idea (a narrower lake, smaller shapes)
+  const small: PondSpec = { ...base, left: 2, right: 3, sizes: [2, 3] };
+  ([{ ...small }, { ...small, darkP: 0.6 }, { ...small, mirrorP: 0.8 }, { ...small, right: 4, pairs: 3 }, { ...small, right: 4, dropRivets: 0.3 }, { ...small, right: 4, pairs: 3, mirrorP: 0.6, darkP: 0.5 },
+    { h: 5, left: 3, right: 4, pairs: 3, sizes: [2, 4], mirrorP: 0.5, dropRivets: 0.25, darkP: 0.4, holes: 0.03 }, { h: 5, left: 3, right: 5, pairs: 4, sizes: [2, 3], mirrorP: 0.4, dropRivets: 0.1, darkP: 0.4, holes: 0.03 }] as PondSpec[])
+    .forEach((ps, i) => (seqs[i].openMake = P(ps)));
   const out: Groups = {};
   const byGroup: Record<string, Seq[]> = { practice: seqs.slice(0, 3), trial: seqs.slice(3, 6), mastery: seqs.slice(6, 8) };
   const diffs: Record<string, [number, number]> = { practice: [3, 5], trial: [5, 7], mastery: [7, 8] };
@@ -521,8 +615,16 @@ function twins(): Groups {
     out[g] = puzzles;
   }
   const r = seeded(A, 'heart');
-  const hp = pool(r, () => generatePond(r, { h: 6, left: 4, right: 5, pairs: 3, sizes: [3, 5], mirrorP: 0.5, dropRivets: 0.5, darkP: 0.4, holes: 0.02 }), 2500, 18);
-  const shows = hp.sort((x, y) => y.score - x.score).slice(0, cnt(A, 'heart')).sort((x, y) => x.score - y.score);
+  // showpieces: big lakes whose copies the model can actually follow (>= 5 insights), hardest last
+  const tH = Date.now();
+  const heartMs = Number(process.env.SEQ_MS ?? 120_000) * 4;
+  const hp = pool(r, () => {
+    if (Date.now() - tH > heartMs) return null;
+    const c = generatePond(r, { h: 6, left: 4, right: 5, pairs: 3 + r.int(2), sizes: [3, 5], mirrorP: 0.5, dropRivets: 0.2, darkP: 0.4, holes: 0.02 });
+    return c && stats(c).steps >= 5 ? c : null;
+  }, 6000, 18);
+  if (hp.length < cnt(A, 'heart')) throw new Error(`twins hearts: only ${hp.length}`);
+  const shows = hp.sort((x, y) => showScore(y) + stats(y).steps * 0.5 - showScore(x) - stats(x).steps * 0.5).slice(0, cnt(A, 'heart')).sort((x, y) => stats(x).steps - stats(y).steps);
   out.heart = finish(shows, A, 'heart', [8, 10], (c, i) => `Obra-prima ${i + 1}/${shows.length}. ${twNote(c)}`);
   return out;
 }
@@ -555,7 +657,7 @@ function echo(): Groups {
   return {
     practice: ids([
       ...plates('A', 'toques que se somam', plate(4, 4, [0, 1, 2], 0.7, 0, [3, 5]), 3, () => 'tocar duas vezes desfaz e a ordem não importa — cada cristal é tocado zero ou uma vez'),
-      ...plates('B', 'cristais mudos', plate(4, 4, [0, 1, 2, 3], 0.75, 0.2, [3, 5]), 3, (m) => `${m === 1 ? 'o cristal mudo' : 'os cristais mudos'} só mudam pela soma das ressonâncias dos vizinhos`),
+      ...plates('B', 'cristais mudos', plate(4, 4, [0, 1, 2, 3], 0.75, 0.2, [3, 5]), 3, (m) => (m === 1 ? 'o cristal mudo só muda pela soma das ressonâncias dos vizinhos' : 'os cristais mudos só mudam pela soma das ressonâncias dos vizinhos')),
       ...plates('C', 'ecos longos de linha e coluna', plate(5, 5, [0, 4, 5], 0.5, 0.1, [4, 7]), 3, () => 'um toque vira a linha inteira — comece pelas linhas que só um cristal alcança'),
     ], 'practice', [5, 6]),
     trial: ids([
@@ -580,67 +682,128 @@ function citadel(): Groups {
     const cands = list.map(([kinds, w, h, level, extra, minNamed], i) => slot(A, `${g}-${i}`, level, S(kinds, w, h, extra ?? {}), kinds.includes('twin') ? 2500 : 900, all(hasAll(kinds), tidy(2)), minNamed ?? (kinds.length >= 3 ? 2 : 1))[0]);
     return finish(cands.sort((a, b) => showScore(a) - showScore(b)), A, g, g === 'gate' ? [6, 7] : g === 'court' ? [7, 8] : g === 'halls' ? [8, 9] : [9, 10], note);
   };
-  return {
-    gate: run('gate', [
+  const LISTS: Record<string, [Kind[], number, number, Level, Partial<Spec>?, number?][]> = {
+    gate: [
       [['gem', 'measure'], 5, 5, 'trial'], [['contour', 'mosaic'], 5, 5, 'trial', {}, 0], [['mold', 'twin'], 5, 5, 'trial'],
       [['weave', 'beacon'], 5, 5, 'trial', {}, 0], [['measure', 'mold'], 5, 5, 'trial'], [['gem', 'contour'], 5, 5, 'trial'],
-    ]),
-    court: run('court', [
+    ],
+    court: [
       [['measure', 'contour'], 6, 6, 'trial'], [['gem', 'mold'], 6, 6, 'trial'], [['mosaic', 'beacon'], 6, 6, 'trial'],
       [['twin', 'measure'], 6, 6, 'trial'], [['weave', 'gem'], 6, 6, 'trial'], [['contour', 'twin'], 6, 6, 'trial'],
       [['mold', 'mosaic'], 6, 6, 'trial'], [['beacon', 'measure'], 6, 6, 'trial'], [['gem', 'mosaic'], 6, 6, 'trial'], [['weave', 'mold'], 6, 6, 'trial'],
-    ]),
-    halls: run('halls', [
+    ],
+    halls: [
       [['measure', 'contour', 'gem'], 6, 6, 'heart'], [['mold', 'mosaic', 'gem'], 6, 6, 'heart'], [['beacon', 'weave', 'contour'], 6, 6, 'heart', {}, 0],
       [['twin', 'measure', 'mosaic'], 6, 6, 'heart', {}, 1], [['gem', 'contour', 'mosaic'], 7, 6, 'heart'], [['mold', 'contour', 'weave'], 7, 6, 'heart'],
       [['beacon', 'measure', 'gem'], 7, 6, 'heart'], [['twin', 'mold', 'contour'], 7, 7, 'heart', {}, 1], [['weave', 'measure', 'mosaic'], 7, 7, 'heart'],
       [['beacon', 'mold', 'gem'], 7, 7, 'heart'], [['twin', 'gem', 'measure'], 7, 7, 'heart', {}, 1], [['contour', 'mosaic', 'measure'], 7, 7, 'heart'],
       [['weave', 'twin', 'gem'], 7, 7, 'heart', {}, 1], [['beacon', 'contour', 'mosaic'], 7, 7, 'heart'],
-    ]),
-    crown: run('crown', [
+    ],
+    crown: [
       [['measure', 'contour', 'gem'], 7, 6, 'heart', ech([0, 1, 2, 3])], [['gem', 'mosaic'], 6, 6, 'heart', ech([0, 1, 2, 3])],
       [['weave', 'measure', 'gem'], 7, 7, 'heart', ech([1, 2, 6, 7])], [['mold', 'contour', 'gem'], 7, 6, 'heart', ech([0, 1, 2])],
       [['mosaic', 'measure', 'contour'], 7, 6, 'heart', ech([0, 1, 2, 3], 0.25)], [['twin', 'measure', 'mosaic'], 7, 7, 'heart', ech([0, 3], 0), 1],
       [['beacon', 'contour', 'gem'], 7, 7, 'heart', ech([0, 1, 2], 0.08)], [['mold', 'weave', 'contour', 'gem'], 7, 7, 'heart', ech([0, 1, 2, 3], 0.25)],
       [['twin', 'mold', 'measure', 'gem'], 7, 7, 'heart', ech([0, 3], 0), 1], [['beacon', 'mosaic', 'measure', 'gem'], 7, 7, 'heart', ech([0, 1, 2], 0.08)],
-    ]),
+    ],
   };
+  const patch = process.env.PATCH;
+  if (!patch) return Object.fromEntries(Object.entries(LISTS).map(([g, l]) => [g, run(g, l)]));
+  // PATCH=crown.3=6,...: regenerate single panels in place from slot <index> of their group, asking for
+  // at least MIN_STEPS insights (calibration), and keep every other panel exactly as it is.
+  const groups: Groups = JSON.parse(JSON.stringify(citadelExisting));
+  for (const item of patch.split(',')) {
+    const [target, idx] = item.split('=');
+    const [g, n] = target.split('.');
+    const [kinds, w, h, level, extra, minNamed] = LISTS[g][Number(idx)];
+    const minSteps = Number(process.env.MIN_STEPS ?? 3);
+    const c = slot(A, `${g}-${idx}-cal`, level, S(kinds, w, h, extra ?? {}), Number(process.env.TRIES ?? (kinds.includes('twin') ? 2500 : 1600)), all(hasAll(kinds), tidy(2)), minNamed ?? (kinds.length >= 3 ? 2 : 1), minSteps)[0];
+    if (stats(c).steps < minSteps) throw new Error(`patch ${target}: best candidate has only ${stats(c).steps} insights`);
+    const old = groups[g][Number(n) - 1];
+    c.p.id = old.id;
+    c.p.difficulty = old.difficulty;
+    c.p.note = note(c);
+    groups[g][Number(n) - 1] = c.p;
+    console.log(`patched ${old.id}: ${stats(c).steps} insights (${langs(c.p)})`);
+  }
+  return groups;
 }
 
 function spire(): Groups {
   const A: AreaId = 'spire';
+  let cal = '';
+  let minSteps = 0;
   const one = (g: string, kinds: Kind[], w: number, h: number, extra: Partial<Spec> = {}, tries = 900, acc?: (p: PuzzleDef, s: Uint8Array) => boolean, minNamed = 1) =>
-    slot(A, g, 'heart', { w, h, kinds, holes: 0.02, maxMold: 5, keep: keepOf(kinds), gemColors: 4, twinPairs: 1, beacons: [3, 4], freeMoldP: 0.3, ...extra }, tries, (p, s) => hasAll(kinds)(p) && tidy(2)(p, s) && (!acc || acc(p, s)), minNamed);
+    slot(A, g + cal, 'heart', { w, h, kinds, holes: 0.02, maxMold: 5, keep: keepOf(kinds), gemColors: 4, twinPairs: 1, beacons: [3, 4], freeMoldP: 0.3, ...extra }, tries, (p, s) => hasAll(kinds)(p) && tidy(2)(p, s) && (!acc || acc(p, s)), minNamed, minSteps);
   const note = (c: Candidate) => insightNote(c, 'default', `${langs(c.p)}: tudo o que a ilha ensinou, junto`);
   const noteDrum = (c: Candidate) => insightNote(c, 'default', `Tambor: a borda esquerda encosta na direita — ${langs(c.p)} dando a volta`);
   const noteMirror = (c: Candidate) => insightNote(c, 'default', `Espelho (${c.p.mirror === 'v' ? 'vertical' : c.p.mirror === 'h' ? 'horizontal' : 'rotação'}): cada toque acende também o reflexo, então a resposta é simétrica — ${langs(c.p)}`);
   const sortRamp = (l: Candidate[]) => [...l].sort((a, b) => showScore(a) - showScore(b));
+  const apexNote = (c: Candidate, i: number) => (i === 3 ? insightNote(c, 'default', `O último painel da Torre: as ${NF(glyphKinds(c.p).size)} linguagens de uma só vez (${langs(c.p)})`) : note(c));
+  const SLOTS: Record<string, (() => Candidate[])[]> = {
+    ascent: [
+      () => one('ascent-1', ['measure', 'gem'], 6, 6), () => one('ascent-2', ['contour', 'beacon'], 6, 6, {}, 900, undefined, 0),
+      () => one('ascent-3', ['mosaic', 'mold'], 6, 6), () => one('ascent-4', ['weave', 'twin'], 6, 6, {}, 2500, undefined, 0),
+      () => one('ascent-5', ['gem', 'contour', 'measure'], 7, 7, {}, 900, undefined, 2), () => one('ascent-6', ['beacon', 'mosaic', 'mold'], 7, 7, {}, 900, undefined, 1),
+      () => one('ascent-7', ['twin', 'contour', 'gem'], 7, 7, {}, 2500, undefined, 1), () => one('ascent-8', ['weave', 'measure', 'mold'], 7, 7, {}, 900, undefined, 2),
+    ],
+    drums: [
+      () => one('drums-1', ['gem', 'measure'], 6, 4, { wrap: true, gemColors: 2, holes: 0 }, 2000, wrapEssential),
+      () => one('drums-2', ['measure'], 7, 5, { wrap: true, holes: 0 }, 2000, wrapEssential),
+      () => one('drums-3', ['contour'], 7, 5, { wrap: true, holes: 0 }, 2000, wrapEssential, 0),
+      () => one('drums-4', ['mold', 'contour'], 8, 5, { wrap: true, holes: 0 }, 2000, wrapEssential),
+      () => one('drums-5', ['mosaic', 'gem'], 8, 5, { wrap: true, holes: 0 }, 2000, wrapEssential),
+      () => one('drums-6', ['gem', 'measure', 'contour'], 8, 6, { wrap: true, holes: 0.02 }, 2000, wrapEssential),
+    ],
+    mirrors: [
+      () => one('mirrors-1', ['measure', 'contour'], 6, 6, { mirror: 'v', holes: 0 }), () => one('mirrors-2', ['gem', 'mosaic'], 6, 6, { mirror: 'h', holes: 0 }),
+      () => one('mirrors-3', ['contour', 'mold'], 6, 6, { mirror: 'rot', holes: 0 }), () => one('mirrors-4', ['mold', 'contour', 'mosaic'], 7, 7, { mirror: 'rot', holes: 0 }),
+      () => one('mirrors-5', ['gem', 'measure', 'weave'], 7, 7, { mirror: 'v', holes: 0 }), () => one('mirrors-6', ['mosaic', 'measure', 'gem'], 7, 7, { mirror: 'h', holes: 0 }),
+    ],
+    apex: [
+      () => one('apex-1', ['gem', 'measure', 'contour', 'mosaic'], 7, 7, {}, 1200, undefined, 2),
+      () => one('apex-2', ['mold', 'twin', 'beacon', 'contour', 'gem', 'mosaic'], 8, 8, {}, 4000, undefined, 2),
+      () => one('apex-3', ['weave', 'measure', 'mold', 'gem', 'contour'], 8, 8, {}, 2000, undefined, 2),
+      () => one('apex-4', ['gem', 'measure', 'mold', 'contour', 'mosaic', 'beacon', 'weave', 'twin'], 9, 9, { echo: { p: 0.3, dirs: echoDirs([0, 1, 2, 3]), mute: 0.08 }, beacons: [3, 4] }, 5000, undefined, 2),
+    ],
+  };
+  const NOTES: Record<string, (c: Candidate, i: number) => string> = { ascent: note, drums: noteDrum, mirrors: noteMirror, apex: apexNote };
+  const patch = process.env.PATCH;
+  if (patch) {
+    // PATCH=apex.4=3,...: regenerate single panels in place from slot <index>, asking for at least MIN_STEPS insights
+    const groups: Groups = JSON.parse(JSON.stringify(spireExisting));
+    cal = '-cal';
+    minSteps = Number(process.env.MIN_STEPS ?? 3);
+    for (const item of patch.split(',')) {
+      const [target, idx] = item.split('=');
+      const [g, n] = target.split('.');
+      let c: Candidate;
+      if (idx.endsWith('.json')) {
+        // a panel found by a dedicated search (tools/gen-vault.ts with OUT=...): the Spire's finale
+        const data = JSON.parse(readFileSync(join(root, idx), 'utf8'));
+        const p = puzzle(`${A}.${target}`, data.compact);
+        delete p.difficulty;
+        const res = solve(p, { maxSolutions: 2, maxNodes: 2_000_000 });
+        if (res.solutions.length !== 1) throw new Error(`${idx}: not unique`);
+        c = { p, sol: res.solutions[0], glyphs: 0, rivets: 0, nodes: res.nodes, simple: res.propagationOnly, sols: 1, score: 0 };
+      } else {
+        c = SLOTS[g][Number(idx)]()[0];
+      }
+      if (stats(c).steps < minSteps) throw new Error(`patch ${target}: best candidate has only ${stats(c).steps} insights`);
+      const old = groups[g][Number(n) - 1];
+      c.p.id = old.id;
+      c.p.difficulty = old.difficulty;
+      c.p.note = NOTES[g](c, Number(n) - 1);
+      groups[g][Number(n) - 1] = c.p;
+      console.log(`patched ${old.id}: ${stats(c).steps} insights (${langs(c.p)})`);
+    }
+    return groups;
+  }
   return {
-    ascent: finish(sortRamp([
-      ...one('ascent-1', ['measure', 'gem'], 6, 6), ...one('ascent-2', ['contour', 'beacon'], 6, 6, {}, 900, undefined, 0),
-      ...one('ascent-3', ['mosaic', 'mold'], 6, 6), ...one('ascent-4', ['weave', 'twin'], 6, 6, {}, 2500, undefined, 0),
-      ...one('ascent-5', ['gem', 'contour', 'measure'], 7, 7, {}, 900, undefined, 2), ...one('ascent-6', ['beacon', 'mosaic', 'mold'], 7, 7, {}, 900, undefined, 1),
-      ...one('ascent-7', ['twin', 'contour', 'gem'], 7, 7, {}, 2500, undefined, 1), ...one('ascent-8', ['weave', 'measure', 'mold'], 7, 7, {}, 900, undefined, 2),
-    ]), A, 'ascent', [8, 9], note),
-    drums: finish([
-      ...one('drums-1', ['gem', 'measure'], 6, 4, { wrap: true, gemColors: 2, holes: 0 }, 2000, wrapEssential),
-      ...one('drums-2', ['measure'], 7, 5, { wrap: true, holes: 0 }, 2000, wrapEssential),
-      ...one('drums-3', ['contour'], 7, 5, { wrap: true, holes: 0 }, 2000, wrapEssential, 0),
-      ...one('drums-4', ['mold', 'contour'], 8, 5, { wrap: true, holes: 0 }, 2000, wrapEssential),
-      ...one('drums-5', ['mosaic', 'gem'], 8, 5, { wrap: true, holes: 0 }, 2000, wrapEssential),
-      ...one('drums-6', ['gem', 'measure', 'contour'], 8, 6, { wrap: true, holes: 0.02 }, 2000, wrapEssential),
-    ], A, 'drums', [8, 9], noteDrum),
-    mirrors: finish([
-      ...one('mirrors-1', ['measure', 'contour'], 6, 6, { mirror: 'v', holes: 0 }), ...one('mirrors-2', ['gem', 'mosaic'], 6, 6, { mirror: 'h', holes: 0 }),
-      ...one('mirrors-3', ['contour', 'mold'], 6, 6, { mirror: 'rot', holes: 0 }), ...one('mirrors-4', ['mold', 'contour', 'mosaic'], 7, 7, { mirror: 'rot', holes: 0 }),
-      ...one('mirrors-5', ['gem', 'measure', 'weave'], 7, 7, { mirror: 'v', holes: 0 }), ...one('mirrors-6', ['mosaic', 'measure', 'gem'], 7, 7, { mirror: 'h', holes: 0 }),
-    ], A, 'mirrors', [8, 9], noteMirror),
-    apex: finish([
-      ...one('apex-1', ['gem', 'measure', 'contour', 'mosaic'], 7, 7, {}, 1200, undefined, 2),
-      ...one('apex-2', ['mold', 'twin', 'beacon', 'contour', 'gem', 'mosaic'], 8, 8, {}, 4000, undefined, 2),
-      ...one('apex-3', ['weave', 'measure', 'mold', 'gem', 'contour'], 8, 8, {}, 2000, undefined, 2),
-      ...one('apex-4', ['gem', 'measure', 'mold', 'contour', 'mosaic', 'beacon', 'weave', 'twin'], 9, 9, { echo: { p: 0.3, dirs: echoDirs([0, 1, 2, 3]), mute: 0.08 }, beacons: [3, 4] }, 5000, undefined, 2),
-    ], A, 'apex', [9, 10], (c, i) => (i === 3 ? insightNote(c, 'default', 'O último painel da Torre: as nove linguagens de uma só vez') : note(c))),
+    ascent: finish(sortRamp(SLOTS.ascent.flatMap((f) => f())), A, 'ascent', [8, 9], note),
+    drums: finish(SLOTS.drums.flatMap((f) => f()), A, 'drums', [8, 9], noteDrum),
+    mirrors: finish(SLOTS.mirrors.flatMap((f) => f()), A, 'mirrors', [8, 9], noteMirror),
+    apex: finish(SLOTS.apex.flatMap((f) => f()), A, 'apex', [9, 10], apexNote),
   };
 }
 
@@ -674,6 +837,56 @@ function emit(area: AreaId, groups: Groups): void {
   const body = order.map((k) => `  ${k}: [\n${groups[k].map((p) => toSource(p, '    ')).join('\n')}\n  ],`).join('\n') + '\n  secret: [],';
   src = src.slice(0, a) + '  // <gen> (generated by tools/gen-content.ts — do not edit by hand)\n' + body + '\n' + src.slice(b);
   writeFileSync(path, src);
+}
+
+/**
+ * REORDER=citadel,echo,spire: calibration pass for the late areas — orders each group (and each
+ * 3-panel echo sequence) by measured difficulty, renumbering ids and the "i/N" in the notes; the
+ * Spire's finale is its hardest panel. Content is untouched.
+ */
+async function reorderLate(area: AreaId): Promise<void> {
+  const mod = await import(`../src/data/puzzles/${area}.ts`);
+  const groups: Groups = JSON.parse(JSON.stringify(mod.default));
+  delete groups.secret;
+  if (area === 'echo') delete groups.intro; // hand-written, lives outside the generated block
+  const effort = new Map<PuzzleDef, number>();
+  const gentleP = (p: PuzzleDef) => {
+    if (!effort.has(p)) { const ip = insightPath(p, 60); effort.set(p, ip.steps.length * 10 - ip.basicRoot); }
+    return effort.get(p)!;
+  };
+  const byEffort = (l: PuzzleDef[]) => [...l].sort((a, b) => gentleP(a) - gentleP(b));
+  for (const [g, list] of Object.entries(groups)) {
+    let out: PuzzleDef[];
+    if (area === 'echo' && g === 'trial') {
+      out = [];
+      for (let k = 0; k < list.length; k += 3) {
+        byEffort(list.slice(k, k + 3)).forEach((p, i) => { p.note = p.note!.replace(/^seq ([A-Z])\d\/3/, `seq $1${i + 1}/3`); out.push(p); });
+      }
+    } else if (area === 'echo' && g === 'practice') {
+      out = list;
+    } else if (area === 'spire' && g === 'apex') {
+      // the finale is the hardest panel of the Tower: order by effort and give the last one the finale's words
+      const FIN = 'O último painel da Torre';
+      out = byEffort(list).map((p, i, arr) => {
+        let n = p.note!.replace(new RegExp(`^${FIN}: a`), 'A').replace(new RegExp(`^${FIN} — `), '');
+        if (i === arr.length - 1) n = `${FIN} — ${n.replace(/^./, (x) => x.toLowerCase())}`;
+        p.note = n;
+        return p;
+      });
+    } else {
+      out = byEffort(list);
+    }
+    out.forEach((p, i) => {
+      p.id = `${area}.${g}.${i + 1}`;
+      if (p.note) p.note = p.note.replace(/^Obra-prima \d+\/(\d+)/, `Obra-prima ${i + 1}/$1`);
+    });
+    groups[g] = out;
+  }
+  emit(area, groups);
+  console.log(`${area}: reordered ${Object.entries(groups).map(([k, v]) => `${k} ${v.length}`).join(', ')}`);
+}
+if (process.env.REORDER) {
+  for (const area of process.env.REORDER.split(',') as AreaId[]) await reorderLate(area);
 }
 
 for (const [area, fn] of Object.entries(GENERATORS) as [AreaId, () => Groups][]) {

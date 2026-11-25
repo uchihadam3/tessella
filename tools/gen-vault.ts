@@ -8,14 +8,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { puzzle, toCompact } from '../src/puzzle/board';
-import { solve, traceDeduction } from '../src/puzzle/solver';
+import { insightPath, solve, traceDeduction } from '../src/puzzle/solver';
 import type { PuzzleDef } from '../src/puzzle/types';
 import { generate, type Kind, type Spec } from './lib/gen';
 import { rng } from './lib/random-puzzle';
 import { ascii } from './lib/show';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const out = join(root, 'tools/data/vault.json');
+const out = join(root, process.env.OUT ?? 'tools/data/vault.json');
 const minutes = Number(process.argv[2] ?? 10);
 const r = rng(Number(process.argv[3] ?? 2026));
 const kinds: Kind[] = ['gem', 'measure', 'mold', 'contour', 'mosaic', 'beacon', 'weave', 'twin'];
@@ -36,7 +36,13 @@ export function vaultScore(p: PuzzleDef): { score: number; trace: [string, numbe
   const regionSteps = tr.steps.filter(([k]) => k === 'regions').length;
   const glyphs = p.cells.filter((c) => c.glyph && c.glyph.kind !== 'beacon').length + (p.rowClues?.filter(Boolean).length ?? 0) + (p.colClues?.filter(Boolean).length ?? 0);
   const bigNumbers = p.cells.filter((c) => c.glyph?.kind === 'measure' && (c.glyph as { n: number }).n > 16).length;
-  const score = (1 - simple.rootDetermined) * 40 + alternations * 1.5 + regionSteps * 1.5 - glyphs * 0.6 - bigNumbers * 6;
+  // the vault must be the true peak: many insights, of many kinds, from a board a beginner can barely start
+  const ip = insightPath(p, 60);
+  if (!ip.solved) return null;
+  const kinds = new Set(ip.steps.map((s) => s.tag.split('-')[0]));
+  const looks = ip.steps.filter((s) => s.tag === 'lookahead').length;
+  if (looks > 10) return null;
+  const score = ip.steps.length * Number(process.env.STEPW ?? 3) + kinds.size * 5 + (1 - ip.basicRoot) * 20 + alternations * 0.5 - glyphs * 0.5 - bigNumbers * 6;
   return { score, trace: tr.steps, simpleRoot: simple.rootDetermined, glyphs };
 }
 
@@ -45,7 +51,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     w: 9, h: 9, kinds, holes: 0, maxMold: 5, freeMoldP: 0.5,
     keep: Object.fromEntries(['measure', 'mold', 'contour', 'mosaic', 'weave'].map((k) => [k, 1])),
     gemColors: 3, twinPairs: 1, mirrorTwinP: 1,
-    weights: { measure: 1, mold: 0.8, contour: 1, mosaic: 1 },
+    weights: process.env.VW ? JSON.parse(process.env.VW) : { measure: 1, mold: 0.8, contour: 1, mosaic: 1 },
     stateWithBeacons: (rr, p, g) => {
       // left-right symmetric constellation of beacons: every region has a mirror twin
       const W = p.w, H = p.h;

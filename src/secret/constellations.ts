@@ -28,7 +28,7 @@ export const VAULT_THRESHOLD = 100;
 /** the player's eye height (see Player.eye) */
 const EYE_H = 1.62;
 /** half-width of a figure as seen from its spot (degrees, centre to the farthest object) */
-const SPAN_DEG = 17;
+const SPAN_DEG = 21;
 /** how close to the spot you must stand (metres) and how straight you must look (degrees) */
 const SPOT_TOL = 0.42;
 const LOOK_TOL = 4;
@@ -37,7 +37,7 @@ const REVEAL_SECONDS = 6;
 /** viewing spots this far apart at least: the figures are spread over the whole island */
 const SPOT_SPACING = 16;
 /** threads are this thin (radians) seen from the spot, whatever their distance */
-const THREAD_W = 0.003;
+const THREAD_W = 0.0042;
 
 // ───────────────────────── per-place objects ─────────────────────────
 
@@ -244,6 +244,12 @@ function ringTexture(): THREE.Texture {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
   const ctx = c.getContext('2d')!;
+  // a dark rim first so the ring reads on bright sky and grass alike
+  ctx.strokeStyle = 'rgba(10,10,20,0.55)';
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.arc(32, 32, 22, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.strokeStyle = 'rgba(255,255,255,1)';
   ctx.lineWidth = 4;
   ctx.shadowColor = 'rgba(255,240,210,0.9)';
@@ -289,6 +295,7 @@ export interface CItem {
   restColors: THREE.Color[];
   specks: THREE.Sprite[];
   threads: THREE.Mesh;
+  threadShadow: THREE.Mesh;
   threadU: { uReveal: { value: number }; uAlpha: { value: number } };
   threadRanges: [number, number][];
   sprites: THREE.Sprite[];
@@ -516,7 +523,7 @@ export class ConstellationSystem {
     const gy = this.okPoint(vx, vz);
     if (gy === null) return false;
     // not on the Sky Spire: its landings only exist once the stair of light is lit
-    if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26 && gy > SPIRE.baseY + 2.5) return false;
+    if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return false; // the Spire's island and landings
     // the crater floor belongs to the Resonant Hollow alone
     if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return false;
     // (in the last, most relaxed pass a crowded place may keep its figures a little closer)
@@ -524,6 +531,8 @@ export class ConstellationSystem {
     if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return false;
     if (!this.enterable(vx, vz, gy)) return false;
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
+    // a clear place to stand: no branches in your face
+    if (this.world.forest.crownNear(eye, 2.2)) return false;
     const yaw = rnd() * Math.PI * 2;
     const pitch = THREE.MathUtils.degToRad(-11 + rnd() * 25);
     const fwd = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
@@ -718,6 +727,31 @@ export class ConstellationSystem {
     tg.setAttribute('color', new THREE.Float32BufferAttribute(tCol, 3));
     tg.setAttribute('aT', new THREE.Float32BufferAttribute(tT, 1));
     const threadU = { uReveal: { value: 1 }, uAlpha: { value: 0 } };
+    // a soft dark band under each thread keeps it readable against bright sky or sand
+    const shadowGeo = tg.clone();
+    {
+      const pa = shadowGeo.attributes.position as THREE.BufferAttribute;
+      const pb = tg.attributes.position as THREE.BufferAttribute;
+      // widen each quad around its centre line (vertices come in pairs across the ribbon)
+      for (let i = 0; i < pa.count; i += 6) {
+        const idx = [0, 1, 2, 0, 2, 3];
+        const q: THREE.Vector3[] = [];
+        for (let k = 0; k < 6; k++) q[idx[k]] = new THREE.Vector3().fromBufferAttribute(pb, i + k);
+        const m01 = q[0].clone().add(q[1]).multiplyScalar(0.5), m32 = q[3].clone().add(q[2]).multiplyScalar(0.5);
+        const w = [q[0].clone().sub(m01).multiplyScalar(2.4).add(m01), q[1].clone().sub(m01).multiplyScalar(2.4).add(m01), q[2].clone().sub(m32).multiplyScalar(2.4).add(m32), q[3].clone().sub(m32).multiplyScalar(2.4).add(m32)];
+        for (let k = 0; k < 6; k++) pa.setXYZ(i + k, w[idx[k]].x, w[idx[k]].y, w[idx[k]].z);
+      }
+    }
+    const shadowMat = new THREE.ShaderMaterial({
+      uniforms: threadU, vertexShader: threadVert,
+      fragmentShader: threadFrag.replace('gl_FragColor = vec4(vC * (1.0 + head * 3.0), uAlpha);', 'gl_FragColor = vec4(0.03, 0.03, 0.06, uAlpha * 0.42);'),
+      side: THREE.DoubleSide, toneMapped: false, transparent: true, depthTest: false, depthWrite: false,
+    });
+    const threadShadow = new THREE.Mesh(shadowGeo, shadowMat);
+    threadShadow.frustumCulled = false;
+    threadShadow.renderOrder = 19;
+    threadShadow.visible = false;
+    g.add(threadShadow);
     const threads = new THREE.Mesh(tg, new THREE.ShaderMaterial({
       uniforms: threadU, vertexShader: threadVert, fragmentShader: threadFrag, side: THREE.DoubleSide, toneMapped: false,
       transparent: true, depthTest: false, depthWrite: false,
@@ -766,7 +800,7 @@ export class ConstellationSystem {
     if (nonSky) centroid.multiplyScalar(1 / nonSky);
     else centroid.copy(eye);
     this.items.push({
-      def, area, group: g, vis, props, discs, fruits, restColors, specks, threads, threadU, threadRanges: ranges, sprites, rings, orb, orbBase,
+      def, area, group: g, vis, props, discs, fruits, restColors, specks, threads, threadShadow, threadU, threadRanges: ranges, sprites, rings, orb, orbBase,
       state: initialState(def), solved: false, revealed: false, reveal: 1, hold: 0,
       view: { spot: new THREE.Vector3(eye.x, gy, eye.z), eye: eye.clone(), dir: fwd.clone() },
       center: centroid, radius: 3, starPos, rest, lit, blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false,
@@ -876,7 +910,7 @@ export class ConstellationSystem {
       }
       if (Math.abs(alpha - it.threadU.uAlpha.value) > 1e-3) {
         it.threadU.uAlpha.value = alpha;
-        it.threads.visible = alpha > 0.002;
+        it.threads.visible = it.threadShadow.visible = alpha > 0.002;
       }
     }
   }
@@ -1004,7 +1038,7 @@ export class ConstellationSystem {
       if (!it.group.visible) continue;
       if (this.blaze && it.threadU.uAlpha.value < 0.9) {
         it.threadU.uAlpha.value = 0.9;
-        it.threads.visible = true;
+        it.threads.visible = it.threadShadow.visible = true;
       }
       if (it.revealed && it.reveal < 1) {
         // the threads draw themselves out once the vision completes

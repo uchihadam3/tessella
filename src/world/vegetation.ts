@@ -474,6 +474,27 @@ export class Forest {
     return { t: best.t, kind: species.startsWith('rock') ? 'rock' : 'tree', species, point: o.clone().addScaledVector(d, best.t) };
   }
 
+  /** is p inside (or within `pad` metres of) any tree crown? — e.g. to keep a viewpoint clear of foliage */
+  crownNear(p: THREE.Vector3, pad: number): boolean {
+    const C = Forest.HIT_CELL;
+    if (!this.hitGrid) this.raycast(p, new THREE.Vector3(0, 1, 0), 0.01); // builds the grid
+    const cx = Math.floor(p.x / C), cz = Math.floor(p.z / C);
+    const l = new THREE.Vector3();
+    for (let ix = cx - 1; ix <= cx + 1; ix++) for (let iz = cz - 1; iz <= cz + 1; iz++) {
+      for (const { key, p: q } of this.hitGrid!.get(`${ix},${iz}`) ?? []) {
+        if (key.startsWith('rock')) continue;
+        const sh = this.shapeFor(key);
+        const cs = Math.cos(-q.r), sn = Math.sin(-q.r);
+        const ox = p.x - q.x, oy = p.y - q.y, oz = p.z - q.z;
+        l.set((ox * cs + oz * sn) / q.s, oy / q.s, (-ox * sn + oz * cs) / q.s).sub(sh.c);
+        // ellipsoid grown by pad (in local units)
+        const e = sh.e, pd = pad / q.s;
+        if ((l.x / (e.x + pd)) ** 2 + (l.y / (e.y + pd)) ** 2 + (l.z / (e.z + pd)) ** 2 < 1) return true;
+      }
+    }
+    return false;
+  }
+
   build(): THREE.Group {
     const dummy = new THREE.Object3D();
     for (const [key, list] of this.placements) {

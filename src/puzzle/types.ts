@@ -103,6 +103,8 @@ export interface Violation {
   /** Weave clue lines to blink. */
   rows?: number[];
   cols?: number[];
+  /** the answer as a whole is wrong: say so without telling which tiles (that would give it away) */
+  whole?: boolean;
 }
 
 export interface CheckResult {

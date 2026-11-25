@@ -126,7 +126,8 @@ export function check(p: PuzzleDef, state: ArrayLike<number>): CheckResult {
       const want = p.target[i] === '1' ? 1 : 0;
       if (state[i] !== want) bad.push(i);
     }
-    if (bad.length) violations.push({ rule: 'target', tiles: bad });
+    // never which tiles differ from the pattern: that would show the answer
+    if (bad.length) violations.push({ rule: 'target', tiles: [], whole: true });
   }
 
   const { id: reg, members } = computeRegions(g, state);
@@ -209,9 +210,10 @@ export function check(p: PuzzleDef, state: ArrayLike<number>): CheckResult {
       sight.forEach((t) => seenAll.add(t));
       if (!state[b] || sight.length !== gl.n) violations.push({ rule: 'beacon', tiles: [b] });
     }
-    const unseen: number[] = [];
-    for (let i = 0; i < n; i++) if (!p.cells[i].hole && state[i] && !seenAll.has(i)) unseen.push(i);
-    if (unseen.length) violations.push({ rule: 'beacon', tiles: unseen });
+    // a lit tile no beacon sees: blink the beacons (the rule), not the tile (that would show the answer)
+    let unseen = false;
+    for (let i = 0; i < n; i++) if (!p.cells[i].hole && state[i] && !seenAll.has(i)) unseen = true;
+    if (unseen) violations.push({ rule: 'beacon', tiles: [...beacons] });
   }
 
   // Weave

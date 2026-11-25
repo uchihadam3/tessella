@@ -108,7 +108,10 @@ export function checkConstellation(def: ConstellationDef, state: ArrayLike<numbe
   });
 
   if (wantsAllLit(def)) {
-    for (let i = 0; i < n; i++) if (!state[i]) bad.add(i);
+    // (wrong as a whole: never which stars, that would show the answer)
+    let off = false;
+    for (let i = 0; i < n; i++) if (!state[i]) off = true;
+    if (off) for (let i = 0; i < n; i++) bad.add(i);
     return { ok: bad.size === 0, violations: { stars: [...bad], threads: [] } };
   }
 

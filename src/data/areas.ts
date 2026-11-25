@@ -45,11 +45,12 @@ export interface AreaSpec {
   totem: boolean;
 }
 
+/** Teaching areas: 7 teaching panels, then 22 ever-harder panels of the same language. */
 const OPEN_GROUPS = (intro: string, practice: string, trial: string, heart: string): GroupSpec[] => [
   { key: 'intro', count: 7, role: intro },
-  { key: 'practice', count: 5, role: practice },
-  { key: 'trial', count: 4, role: trial },
-  { key: 'heart', count: 4, role: heart },
+  { key: 'practice', count: 8, role: practice },
+  { key: 'trial', count: 8, role: trial },
+  { key: 'heart', count: 6, role: heart },
 ];
 
 export const AREAS: AreaSpec[] = [
@@ -120,9 +121,9 @@ export const AREAS: AreaSpec[] = [
     lit: '#e8a560', accent: '#9c6b3c', anchor: [0, -440], totem: true,
     groups: [
       { key: 'gate', count: 4, role: 'two languages per panel' },
-      { key: 'court', count: 6, role: 'two languages, deeper interactions' },
-      { key: 'halls', count: 8, role: 'three languages' },
-      { key: 'crown', count: 6, role: 'three or four languages incl. echo; the hardest of the island' },
+      { key: 'court', count: 8, role: 'two languages, deeper interactions' },
+      { key: 'halls', count: 10, role: 'three languages' },
+      { key: 'crown', count: 8, role: 'three or four languages incl. echo; the hardest of the island' },
     ],
   },
   {
@@ -131,9 +132,9 @@ export const AREAS: AreaSpec[] = [
     lit: '#63f0ff', accent: '#8a6bff', anchor: [0, -60], totem: true,
     groups: [
       { key: 'intro', count: 7, role: 'pressing echoes; mute tiles; copy crystal plates' },
-      { key: 'practice', count: 5, role: 'echo puzzles with plates, bigger' },
-      { key: 'trial', count: 4, role: 'echo + a known language' },
-      { key: 'heart', count: 2, role: 'mastery' },
+      { key: 'practice', count: 6, role: 'echo puzzles with plates, bigger' },
+      { key: 'trial', count: 6, role: 'echo + a known language' },
+      { key: 'heart', count: 3, role: 'mastery' },
     ],
   },
   {
@@ -143,7 +144,7 @@ export const AREAS: AreaSpec[] = [
     groups: [
       { key: 'ascent', count: 6, role: 'combinations, rising' },
       { key: 'drums', count: 4, role: 'drum panels: the edges meet (wrap)' },
-      { key: 'mirrors', count: 3, role: 'mirror input' },
+      { key: 'mirrors', count: 4, role: 'mirror input' },
       { key: 'apex', count: 3, role: 'the finale' },
     ],
   },
@@ -155,8 +156,17 @@ export const AREA_BY_ID: Record<AreaId, AreaSpec> = Object.fromEntries(AREAS.map
 export const TEACHING_AREAS: AreaId[] = ['kinship', 'measure', 'mold', 'contour', 'mosaic', 'beacon', 'weave', 'twins'];
 export const TOTEMS_TO_OPEN_ECHO = 7;
 
-/** Environmental secrets (optional "world tesserae"): one per place listed here. */
-export const SECRET_AREAS: AreaId[] = ['prologue', 'hub', 'kinship', 'measure', 'mold', 'contour', 'mosaic', 'beacon', 'weave', 'twins', 'citadel', 'echo'];
+/** Environmental secrets (optional "world tesserae" built from objects of the landscape):
+ *  how many each place hides (group key 'secret'). */
+export const SECRET_COUNTS: Partial<Record<AreaId, number>> = {
+  prologue: 1, hub: 1, kinship: 2, measure: 2, mold: 2, contour: 2, mosaic: 2, beacon: 2, weave: 2, twins: 2, citadel: 2, echo: 1, spire: 1,
+};
+export const SECRET_AREAS: AreaId[] = Object.keys(SECRET_COUNTS) as AreaId[];
+export const SECRET_TOTAL = Object.values(SECRET_COUNTS).reduce((s, n) => s + (n ?? 0), 0);
+
+/** The Hidden Vault opens when every world secret is solved. It holds one puzzle:
+ *  'hub.vault' (group key 'vault' in the hub's puzzle set) — the hardest puzzle of the island. */
+export const VAULT_PUZZLE_ID = 'hub.vault';
 
 export function puzzleCount(id: AreaId): number {
   return AREA_BY_ID[id].groups.reduce((s, g) => s + g.count, 0);

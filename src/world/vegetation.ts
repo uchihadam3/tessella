@@ -522,6 +522,8 @@ export class GrassField {
   private maxFlowers = 5000;
   enabled = true;
   densityScale = 1;
+  /** returns true where something (a floor, a plaza) covers the ground */
+  covered: (x: number, z: number, h: number) => boolean = () => false;
 
   constructor(private terrain: Terrain, private rules: GrassRules, private colorAt: (x: number, z: number, out: THREE.Color) => THREE.Color) {
     this.grass = new THREE.InstancedMesh(makeGrassClump(), makeGrassMaterial(false), this.maxGrass);
@@ -576,6 +578,7 @@ export class GrassField {
           this.terrain.normalAt(x, z, n);
           const d = this.rules.density(x, z, h, 1 - n.y, this.terrain.pathAt(x, z));
           if (r3 > d) continue;
+          if (this.covered(x, z, h)) continue;
           const fc = this.rules.flowerChance ? this.rules.flowerChance(x, z) : 0.08;
           const flower = r3 < d * fc ? this.rules.flower(x, z) : null;
           dummy.position.set(x, h - 0.02, z);

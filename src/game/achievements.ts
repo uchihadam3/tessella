@@ -1,0 +1,30 @@
+/** Achievements ("Conquistas"). */
+export const ACHIEVEMENTS = [
+  { id: 'first_light', pt: ['Primeira Luz', 'Resolva o seu primeiro painel.'], en: ['First Light', 'Solve your first panel.'] },
+  { id: 'awakened', pt: ['Desperto', 'Saia do santuário e abra o portão das dunas.'], en: ['Awakened', 'Leave the sanctuary and open the dune gate.'] },
+  { id: 'explorer', pt: ['Andarilho', 'Visite as oito áreas de ensino.'], en: ['Wanderer', 'Visit all eight teaching areas.'] },
+  { id: 'area_kinship', pt: ['Afinidade', 'Acenda o totem do Bosque Outonal.'], en: ['Kinship', 'Light the Autumn Grove totem.'] },
+  { id: 'area_measure', pt: ['Medida', 'Acenda o totem dos Terraços.'], en: ['Measure', 'Light the Terraces totem.'] },
+  { id: 'area_mold', pt: ['Forma', 'Acenda o totem da Pedreira.'], en: ['Mold', 'Light the Quarry totem.'] },
+  { id: 'area_contour', pt: ['Contorno', 'Acenda o totem do Jardim de Sebes.'], en: ['Contour', 'Light the Hedge Garden totem.'] },
+  { id: 'area_mosaic', pt: ['Mosaico', 'Acenda o totem do Templo das Areias.'], en: ['Mosaic', 'Light the Sand Temple totem.'] },
+  { id: 'area_beacon', pt: ['Farol', 'Acenda o totem dos Penhascos.'], en: ['Beacon', 'Light the Cliffs totem.'] },
+  { id: 'area_weave', pt: ['Trama', 'Acenda o totem do Vale dos Moinhos.'], en: ['Weave', 'Light the Windmill Vale totem.'] },
+  { id: 'area_twins', pt: ['Gêmeos', 'Acenda o totem do Lago Espelhado.'], en: ['Twins', 'Light the Mirror Lake totem.'] },
+  { id: 'hollow', pt: ['A Porta da Montanha', 'Acenda sete totens e abra a Caverna Ressonante.'], en: ['The Mountain Door', 'Light seven totems and open the Resonant Hollow.'] },
+  { id: 'area_echo', pt: ['Eco', 'Complete a Caverna Ressonante.'], en: ['Echo', 'Complete the Resonant Hollow.'] },
+  { id: 'all_totems', pt: ['Oito Feixes', 'Acenda os oito totens de ensino.'], en: ['Eight Beams', 'Light all eight teaching totems.'] },
+  { id: 'area_citadel', pt: ['A Cidadela', 'Complete a Cidadela.'], en: ['The Citadel', 'Complete the Citadel.'] },
+  { id: 'spire_open', pt: ['Escada de Luz', 'Abra o caminho para a Torre do Céu.'], en: ['Stair of Light', 'Open the way to the Sky Spire.'] },
+  { id: 'the_end', pt: ['Um Novo Dia', 'Chegue ao topo da Torre do Céu.'], en: ['A New Day', 'Reach the top of the Sky Spire.'] },
+  { id: 'fifty', pt: ['Cinquenta Luzes', 'Resolva 50 painéis.'], en: ['Fifty Lights', 'Solve 50 panels.'] },
+  { id: 'hundred_fifty', pt: ['Mestre das Tesselas', 'Resolva 150 painéis.'], en: ['Tessella Master', 'Solve 150 panels.'] },
+  { id: 'every_panel', pt: ['Ilha Inteira', 'Resolva todos os painéis da ilha.'], en: ['The Whole Island', 'Solve every panel on the island.'] },
+  { id: 'first_star', pt: ['Algo Brilha', 'Descubra a primeira constelação.'], en: ['Something Glimmers', 'Discover the first constellation.'] },
+  { id: 'stars_30', pt: ['Cartógrafo do Céu', 'Resolva 30 constelações.'], en: ['Sky Cartographer', 'Solve 30 constellations.'] },
+  { id: 'stars_100', pt: ['Cem Estrelas', 'Resolva 100 constelações e abra o Cofre.'], en: ['A Hundred Stars', 'Solve 100 constellations and open the Vault.'] },
+  { id: 'stars_all', pt: ['Firmamento', 'Resolva todas as constelações.'], en: ['Firmament', 'Solve every constellation.'] },
+  { id: 'vault', pt: ['A Tessela Oculta', 'Resolva o puzzle do Cofre Oculto.'], en: ['The Hidden Tessella', 'Solve the Hidden Vault puzzle.'] },
+] as const;
+
+export type AchievementId = (typeof ACHIEVEMENTS)[number]['id'];

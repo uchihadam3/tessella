@@ -33,8 +33,9 @@ export function rawHeight(x: number, z: number): number {
 
   // ── hub plateau ──
   {
-    const w = smoothstep(95, 44, dist(x, z, HUB.x, HUB.z));
-    h = lerp(h, HUB.y + 0.25 * simplex.noise(x / 9, z / 9), w);
+    const dh = dist(x, z, HUB.x, HUB.z);
+    const w = smoothstep(95, 44, dh);
+    h = lerp(h, HUB.y + 0.25 * simplex.noise(x / 9, z / 9) * smoothstep(31, 36, dh) - 0.18 * smoothstep(36, 31, dh), w);
   }
 
   // ── areas ──

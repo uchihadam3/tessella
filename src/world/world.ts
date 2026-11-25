@@ -69,6 +69,8 @@ export class World {
     scatterVegetation(this.forest);
     this.root.add(this.forest.build());
     for (const c of this.forest.colliders) this.collision.addBlocker({ x: c.x, z: c.z, r: c.r, y0: -100, y1: 400 });
+    // no grass where floors/plazas/decks cover the ground
+    this.grass.covered = (x, z, h) => this.collision.groundAt(x, z, h + 40)[0] > h + 0.03 || this.forest.isExcluded(x, z, -1.2);
     this.root.add(this.grass.group);
   }
 

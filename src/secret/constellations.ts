@@ -28,14 +28,14 @@ export const VAULT_THRESHOLD = 100;
 /** the player's eye height (see Player.eye) */
 const EYE_H = 1.62;
 /** half-width of a figure as seen from its spot (degrees, centre to the farthest object) */
-const SPAN_DEG = 11;
+const SPAN_DEG = 15;
 /** how close to the spot you must stand (metres) and how straight you must look (degrees) */
 const SPOT_TOL = 0.6;
 const LOOK_TOL = 4.5;
 /** seconds of steady looking for the vision to complete */
 const REVEAL_SECONDS = 5;
 /** threads are this thin (radians) seen from the spot, whatever their distance */
-const THREAD_W = 0.0021;
+const THREAD_W = 0.003;
 
 // ───────────────────────── per-place objects ─────────────────────────
 
@@ -229,6 +229,24 @@ function dotTexture(): THREE.Texture {
   return dotTex;
 }
 
+// a thin ring that marks each object once the figure has been seen
+let ringTex: THREE.Texture | null = null;
+function ringTexture(): THREE.Texture {
+  if (ringTex) return ringTex;
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d')!;
+  ctx.strokeStyle = 'rgba(255,255,255,1)';
+  ctx.lineWidth = 4;
+  ctx.shadowColor = 'rgba(255,240,210,0.9)';
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  ctx.arc(32, 32, 22, 0, Math.PI * 2);
+  ctx.stroke();
+  ringTex = new THREE.CanvasTexture(c);
+  return ringTex;
+}
+
 // ───────────────────────── threads ─────────────────────────
 
 const threadVert = /* glsl */ `
@@ -263,6 +281,8 @@ export interface CItem {
   threadU: { uReveal: { value: number }; uAlpha: { value: number } };
   threadRanges: [number, number][];
   sprites: THREE.Sprite[];
+  /** a ring around each object, drawn with the threads */
+  rings: THREE.Sprite[];
   orb: THREE.Mesh;
   orbBase: THREE.Vector3;
   state: Uint8Array;
@@ -588,6 +608,16 @@ export class ConstellationSystem {
       g.add(sp);
       sprites.push(sp);
     });
+    const rings = starPos.map((p) => {
+      const d = p.distanceTo(eye);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTexture(), color: 0xfff1d6, depthWrite: false, depthTest: false, transparent: true, opacity: 0, fog: false, toneMapped: false }));
+      sp.position.copy(p);
+      sp.scale.setScalar(d * 0.034);
+      sp.renderOrder = 21;
+      sp.visible = false;
+      g.add(sp);
+      return sp;
+    });
     // the orb (rung to check) appears where the figure says
     const orbHit = hits[n];
     const orbBase = orbHit.kind === 'sky' ? eye.clone().addScaledVector(orbHit.p.clone().sub(eye).normalize(), 18) : orbHit.p.clone().add(new THREE.Vector3(0, 0.35, 0));
@@ -604,7 +634,7 @@ export class ConstellationSystem {
     if (nonSky) centroid.multiplyScalar(1 / nonSky);
     else centroid.copy(eye);
     this.items.push({
-      def, area, group: g, vis, props, discs, specks, threads, threadU, threadRanges: ranges, sprites, orb, orbBase,
+      def, area, group: g, vis, props, discs, specks, threads, threadU, threadRanges: ranges, sprites, rings, orb, orbBase,
       state: initialState(def), solved: false, revealed: false, reveal: 1, hold: 0,
       view: { spot: new THREE.Vector3(eye.x, gy, eye.z), eye: eye.clone(), dir: fwd.clone() },
       center: centroid, radius: 3, starPos, rest, lit, blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false,
@@ -853,6 +883,14 @@ export class ConstellationSystem {
         s.visible = show;
         (s.material as THREE.SpriteMaterial).opacity = Math.min(1, it.reveal * 1.4) * it.threadU.uAlpha.value;
       }
+      it.rings.forEach((r, i) => {
+        r.visible = show;
+        const m = r.material as THREE.SpriteMaterial;
+        m.opacity = Math.min(1, it.reveal * 1.4) * it.threadU.uAlpha.value * (it.state[i] ? 1 : 0.55);
+        if (it.solved || this.blaze) m.color.setRGB(1.6, 1.4, 1.0);
+        else if (it.state[i]) m.color.copy(it.lit).multiplyScalar(1.8);
+        else m.color.setRGB(0.95, 0.92, 0.86);
+      });
       if (it.blink > 0) {
         it.blink = Math.max(0, it.blink - dt);
         it.dirty = true;

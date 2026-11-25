@@ -164,6 +164,14 @@ export function rawHeight(x: number, z: number): number {
     }
   }
 
+  // ── the hub plateau again, over the caldera's outer slope (which reached over the plaza's south
+  // side and buried its colonnade, steles and plinths) ──
+  {
+    const dh = dist(x, z, HUB.x, HUB.z);
+    const w = smoothstep(47, 37, dh);
+    h = lerp(h, HUB.y + 0.25 * simplex.noise(x / 9, z / 9) * smoothstep(31, 36, dh) - 0.18 * smoothstep(36, 31, dh), w);
+  }
+
   // ── citadel islet ──
   {
     const r = dist(x, z, CITADEL.x, CITADEL.z) * (1 + 0.08 * simplex.noise(x / 30, z / 30));

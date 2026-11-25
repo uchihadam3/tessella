@@ -227,7 +227,17 @@ export class AreaCtx implements AreaRuntime {
       maxSize: place.maxSize,
       tilt: place.tilt,
     });
-    const y = place.y ?? this.y(place.x, place.z);
+    let y = place.y ?? this.y(place.x, place.z);
+    // never sunk: if the ground rises anywhere under the panel's base or just in front of it (a
+    // slope, a terrace step through a platform), the panel stands on the highest of it
+    if (p.view.mount !== 'wall') {
+      const c = Math.cos(place.yaw), s = Math.sin(place.yaw);
+      let top = -Infinity;
+      for (const lx of [-0.8, -0.4, 0, 0.4, 0.8]) for (const lz of [-0.45, 0, 0.45, 0.9]) {
+        top = Math.max(top, this.y(place.x + lx * c + lz * s, place.z - lx * s + lz * c));
+      }
+      if (top > y - 0.04) y = top + 0.03;
+    }
     p.view.root.position.set(place.x, y, place.z);
     p.view.root.rotation.y = place.yaw;
     p.view.root.updateMatrixWorld(true);

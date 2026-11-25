@@ -10,6 +10,7 @@ import { G, mtx, solidBox, floorSlab, column, wall } from '../arch';
 import { M, mat } from '../materials';
 import type { World } from '../world';
 import type { PanelManager } from '../../puzzle/panels';
+import { audio } from '../../audio';
 
 export const PROLOGUE_START = { x: 0, z: 279.5, yaw: Math.PI, floorY: 7.2 };
 
@@ -195,6 +196,7 @@ export function buildPrologue(world: World, pm: PanelManager): AreaCtx {
     wall(b, stoneDark, -11, 251, -4.3, 251, gy - 1, 4.5, 1.4);
     wall(b, stoneDark, 4.3, 251, 11, 251, gy - 1, 4.5, 1.4);
   }
+  audio.addSource('surf', 0, 0.5, 334, 70);
   // palms and driftwood for flavour
   world.forest.add('palm', -14, 300, 1.1);
   world.forest.add('palm', 15, 302, 1.0);

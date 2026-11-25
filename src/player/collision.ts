@@ -144,6 +144,36 @@ export class CollisionWorld {
     return false;
   }
 
+  /** Minimum terrain normal.y you can walk up (0.6 ≈ 53°). */
+  maxSlopeNY = 0.6;
+
+  /**
+   * The single movement rule shared by the player and the reachability checker:
+   * try to move a body (feet at fy) from (fx,fz) to (tx,tz). Steps up to `step` are fine on
+   * floors/stairs; on bare terrain you can only walk up slopes gentler than maxSlopeNY; deep
+   * water and low ceilings block. Returns the new position (after sliding out of blockers) or null.
+   */
+  tryMove(fx: number, fz: number, fy: number, tx: number, tz: number, radius: number, step: number, height: number): { x: number; z: number; y: number; surface: Surface | null } | null {
+    const p = { x: tx, z: tz };
+    this.resolve(p, radius, fy + step * 0.9, fy + height);
+    const [g, surf] = this.groundAt(p.x, p.z, fy + step);
+    if (g === -Infinity) return null;
+    if (surf === null) {
+      if (g > fy + 0.005) {
+        const e = 0.6;
+        const hx = this.terrainHeight(p.x + e, p.z) - this.terrainHeight(p.x - e, p.z);
+        const hz = this.terrainHeight(p.x, p.z + e) - this.terrainHeight(p.x, p.z - e);
+        const ny = (2 * e) / Math.hypot(hx, hz, 2 * e);
+        if (ny < this.maxSlopeNY) return null;
+      }
+      if (g < this.waterAt(p.x, p.z) - 0.75) return null;
+    }
+    if (this.ceilingAt(p.x, p.z, Math.max(fy, g) + step, Math.max(fy, g) + height)) return null;
+    void fx;
+    void fz;
+    return { x: p.x, z: p.z, y: g, surface: surf };
+  }
+
   /** Is a circle at (x,z) with radius r overlapping any enabled blocker within [y0,y1]? */
   blockedAt(x: number, z: number, r: number, y0: number, y1: number): boolean {
     const p = { x, z };

@@ -11,6 +11,7 @@ import type { World } from '../world';
 import type { Panel, PanelManager } from '../../puzzle/panels';
 import type { PuzzleDef } from '../../puzzle/types';
 import { rng } from '../noise';
+import { audio } from '../../audio';
 
 function ring(a: AreaCtx, defs: PuzzleDef[], group: string, cx: number, cz: number, r: number, a0: number, a1: number, y: number, inward = true): Panel[] {
   const n = defs.length;
@@ -75,8 +76,9 @@ export function buildCitadel(world: World, pm: PanelManager): AreaCtx {
     else {
       // wall with a gate gap
       const gx = C.x, gz = C.z + R * Math.sin(mid);
-      wall(b, slate, x0, zz0, gx - 4, gz, Y - 3, 9, 2.4, { cap: slateD });
-      wall(b, slate, gx + 4, gz, x1, zz1, Y - 3, 9, 2.4, { cap: slateD });
+      // x0 is on the +x side (a0 < π/2), x1 on the −x side: leave the gate gap |x - gx| < 4 open
+      wall(b, slate, x0, zz0, gx + 4, gz, Y - 3, 9, 2.4, { cap: slateD });
+      wall(b, slate, gx - 4, gz, x1, zz1, Y - 3, 9, 2.4, { cap: slateD });
       b.batch.add(archGeometry(8, 9.5, 1.4, 2.6), slateD, mtx(gx, Y - 0.2, gz));
     }
     // round tower
@@ -131,15 +133,16 @@ export function buildCitadel(world: World, pm: PanelManager): AreaCtx {
       fire.position.set(hx, Y + 2.3, zz);
       a.dynamic.add(fire);
       a.onUpdate((dt, t) => fire.scale.set(1, 0.85 + 0.25 * Math.sin(t * 9 + zz), 1));
+      audio.addSource('fire', hx, Y + 2, zz, 12);
     }
   }
   // ── the crown: a tall keep with a spiral of landings ──
-  const kz = C.z - 26;
-  solidBox(b, slateD, C.x, Y, kz, 16, 4.5, 12, 0);
-  const st = stairs(b, slate, C.x, Y, kz + 10.5, 0, 4, 4.5 / 10, 0.42, 10);
+  const kz = C.z - 22;
+  solidBox(b, slateD, C.x, Y, kz, 26, 4.5, 20, 0);
+  const st = stairs(b, slate, C.x, Y, kz + 14.2, 0, 4, 4.5 / 10, 0.42, 10);
   void st;
   const crownY = Y + 4.5;
-  const crown = ring(a, a.group('crown'), 'crown', C.x, kz - 1, 5.2, Math.PI * 0.05, Math.PI * 0.95, crownY);
+  const crown = ring(a, a.group('crown'), 'crown', C.x, kz - 2, 10, Math.PI * 0.02, Math.PI * 0.98, crownY);
   b.batch.add(G.cyl(2.4, 3, 18, 12), slate, mtx(C.x, crownY + 9, kz - 4));
   b.batch.add(G.cone(3.4, 6, 12), M.roofSlate(), mtx(C.x, crownY + 21, kz - 4));
   world.collision.addBlocker({ x: C.x, z: kz - 4, r: 3, y0: Y, y1: Y + 40 });
@@ -184,24 +187,36 @@ export function buildEcho(world: World, pm: PanelManager): AreaCtx {
     b.batch.addMesh(m);
     if (s > 1.2) world.collision.addBlocker({ x, z, r: s * 0.5, y0: y - 1, y1: y + 4 });
   }
-  // stepping path from the gorge to the island (over the lake)
   const isl = { x: cx, z: cz };
-  for (let i = 0; i < 9; i++) {
-    const z = cz + 36 - i * 2.4;
-    const y = Math.max(world.terrain.heightAt(cx, z), 5.9) + 0.25;
-    floorSlab(b, mat('echoStep', { color: '#4a4860', roughness: 0.5, detail: 0.2, scale: 2 }), cx, y, z, 2.6, 2.0, 0, 3, 'crystal');
+  // a causeway of crystal-stone from the dry outer ring to the island (over the lake)
+  const stepMat = mat('echoStep', { color: '#4a4860', roughness: 0.5, detail: 0.2, scale: 2 });
+  const zA = cz + 41, zB = cz + 11;
+  const causeY = 7.35;
+  floorSlab(b, stepMat, cx, causeY, (zA + zB) / 2, 3.2, zA - zB, 0, 4, 'crystal');
+  for (let k = 0; k <= 10; k++) {
+    const z = zB + ((zA - zB) * k) / 10;
+    for (const sx of [-1.7, 1.7]) b.batch.add(G.box(0.18, 0.7, 0.18), stepMat, mtx(cx + sx, causeY + 0.35, z));
   }
+  world.collision.addBlocker({ x: cx - 1.7, z: (zA + zB) / 2, hw: 0.09, hd: (zA - zB) / 2 - 1.5, rot: 0, y0: causeY - 0.5, y1: causeY + 0.8 });
+  world.collision.addBlocker({ x: cx + 1.7, z: (zA + zB) / 2, hw: 0.09, hd: (zA - zB) / 2 - 1.5, rot: 0, y0: causeY - 0.5, y1: causeY + 0.8 });
   floorSlab(b, mat('echoIsle', { color: '#3e3c52', roughness: 0.6, detail: 0.2, scale: 1.5 }), isl.x, F + 1.2, isl.z, 26, 26, Math.PI / 4, 4, 'crystal');
-  // groups around the basin floor
-  const intro = ring(a, a.group('intro'), 'intro', cx, cz + 30, 9, -Math.PI * 0.95, -Math.PI * 0.05, F + 0.1);
-  const practice = ring(a, a.group('practice'), 'practice', cx - 24, cz - 6, 8, -Math.PI * 0.4, Math.PI * 0.4, F + 0.1, true);
-  const trial = ring(a, a.group('trial'), 'trial', cx + 24, cz - 6, 8, Math.PI * 0.6, Math.PI * 1.4, F + 0.1, true);
+  // the stations stand on the dry ring between the lake and the crater wall (r ≈ 43)
+  const ringR = 43;
+  const groundY = (x: number, z: number) => world.terrain.heightAt(x, z);
+  const onRing = (defs: typeof a.puzzles[string], key: string, a0: number, a1: number) =>
+    defs.map((d, i) => {
+      const t = defs.length === 1 ? 0.5 : i / (defs.length - 1);
+      const ang = a0 + (a1 - a0) * t;
+      const x = cx + Math.cos(ang) * ringR, z = cz + Math.sin(ang) * ringR;
+      return a.panel(d, { x, z, y: groundY(x, z), yaw: yawToward(x, z, cx, cz) }, key);
+    });
+  const S = Math.PI / 2; // south: where the gorge comes in
+  const intro = onRing(a.group('intro'), 'intro', S + 0.22, S + 1.25);
+  const practice = onRing(a.group('practice'), 'practice', S + 1.45, S + 2.95);
+  const trial = onRing(a.group('trial'), 'trial', S - 0.22, S - 1.75);
   const heart = ring(a, a.group('heart'), 'heart', isl.x, isl.z, 7.5, Math.PI * 0.25, Math.PI * 0.75, F + 1.2);
-  for (const p of [...intro, ...practice, ...trial]) {
-    const q = p.view.root.position;
-    q.y = world.terrain.heightAt(q.x, q.z);
-  }
   a.addTotem(isl.x - 6, isl.z - 2, F + 1.2);
+  audio.addSource('crystal', cx, F + 3, cz, 55);
   a.chain([...intro, ...practice, ...trial, ...heart]);
   // the hollow needs the great door open (set by the game)
   return a;
@@ -251,19 +266,23 @@ export function buildSpire(world: World, pm: PanelManager): SpireRuntime {
     const ny = y + 16;
     if (l < nLand - 1) {
       const nx = cx + Math.cos(nextAng) * r, nz = cz + Math.sin(nextAng) * r;
-      const steps = 22;
-      for (let s = 1; s < steps; s++) {
+      // the flight leaves this landing at its edge and arrives at the next one at its edge, at the
+      // right height, so no step ever passes underneath a landing
+      const steps = 44; // 16 m / 44 ≈ 0.36 m per step (the player can step up 0.55 m)
+      const edge = 5.0 / r;
+      const a0 = ang + edge, a1 = nextAng - edge;
+      for (let s = 0; s <= steps; s++) {
         const t = s / steps;
-        const aa = ang + (nextAng - ang) * t;
-        const rr = r - Math.sin(t * Math.PI) * 2;
-        const sx = cx + Math.cos(aa) * rr, sz = cz + Math.sin(aa) * rr;
-        const sy = y + (ny - y) * t;
-        const m = new THREE.Mesh(G.box(2.2, 0.18, 1.4, 0.04), lightStep);
-        m.position.set(sx, sy - 0.09, sz);
+        const aa = a0 + (a1 - a0) * t;
+        const sx = cx + Math.cos(aa) * r, sz = cz + Math.sin(aa) * r;
+        const sy = y + (ny - y) * (s + 0.5) / (steps + 1);
+        const m = new THREE.Mesh(G.box(3.0, 0.16, 0.9, 0.03), lightStep);
+        m.position.set(sx, sy - 0.08, sz);
         m.rotation.y = -aa;
         a.dynamic.add(m);
         stepMeshes.push(m);
-        world.collision.addFloor({ x: sx, z: sz, hw: 1.3, hd: 1.0, rot: -aa, top: sy, bottom: sy - 0.3, surface: 'crystal', tag: 'spire.steps' });
+        // bottom far below: a stair of light is never a "ceiling" for the steps under it
+        world.collision.addFloor({ x: sx, z: sz, hw: 1.6, hd: 0.55, rot: -aa, top: sy, bottom: -1000, surface: 'crystal', tag: 'spire.steps' });
       }
       void nx;
       void nz;

@@ -1,46 +1,10 @@
 /**
- * Audio entry point. TEMPORARY no-op implementation — replaced by the real engine.
- * Keep the export name `audio` and the AudioAPI interface.
+ * Audio entry point. The game talks to audio only through `audio` (see ./api.ts).
+ * 100% Web Audio synthesis — no audio files.
  */
-import type { AudioAPI, SpatialHandle } from './api';
+import type { AudioAPI } from './api';
+import { engineApi } from './engine/engine';
 
-const noopHandle: SpatialHandle = { setPosition() {}, setGain() {}, stop() {} };
-
-export const audio: AudioAPI = {
-  ready: false,
-  async unlock() {},
-  setVolumes() {},
-  suspend() {},
-  resume() {},
-  setMusic() {},
-  setProgress() {},
-  duck() {},
-  studioSting() {},
-  titleTile() {},
-  titleResolve() {},
-  playEnding() {},
-  tile() {},
-  panelEngage() {},
-  panelLeave() {},
-  panelSolved() {},
-  panelFailed() {},
-  panelPowered() {},
-  cable() {},
-  door() {},
-  totem() {},
-  greatUnlock() {},
-  secretSolved() {},
-  uiHover() {},
-  uiClick() {},
-  uiBack() {},
-  achievement() {},
-  save() {},
-  footstep() {},
-  setAmbience() {},
-  setListener() {},
-  addSource() {
-    return noopHandle;
-  },
-};
+export const audio: AudioAPI = engineApi;
 
 export type * from './api';

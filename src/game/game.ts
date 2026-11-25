@@ -112,6 +112,10 @@ export class Game {
     this.stars = new ConstellationSystem(this.world);
     this.stars.place();
     this.stars.onSolved = (it) => this.onStarSolved(it);
+    this.stars.onRevealed = (it) => {
+      this.save.flags['r:' + it.def.id] = true;
+      if (this.stars.revealedCount === 1) this.vault.setStars(this.stars.solvedCount, VAULT_THRESHOLD, true);
+    };
     this.stars.onChanged = (it) => {
       this.save.panels['c:' + it.def.id] = { s: this.stars.stateOf(it) };
     };
@@ -127,6 +131,7 @@ export class Game {
     if (echo.panels[0]) echo.panels[0].extraPower = () => !!this.save.flags.hollowOpen;
     this.player = new Player(this.world.collision, this.input);
     this.player.onFootstep = (s, sp) => audio.footstep(s, sp);
+    this.player.terrainSurface = (x, z) => this.world.terrain.surfaceAt(x, z);
     this.pm.returnView = () => {
       this.player.applyCamera(this.engine.camera);
       return { pos: this.engine.camera.position.clone(), quat: this.engine.camera.quaternion.clone() };
@@ -193,7 +198,7 @@ export class Game {
       const rec = data.panels['c:' + it.def.id];
       it.solved = false;
       it.state.fill(0);
-      this.stars.restore(it.def.id, rec?.s, !!rec?.done);
+      this.stars.restore(it.def.id, rec?.s, !!rec?.done, !!data.flags['r:' + it.def.id]);
     }
     this.updateVault(true);
     if (data.flags.hollowOpen) this.hub.openHollow(true);
@@ -540,6 +545,7 @@ export class Game {
         this.player.update(dt);
         this.player.applyCamera(this.engine.camera);
         const aimed = this.pm.updateAim();
+        this.stars.watch(dt, this.engine.camera, this.player.speed);
         const star = aimed ? null : this.stars.aim(this.engine.camera);
         this.ui?.setCrosshair(aimed || star ? 'ring' : 'dot');
         this.updateArea(dt);

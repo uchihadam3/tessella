@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TESSELLA — audio lab</title>
+    <style>
+      body { margin: 0; padding: 18px; background: #12101a; color: #e8e2d4; font: 14px/1.4 system-ui, sans-serif; }
+      h1 { font-weight: 500; letter-spacing: .2em; margin: 0 0 12px; }
+      h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #d7b56d; margin: 18px 0 8px; }
+      section { border-top: 1px solid #2c2838; padding-bottom: 8px; }
+      button { background: #232031; color: #eee; border: 1px solid #3c3650; border-radius: 6px; padding: 6px 10px; margin: 3px; cursor: pointer; }
+      button:hover { background: #2f2a42; }
+      .slider { display: inline-flex; flex-direction: column; margin: 4px 10px 4px 0; min-width: 150px; }
+      .status { margin-left: 12px; color: #9fd; font-family: monospace; }
+      select { background: #232031; color: #eee; border: 1px solid #3c3650; padding: 4px; margin: 3px; }
+      .grid { display: grid; grid-template-columns: repeat(5, 44px); gap: 6px; user-select: none; }
+      .cell { width: 44px; height: 44px; border-radius: 6px; background: #2a2738; cursor: pointer; }
+      .cell.on { background: #f2c66d; box-shadow: 0 0 12px #f2c66d; }
+      label { margin-right: 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>TESSELLA · AUDIO LAB</h1>
+    <div id="lab"></div>
+    <script type="module" src="../src/audio/lab.ts"></script>
+  </body>
+</html>

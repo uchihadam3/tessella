@@ -12,6 +12,7 @@ import type { Panel, PanelManager } from '../../puzzle/panels';
 import type { PuzzleDef } from '../../puzzle/types';
 import type { AreaId } from '../../data/areas';
 import { rng } from '../noise';
+import { audio } from '../../audio';
 
 // ───────────────────────── station helpers ─────────────────────────
 
@@ -132,6 +133,10 @@ export function buildKinship(world: World, pm: PanelManager): AreaCtx {
     bw.add(m);
   }
   a.dynamic.add(bw);
+  {
+    const mid = brook.getPoint(0.5);
+    audio.addSource('brook', mid.x, a.y(mid.x, mid.z) + 0.3, mid.z, 34);
+  }
   const pr = ax.at(-12, -14);
   const practice = arc(a, a.group('practice'), 'practice', pr.x, pr.z, 8, ax.ang + Math.PI * 0.55, ax.ang + Math.PI * 1.25, true);
   // ring of standing stones around the giant tree (trial)
@@ -198,6 +203,7 @@ export function buildMeasure(world: World, pm: PanelManager): AreaCtx {
   fall.position.set(wf.x, wy + 4.5, wf.z);
   fall.rotation.y = ax.ang - Math.PI / 2;
   a.dynamic.add(fall);
+  audio.addSource('waterfall', wf.x, wy + 3, wf.z, 48);
   a.onUpdate((dt) => {
     const mm = fall.material as THREE.MeshStandardMaterial;
     mm.opacity = 0.65 + 0.1 * Math.sin(performance.now() / 300);
@@ -282,8 +288,8 @@ export function buildMold(world: World, pm: PanelManager): AreaCtx {
   const hp = ax.at(24, 2);
   const hy0 = a.y(hp.x, hp.z);
   const H1 = 3.2;
-  solidBox(b, block, hp.x, hy0 - 0.5, hp.z, 14, H1 + 0.5, 14, ax.ang);
-  const st = stairs(b, marble, hp.x - ax.f.x * 10.5, hy0, hp.z - ax.f.z * 10.5, Math.atan2(-ax.f.x, -ax.f.z) + Math.PI, 3.2, H1 / 8, 0.45, 8);
+  solidBox(b, block, hp.x, hy0 - 0.5, hp.z, 14, H1 + 0.5, 14, -ax.ang);
+  const st = stairs(b, marble, hp.x - ax.f.x * 10.6, hy0, hp.z - ax.f.z * 10.6, Math.atan2(-ax.f.x, -ax.f.z), 3.2, H1 / 8, 0.45, 8);
   void st;
   a.exclude(hp.x, hp.z, 12);
   const heart = arc(a, a.group('heart'), 'heart', hp.x, hp.z, 4.6, ax.ang + Math.PI * 0.6, ax.ang + Math.PI * 1.4, true, undefined, () => hy0 + H1, 6);
@@ -346,6 +352,7 @@ export function buildContour(world: World, pm: PanelManager): AreaCtx {
   water.rotation.x = -Math.PI / 2;
   water.position.set(fp.x, fy + 0.7, fp.z);
   a.dynamic.add(water);
+  audio.addSource('fountain', fp.x, fy + 1.2, fp.z, 26);
   const trial = arc(a, a.group('trial'), 'trial', fp.x, fp.z, 8.2, ax.ang + Math.PI * 0.2, ax.ang + Math.PI * 0.8, true);
   // gazebo (heart)
   const hp = ax.at(26, 4);
@@ -412,8 +419,8 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   solidBox(b, sand, S.x, sy - 1, S.z, 18, 7, 18, rot);
   for (let k = 0; k < 4; k++) solidBox(b, sandS, S.x, sy + 6 + k * 1.2, S.z, 6 - k * 1.3, 1.2, 6 - k * 1.3, rot);
   // stairs up to the sanctuary roof terrace (heart)
-  const stBase = ax.at(19, -9);
-  const top = stairs(b, sandS, stBase.x, cy, stBase.z, Math.atan2(-ax.f.x, -ax.f.z) + Math.PI, 3, (sy + 6 - cy) / 14, 0.55, 14);
+  const stBase = ax.at(19 - 14 * 0.55 - 0.1, -5.5);
+  const top = stairs(b, sandS, stBase.x, cy, stBase.z, Math.atan2(-ax.f.x, -ax.f.z), 3, (sy + 6 - cy) / 14, 0.55, 14);
   void top;
   const trp = ax.at(10, 0);
   const practice = arc(a, a.group('practice'), 'practice', C.x, C.z, 9, ax.ang + Math.PI * 0.6, ax.ang + Math.PI * 1.4, true, undefined, () => cy);
@@ -480,6 +487,10 @@ export function buildBeacon(world: World, pm: PanelManager): AreaCtx {
     lamps.push(lighthouse(a, p.x, p.z, 9, 4));
   }
   a.onUpdate((dt, t) => lamps.forEach((l, i) => ((l.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.2 + 0.8 * Math.sin(t * 1.5 + i * 2))));
+  {
+    const sp = ax.at(44, 0);
+    audio.addSource('surf', sp.x, 1, sp.z, 90);
+  }
   // cliff-edge railing
   for (let i = 0; i < 20; i++) {
     const p = ax.at(12 + (i % 2) * 0.1, -30 + i * 3.2);
@@ -539,6 +550,7 @@ function windmill(a: AreaCtx, x: number, z: number, faceAng: number, scale = 1) 
   }
   a.dynamic.add(hubG);
   a.onUpdate((dt) => (sails.rotation.z += dt * 0.35));
+  audio.addSource('windmill', x, y + 8 * scale, z, 32);
 }
 
 export function buildWeave(world: World, pm: PanelManager): AreaCtx {
@@ -634,10 +646,24 @@ export function buildTwins(world: World, pm: PanelManager): AreaCtx {
       b.batch.add(G.box(0.22, 2.4, 0.22), deck, mtx(x, deckY - 1.6, z));
     }
   }
+  // hand rails (with openings where walkways and landings join the bridge)
+  const openings: [number, number][] = [[-31.6, -28.4], [-21.2, -8.8], [5.8, 18.2]];
   for (const sd of [-1.5, 1.5]) {
     const x = bm.x + Math.cos(bry) * sd, z = bm.z - Math.sin(bry) * sd;
     b.batch.add(G.box(0.1, 0.1, len), M.woodRed(), mtx(x, deckY + 1.0, z, bry));
-    a.world.collision.addBlocker({ x, z, hw: 0.08, hd: len / 2 - 3, rot: bry, y0: deckY - 0.2, y1: deckY + 1.1 });
+    let from = -len / 2 + 3;
+    const segs: [number, number][] = [];
+    for (const [o0, o1] of openings) {
+      segs.push([from, o0]);
+      from = o1;
+    }
+    segs.push([from, len / 2 - 3]);
+    for (const [f0, f1] of segs) {
+      if (f1 <= f0) continue;
+      const mid = (f0 + f1) / 2;
+      const px = x + Math.sin(bry) * mid, pz = z + Math.cos(bry) * mid;
+      a.world.collision.addBlocker({ x: px, z: pz, hw: 0.08, hd: (f1 - f0) / 2, rot: bry, y0: deckY - 0.2, y1: deckY + 1.1 });
+    }
   }
   // island platform in the middle
   floorSlab(b, deck, L.x, deckY, L.z, 14, 14, bry, 0.4, 'wood');
@@ -657,13 +683,13 @@ export function buildTwins(world: World, pm: PanelManager): AreaCtx {
     }
     // walkway to the bridge
     const wx = (p.x + ax.at(-30, 0).x) / 2, wz = (p.z + ax.at(-30, 0).z) / 2;
-    floorSlab(b, deck, wx, deckY, wz, 2.4, 13, bry + Math.PI / 2, 0.3, 'wood');
+    floorSlab(b, deck, wx, deckY, wz, 2.4, 16.5, bry + Math.PI / 2, 0.3, 'wood');
     const pv = ax.at(-30 + 4.5, sd * 17);
     pavilion(a, pv.x, pv.z, y, bry, 0.9);
     a.exclude(p.x, p.z, 9);
     const mine = sd < 0 ? pdefs.slice(0, half) : pdefs.slice(half);
     mine.forEach((d, k) => {
-      const q = ax.at(-36 + k * 3.4, sd * 17 + sd * -2.5);
+      const q = ax.at(-37.2 + k * 2.85, sd * 17 + sd * -2.5);
       practice.push(a.panel(d, { x: q.x, z: q.z, yaw: yawToward(q.x, q.z, q.x + ax.r.x * sd * 6, q.z + ax.r.z * sd * 6), y }, 'practice'));
     });
   }

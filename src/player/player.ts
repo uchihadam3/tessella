@@ -31,6 +31,8 @@ export class Player {
   private stepAcc = 0;
   private eyeY = 0;
   onFootstep: (s: Surface, speed: number) => void = () => {};
+  /** surface of bare terrain at a point (set by the game from the terrain biome) */
+  terrainSurface: (x: number, z: number) => Surface = () => 'grass';
   settings: PlayerSettings = { sensitivity: 1, invertY: false, headBob: true, fov: 72 };
   /** last frame's horizontal speed */
   speed = 0;
@@ -73,51 +75,33 @@ export class Player {
     this.vel.x += (target.x - this.vel.x) * Math.min(1, accel * dt);
     this.vel.z += (target.z - this.vel.z) * Math.min(1, accel * dt);
 
-    const feet = this.pos.y;
-    const p = { x: this.pos.x + this.vel.x * dt, z: this.pos.z + this.vel.z * dt };
-    this.world.resolve(p, this.radius, feet + this.step * 0.9, feet + this.height);
-    // ground at the new spot
-    const moved = Math.hypot(p.x - this.pos.x, p.z - this.pos.z);
-    const climb = this.step + moved * 1.15; // allows ~49° slopes
-    let [g, surf] = this.world.groundAt(p.x, p.z, feet + climb);
-    const [gHere] = this.world.groundAt(this.pos.x, this.pos.z, feet + this.step);
-    const terr = this.world.terrainHeight(p.x, p.z);
-    // terrain too steep to climb counts as a wall (unless we stand on a floor above it)
-    const blockedTerrain = terr > feet + climb && g < terr - 0.01 && g < feet - 2.5;
-    // deep water blocks
-    const water = this.world.waterAt(p.x, p.z);
-    const deepWater = g < water - 0.75 && g === terr;
-    const ceiling = this.world.ceilingAt(p.x, p.z, feet + this.step, feet + this.height);
-    if (g === -Infinity || blockedTerrain || deepWater || ceiling) {
-      // try sliding along each axis
-      let slid = false;
-      for (const [tx, tz] of [[p.x, this.pos.z], [this.pos.x, p.z]] as [number, number][]) {
-        const q = { x: tx, z: tz };
-        this.world.resolve(q, this.radius, feet + this.step * 0.9, feet + this.height);
-        const mv = Math.hypot(q.x - this.pos.x, q.z - this.pos.z);
-        const [g2, s2] = this.world.groundAt(q.x, q.z, feet + this.step + mv * 1.15);
-        const t2 = this.world.terrainHeight(q.x, q.z);
-        const w2 = this.world.waterAt(q.x, q.z);
-        if (g2 !== -Infinity && !(g2 < w2 - 0.75 && g2 === t2) && !this.world.ceilingAt(q.x, q.z, feet + this.step, feet + this.height)) {
-          p.x = q.x;
-          p.z = q.z;
-          g = g2;
-          surf = s2;
-          slid = true;
-          break;
-        }
-      }
-      if (!slid) {
-        p.x = this.pos.x;
-        p.z = this.pos.z;
-        g = gHere;
-        this.vel.multiplyScalar(0.5);
-      }
-    }
     const before = { x: this.pos.x, z: this.pos.z };
-    this.pos.x = p.x;
-    this.pos.z = p.z;
-    if (surf) this.surface = surf;
+    // move in small sub-steps so thin walls can never be skipped, sliding along obstacles
+    const dx = this.vel.x * dt, dz = this.vel.z * dt;
+    const len = Math.hypot(dx, dz);
+    const n = Math.max(1, Math.ceil(len / 0.18));
+    let feet = this.pos.y;
+    let ground = this.world.groundAt(this.pos.x, this.pos.z, feet + 0.05)[0];
+    for (let k = 0; k < n; k++) {
+      const sx = dx / n, sz = dz / n;
+      let m = this.world.tryMove(this.pos.x, this.pos.z, feet, this.pos.x + sx, this.pos.z + sz, this.radius, this.step, this.height);
+      if (!m) m = this.world.tryMove(this.pos.x, this.pos.z, feet, this.pos.x + sx, this.pos.z, this.radius, this.step, this.height);
+      if (!m) m = this.world.tryMove(this.pos.x, this.pos.z, feet, this.pos.x, this.pos.z + sz, this.radius, this.step, this.height);
+      if (!m) {
+        this.vel.multiplyScalar(0.5);
+        break;
+      }
+      this.pos.x = m.x;
+      this.pos.z = m.z;
+      ground = m.y;
+      if (m.surface) this.surface = m.surface;
+      else this.surface = this.terrainSurface(m.x, m.z);
+      // stepping up happens immediately, stepping down is handled by gravity below
+      if (ground > feet) feet = ground;
+    }
+    if (ground === -Infinity || !isFinite(ground)) ground = this.world.terrainHeight(this.pos.x, this.pos.z);
+    const g = ground;
+    this.pos.y = Math.max(this.pos.y, feet);
     // vertical
     if (g < this.pos.y - 0.05) {
       this.vy -= 22 * dt;

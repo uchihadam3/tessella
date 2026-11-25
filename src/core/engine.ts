@@ -55,6 +55,8 @@ export class Engine {
   time = 0;
   quality: Quality = 'high';
   running = false;
+  /** skip 3D rendering (e.g. while an opaque intro screen covers everything) */
+  paused = false;
   /** frames-per-second (smoothed) */
   fps = 60;
 
@@ -134,6 +136,7 @@ export class Engine {
       this.last = now;
       this.time += dt;
       this.fps = this.fps * 0.95 + (1 / Math.max(dt, 1e-3)) * 0.05;
+      if (this.paused) return;
       for (const u of this.updaters) u(dt, this.time);
       this.grade.uniforms.uTime.value = this.time;
       this.composer.render(dt);

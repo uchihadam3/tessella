@@ -45,12 +45,14 @@ export interface AreaSpec {
   totem: boolean;
 }
 
-/** Teaching areas: 7 teaching panels, then 22 ever-harder panels of the same language. */
+/** Teaching areas: 7 teaching panels, then 38 ever-harder panels of the same language, organised
+ *  in sequences of 4 (each sequence explores one insight from simple to genuinely hard). */
 const OPEN_GROUPS = (intro: string, practice: string, trial: string, heart: string): GroupSpec[] => [
   { key: 'intro', count: 7, role: intro },
-  { key: 'practice', count: 8, role: practice },
-  { key: 'trial', count: 8, role: trial },
-  { key: 'heart', count: 6, role: heart },
+  { key: 'practice', count: 12, role: practice + ' (3 insight sequences of 4)' },
+  { key: 'trial', count: 12, role: trial + ' (3 harder insight sequences of 4)' },
+  { key: 'mastery', count: 8, role: 'two sequences combining the insights' },
+  { key: 'heart', count: 6, role: heart + ' — showpieces' },
 ];
 
 export const AREAS: AreaSpec[] = [
@@ -120,10 +122,10 @@ export const AREAS: AreaSpec[] = [
     rule: { pt: 'Todas as linguagens', en: 'Every language' }, glyph: 'mix',
     lit: '#e8a560', accent: '#9c6b3c', anchor: [0, -440], totem: true,
     groups: [
-      { key: 'gate', count: 4, role: 'two languages per panel' },
-      { key: 'court', count: 8, role: 'two languages, deeper interactions' },
-      { key: 'halls', count: 10, role: 'three languages' },
-      { key: 'crown', count: 8, role: 'three or four languages incl. echo; the hardest of the island' },
+      { key: 'gate', count: 6, role: 'two languages per panel' },
+      { key: 'court', count: 10, role: 'two languages, deeper interactions' },
+      { key: 'halls', count: 14, role: 'three languages' },
+      { key: 'crown', count: 10, role: 'three or four languages incl. echo; the hardest of the island' },
     ],
   },
   {
@@ -132,9 +134,9 @@ export const AREAS: AreaSpec[] = [
     lit: '#63f0ff', accent: '#8a6bff', anchor: [0, -60], totem: true,
     groups: [
       { key: 'intro', count: 7, role: 'pressing echoes; mute tiles; copy crystal plates' },
-      { key: 'practice', count: 6, role: 'echo puzzles with plates, bigger' },
-      { key: 'trial', count: 6, role: 'echo + a known language' },
-      { key: 'heart', count: 3, role: 'mastery' },
+      { key: 'practice', count: 9, role: 'echo puzzles with plates, bigger' },
+      { key: 'trial', count: 9, role: 'echo + a known language' },
+      { key: 'heart', count: 5, role: 'mastery' },
     ],
   },
   {
@@ -142,10 +144,10 @@ export const AREAS: AreaSpec[] = [
     rule: { pt: 'Tudo', en: 'Everything' }, glyph: 'mix',
     lit: '#e8f0ff', accent: '#ffd88a', anchor: [0, -95], totem: false,
     groups: [
-      { key: 'ascent', count: 6, role: 'combinations, rising' },
-      { key: 'drums', count: 4, role: 'drum panels: the edges meet (wrap)' },
-      { key: 'mirrors', count: 4, role: 'mirror input' },
-      { key: 'apex', count: 3, role: 'the finale' },
+      { key: 'ascent', count: 8, role: 'combinations, rising' },
+      { key: 'drums', count: 6, role: 'drum panels: the edges meet (wrap)' },
+      { key: 'mirrors', count: 6, role: 'mirror input' },
+      { key: 'apex', count: 4, role: 'the finale' },
     ],
   },
 ];

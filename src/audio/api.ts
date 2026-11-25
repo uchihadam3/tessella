@@ -55,6 +55,8 @@ export interface AudioAPI {
   titleResolve(): void;
   /** Ending / credits music (long, emotional). */
   playEnding(): void;
+  /** OPTIONAL — secret-ending music (~2.5 min: mysterious, then luminous). */
+  playSecretEnding?(): void;
 
   // ── panels ────────────────────────────────────────────
   /** Tile toggled. Pitch from the tile position in the area's scale. */

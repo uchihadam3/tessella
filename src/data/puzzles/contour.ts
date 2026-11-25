@@ -32,7 +32,7 @@ const P: AreaPuzzles = {
         . c0 .
         D .  D
       `,
-      difficulty: 2,
+      difficulty: 1,
       note: 'Zero bordas: igual a todos os vizinhos — a luz do rebite se espalha em cruz.',
     }),
     puzzle('contour.intro.5', {
@@ -41,7 +41,7 @@ const P: AreaPuzzles = {
         .  #  .
         c3 .  c3
       `,
-      difficulty: 3,
+      difficulty: 1,
       note: 'Fora do painel é escuro: um canto com 3 só pode estar aceso.',
     }),
     puzzle('contour.intro.6', {
@@ -51,7 +51,7 @@ const P: AreaPuzzles = {
         .  c2 c0 c2
         .  c0 .  .
       `,
-      difficulty: 4,
+      difficulty: 1,
       note: 'Uma corrente: os zeros copiam os vizinhos e cada dedução acende a próxima.',
     }),
     puzzle('contour.intro.7', {
@@ -61,7 +61,7 @@ const P: AreaPuzzles = {
         c3 .  c3 .
         .  .  c3 .
       `,
-      difficulty: 4,
+      difficulty: 1,
       note: 'Portão: o 4 é uma ilha, o zero no canto é sombra, os 3 se apoiam na borda.',
     }),
   ],
@@ -87,7 +87,7 @@ const P: AreaPuzzles = {
         .  c0 . c0 c1
         .  c1 . .  c2
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq A2/4 — o zero copia todos os vizinhos. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.practice.3', {
@@ -98,7 +98,7 @@ const P: AreaPuzzles = {
         .  c0 .  .  c3
         #  .  .  c1 .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq A3/4 — o zero copia todos os vizinhos. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.practice.4', {
@@ -109,7 +109,7 @@ const P: AreaPuzzles = {
         c1 c0 c0 .  .
         .  .  .  c1 c2
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq A4/4 — o zero copia todos os vizinhos. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.practice.5', {
@@ -142,7 +142,7 @@ const P: AreaPuzzles = {
         c2 c1 c2 c3 .
         .  .  .  .  c4
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq B3/4 — o quatro é uma ilha. Uma ilha de quatro lados. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.practice.8', {
@@ -153,7 +153,7 @@ const P: AreaPuzzles = {
         c2 c4 .  .  c2
         .  .  c3 .  .
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq B4/4 — o quatro é uma ilha. Uma ilha de quatro lados. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.practice.9', {
@@ -186,7 +186,7 @@ const P: AreaPuzzles = {
         .  .  .  .  c1
         c3 .  c1 .  c0
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq C3/4 — fora do painel é escuro. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.practice.12', {
@@ -197,7 +197,7 @@ const P: AreaPuzzles = {
         c2 . c3 c3 c2
         c3 . c1 .  .
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq C4/4 — fora do painel é escuro. Uma ilha de quatro lados. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
   ],
@@ -211,7 +211,7 @@ const P: AreaPuzzles = {
         c2 .  c1 .  c2 .
         c2 .  .  c2 c0 .
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq D1/4 — \"e se?\" de um passo. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.2', {
@@ -223,7 +223,7 @@ const P: AreaPuzzles = {
         .  .  .  .  c4 c1
         c4 .  .  c3 .  .
       `,
-      difficulty: 6,
+      difficulty: 4,
       note: "seq D2/4 — \"e se?\" de um passo. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.3', {
@@ -235,7 +235,7 @@ const P: AreaPuzzles = {
         c0 .  c1 .  c1 c1
         .  .  c2 .  c2 c3
       `,
-      difficulty: 6,
+      difficulty: 4,
       note: "seq D3/4 — \"e se?\" de um passo. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.4', {
@@ -247,7 +247,7 @@ const P: AreaPuzzles = {
         .  .  .  .  c4 c2
         #  c1 .  c2 c2 .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq D4/4 — \"e se?\" de um passo. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.5', {
@@ -259,7 +259,7 @@ const P: AreaPuzzles = {
         c0 c0 .  .  .  .
         .  #  c0 .  c0 .
       `,
-      difficulty: 5,
+      difficulty: 3,
       note: "seq E1/4 — pistas esparsas: cada borda conta. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.6', {
@@ -271,7 +271,7 @@ const P: AreaPuzzles = {
         .  .  .  c2 .  .
         .  c0 .  .  c0 .
       `,
-      difficulty: 6,
+      difficulty: 3,
       note: "seq E2/4 — pistas esparsas: cada borda conta. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.7', {
@@ -283,7 +283,7 @@ const P: AreaPuzzles = {
         .  .  c0 .  .  .
         c0 #  .  .  c0 .
       `,
-      difficulty: 6,
+      difficulty: 5,
       note: "seq E3/4 — pistas esparsas: cada borda conta. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.8', {
@@ -295,7 +295,7 @@ const P: AreaPuzzles = {
         .  .  .  c0 .  c1
         .  c0 .  .  .  c2
       `,
-      difficulty: 7,
+      difficulty: 4,
       note: "seq E4/4 — pistas esparsas: cada borda conta. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.9', {
@@ -307,7 +307,7 @@ const P: AreaPuzzles = {
         c0 #  c2 c2 .  .
         .  c1 .  .  .  c3
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq F1/4 — rochas contam como escuro. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.10', {
@@ -319,7 +319,7 @@ const P: AreaPuzzles = {
         c1 .  c1 .  .  #
         .  c3 .  c1 .  c0
       `,
-      difficulty: 6,
+      difficulty: 4,
       note: "seq F2/4 — rochas contam como escuro. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.11', {
@@ -331,7 +331,7 @@ const P: AreaPuzzles = {
         c0 .  .  c3 .  #
         .  .  c4 .  #  c0
       `,
-      difficulty: 6,
+      difficulty: 5,
       note: "seq F3/4 — rochas contam como escuro. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.trial.12', {
@@ -343,7 +343,7 @@ const P: AreaPuzzles = {
         .  .  c1 c2 .  c0
         c3 .  c3 c2 .  .
       `,
-      difficulty: 7,
+      difficulty: 6,
       note: "seq F4/4 — rochas contam como escuro. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
   ],
@@ -358,7 +358,7 @@ const P: AreaPuzzles = {
         .  .  .  c2 c4 .  c3
         .  c2 c0 .  .  c3 .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq G1/4 — correntes longas de deduções. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.mastery.2', {
@@ -371,7 +371,7 @@ const P: AreaPuzzles = {
         #  .  .  c0 .  .  c1
         .  c1 c1 .  c1 .  c2
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq G2/4 — correntes longas de deduções. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.mastery.3', {
@@ -384,7 +384,7 @@ const P: AreaPuzzles = {
         .  c1 c1 c0 c0 #  .
         .  c2 #  .  .  .  c0
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "seq G3/4 — correntes longas de deduções. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.mastery.4', {
@@ -397,7 +397,7 @@ const P: AreaPuzzles = {
         .  .  .  .  c0 .  .
         c1 .  c4 .  .  .  c0
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "seq G4/4 — correntes longas de deduções. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.mastery.5', {
@@ -410,7 +410,7 @@ const P: AreaPuzzles = {
         c0 c0 .  .  .  .  c2 c1
         .  .  .  c4 .  c3 .  .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq H1/4 — o jardim inteiro com poucas placas. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.mastery.6', {
@@ -423,7 +423,7 @@ const P: AreaPuzzles = {
         c2 c3 .  .  .  .  c0 .
         c2 .  .  c1 c0 .  .  c0
       `,
-      difficulty: 7,
+      difficulty: 6,
       note: "seq H2/4 — o jardim inteiro com poucas placas. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.mastery.7', {
@@ -436,7 +436,7 @@ const P: AreaPuzzles = {
         .  .  c0 c3 c1 c0 c0 c0
         .  c1 .  .  .  .  .  .
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "seq H3/4 — o jardim inteiro com poucas placas. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.mastery.8', {
@@ -449,7 +449,7 @@ const P: AreaPuzzles = {
         c1 .  c0 . .  .  .  c4
         .  .  c0 . .  c0 .  .
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "seq H4/4 — o jardim inteiro com poucas placas. Uma ilha de quatro lados e zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
   ],
@@ -465,7 +465,7 @@ const P: AreaPuzzles = {
         .  .  c0 .  .  .  c1 c2
         c2 c1 .  .  c1 c1 .  .
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "Obra-prima 1/6. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.heart.2', {
@@ -479,7 +479,7 @@ const P: AreaPuzzles = {
         .  .  .  c0 .  .  .  c1
         c2 c1 .  .  .  c2 c1 c0
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "Obra-prima 2/6. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.heart.3', {
@@ -493,7 +493,7 @@ const P: AreaPuzzles = {
         .  .  .  c0 c0 .  c0 .
         c1 .  c1 c1 .  .  c1 .
       `,
-      difficulty: 9,
+      difficulty: 6,
       note: "Obra-prima 3/6. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.heart.4', {
@@ -507,7 +507,7 @@ const P: AreaPuzzles = {
         #  c2 .  .  .  c0 .  .
         .  c1 .  c1 .  c1 .  c3
       `,
-      difficulty: 9,
+      difficulty: 6,
       note: "Obra-prima 4/6. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.heart.5', {
@@ -521,7 +521,7 @@ const P: AreaPuzzles = {
         .  .  c0 c0 .  .  c0 .
         c2 c2 .  c1 .  .  c1 .
       `,
-      difficulty: 10,
+      difficulty: 6,
       note: "Obra-prima 5/6. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
     puzzle('contour.heart.6', {
@@ -535,7 +535,7 @@ const P: AreaPuzzles = {
         .  c0 .  c0 c1 .  .  c0
         .  c2 #  c2 .  c1 .  .
       `,
-      difficulty: 10,
+      difficulty: 6,
       note: "Obra-prima 6/6. Zeros que copiam os vizinhos. Ahá: imagine o ladrilho aceso — a pista vizinha ganharia bordas demais.",
     }),
   ],

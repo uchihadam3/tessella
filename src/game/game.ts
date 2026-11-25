@@ -547,7 +547,6 @@ export class Game {
   private update(dt: number, t: number) {
     const w = this.world;
     if (!w) return;
-    this.engine.autoActive = this.state === 'play';
     // touch: while a panel is engaged, fingers paint on it instead of walking and looking
     this.input.setPointerMode(this.state === 'play' && !!this.pm.engaged);
     if (this.state === 'play' || this.state === 'cutscene') {

@@ -61,19 +61,10 @@ export class Engine {
   skipRender = false;
   /** frames-per-second (smoothed) */
   fps = 60;
-  /** lower the resolution automatically on slow GPUs (and raise it back when there is headroom) */
-  autoResolution = true;
-  /** set by the game each frame: only measure during free play (loading and cutscenes hitch) */
-  autoActive = false;
-  /** current automatic scale on top of the quality setting's pixel ratio */
-  autoScale = 1;
-  private autoTimer = 0;
-  private autoSlow = 0;
-  private autoFast = 0;
 
   constructor(private container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', stencil: false });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -101,15 +92,15 @@ export class Engine {
     this.resize();
   }
 
+  /** render resolution: sharp on high-density screens (the picture never changes size by itself) */
   private basePixelRatio(): number {
     const dpr = window.devicePixelRatio || 1;
     const q = this.quality;
-    return q === 'low' ? Math.min(dpr, 0.85) : q === 'medium' ? Math.min(dpr, 1) : Math.min(dpr, 1.5);
+    return q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2);
   }
 
   setQuality(q: Quality) {
     this.quality = q;
-    this.autoScale = 1;
     this.renderer.setPixelRatio(this.basePixelRatio());
     this.renderer.shadowMap.enabled = q !== 'low';
     this.bloom.enabled = q !== 'low';
@@ -165,37 +156,11 @@ export class Engine {
       this.time += dt;
       this.fps = this.fps * 0.95 + (1 / Math.max(dt, 1e-3)) * 0.05;
       if (this.paused) return;
-      this.adaptResolution(dt);
       for (const u of this.updaters) u(dt, this.time);
       this.grade.uniforms.uTime.value = this.time;
       if (!this.skipRender) this.composer.render(dt);
     };
     requestAnimationFrame(loop);
-  }
-
-  /**
-   * Watches frame times: when most of the last 3 s ran under ~38 fps the resolution steps down
-   * (never below 55 %); when nearly all of it ran above ~55 fps it steps back up. Changes are rare
-   * and small so the picture never visibly pumps.
-   */
-  private adaptResolution(dt: number) {
-    if (!this.autoResolution || !this.autoActive || document.hidden) {
-      this.autoTimer = this.autoSlow = this.autoFast = 0;
-      return;
-    }
-    this.autoTimer += dt;
-    if (dt > 1 / 38) this.autoSlow += dt;
-    else if (dt < 1 / 55) this.autoFast += dt;
-    if (this.autoTimer < 3) return;
-    let next = this.autoScale;
-    if (this.autoSlow > 1.8) next = Math.max(0.55, this.autoScale - 0.15);
-    else if (this.autoFast > 2.7) next = Math.min(1, this.autoScale + 0.1);
-    this.autoTimer = this.autoSlow = this.autoFast = 0;
-    if (Math.abs(next - this.autoScale) > 1e-3) {
-      this.autoScale = next;
-      this.renderer.setPixelRatio(this.basePixelRatio() * next);
-      this.resize();
-    }
   }
 
   /** Render one frame immediately (used for screenshots / loading). */

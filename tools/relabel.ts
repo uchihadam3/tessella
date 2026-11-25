@@ -15,9 +15,10 @@ import type { PuzzleDef } from '../src/puzzle/types';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** label from the measured path: 0 insights = pure reading; then roughly one label per insight, widening */
-export function measuredLabel(steps: number, basicRoot: number): number {
-  if (steps === 0) return basicRoot >= 0.85 ? 1 : 2;
+/** label from the measured path: 0 insights = pure reading (1 when reading alone finishes the panel);
+ *  then roughly one label per insight, widening */
+export function measuredLabel(steps: number, basicRoot: number, solved = false): number {
+  if (steps === 0) return solved || basicRoot >= 0.85 ? 1 : 2;
   if (steps <= 3) return steps + 2; // 1 → 3, 2 → 4, 3 → 5
   if (steps <= 5) return 6;
   if (steps <= 7) return 7;
@@ -43,7 +44,7 @@ export function slotRange(id: string): [number, number] {
 export function calibratedLabel(p: PuzzleDef): { label: number; steps: number; basicRoot: number } {
   const ip = insightPath(p, 60);
   const [lo, hi] = slotRange(p.id);
-  const label = Math.max(lo, Math.min(hi, measuredLabel(ip.steps.length, ip.basicRoot)));
+  const label = Math.max(lo, Math.min(hi, measuredLabel(ip.steps.length, ip.basicRoot, ip.solved)));
   return { label, steps: ip.steps.length, basicRoot: ip.basicRoot };
 }
 

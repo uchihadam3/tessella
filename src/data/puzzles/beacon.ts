@@ -23,7 +23,7 @@ const P: AreaPuzzles = {
       grid: `
         b3 . L
       `,
-      difficulty: 2,
+      difficulty: 1,
       note: 'Toda luz precisa ser vista por um farol: o rebite exige o caminho aceso.',
     }),
     puzzle('beacon.intro.4', {
@@ -32,7 +32,7 @@ const P: AreaPuzzles = {
         . b5 .
         . .  .
       `,
-      difficulty: 2,
+      difficulty: 1,
       note: 'O farol enxerga nas quatro direções retas: a cruz. Os cantos ficam no escuro.',
     }),
     puzzle('beacon.intro.5', {
@@ -41,14 +41,14 @@ const P: AreaPuzzles = {
         . b4 .
         . #  .
       `,
-      difficulty: 2,
+      difficulty: 1,
       note: 'Uma rocha bloqueia o feixe.',
     }),
     puzzle('beacon.intro.6', {
       grid: `
         b3 . b3
       `,
-      difficulty: 2,
+      difficulty: 1,
       note: 'Faróis também são luz: um enxerga o outro.',
     }),
     puzzle('beacon.intro.7', {
@@ -58,7 +58,7 @@ const P: AreaPuzzles = {
         .  .  .  .
         b5 .  .  .
       `,
-      difficulty: 4,
+      difficulty: 1,
       note: 'Portão: dois faróis dividem a costa; os feixes se cruzam e contam para os dois.',
     }),
   ],
@@ -73,7 +73,7 @@ const P: AreaPuzzles = {
         . .  .  .  .
         . #  .  b5 .
       `,
-      difficulty: 3,
+      difficulty: 2,
       note: "seq A1/4 — toda luz precisa de uma fonte. Três faróis e três rochas. .",
     }),
     puzzle('beacon.practice.2', {
@@ -84,7 +84,7 @@ const P: AreaPuzzles = {
         . . . .  .
         . . . b9 .
       `,
-      difficulty: 4,
+      difficulty: 2,
       note: "seq A2/4 — toda luz precisa de uma fonte. Faróis que se enxergam. .",
     }),
     puzzle('beacon.practice.3', {
@@ -95,7 +95,7 @@ const P: AreaPuzzles = {
         .  . .  . .
         b1 . #  . .
       `,
-      difficulty: 4,
+      difficulty: 2,
       note: "seq A3/4 — toda luz precisa de uma fonte. Faróis que se enxergam. .",
     }),
     puzzle('beacon.practice.4', {
@@ -106,7 +106,7 @@ const P: AreaPuzzles = {
         . .  . . b6
         . .  . . .
       `,
-      difficulty: 5,
+      difficulty: 3,
       note: "seq A4/4 — toda luz precisa de uma fonte. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.practice.5', {
@@ -128,7 +128,7 @@ const P: AreaPuzzles = {
         . . .  .  .
         # . .  b4 .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq B2/4 — faróis que se enxergam. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.practice.7', {
@@ -139,7 +139,7 @@ const P: AreaPuzzles = {
         .  .  . . .
         b7 b6 . . .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq B3/4 — faróis que se enxergam. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.practice.8', {
@@ -150,7 +150,7 @@ const P: AreaPuzzles = {
         . b7 . .  .
         . .  . .  .
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq B4/4 — faróis que se enxergam. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.practice.9', {
@@ -172,7 +172,7 @@ const P: AreaPuzzles = {
         . b6 b8 . .
         . .  #  . .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq C2/4 — as rochas cortam o feixe. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.practice.11', {
@@ -183,7 +183,7 @@ const P: AreaPuzzles = {
         # . b8 .  .
         . # .  #  .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq C3/4 — as rochas cortam o feixe. Três faróis e quatro rochas. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.practice.12', {
@@ -194,7 +194,7 @@ const P: AreaPuzzles = {
         .  . . .  b4
         .  . . .  #
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq C4/4 — as rochas cortam o feixe. Três faróis e três rochas. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
   ],
@@ -208,7 +208,7 @@ const P: AreaPuzzles = {
         b6 . b11 . . .
         .  . .   . . .
       `,
-      difficulty: 5,
+      difficulty: 3,
       note: "seq D1/4 — só um farol alcança aquela luz. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende.",
     }),
     puzzle('beacon.trial.2', {
@@ -220,7 +220,7 @@ const P: AreaPuzzles = {
         # . .  .   .  .
         . . .  #   b6 .
       `,
-      difficulty: 6,
+      difficulty: 3,
       note: "seq D2/4 — só um farol alcança aquela luz. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende.",
     }),
     puzzle('beacon.trial.3', {
@@ -232,7 +232,7 @@ const P: AreaPuzzles = {
         .  . .  .   . #
         .  . b5 .   . .
       `,
-      difficulty: 6,
+      difficulty: 3,
       note: "seq D3/4 — só um farol alcança aquela luz. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende.",
     }),
     puzzle('beacon.trial.4', {
@@ -244,7 +244,7 @@ const P: AreaPuzzles = {
         #  . . #  . .
         .  # # L  . b6
       `,
-      difficulty: 7,
+      difficulty: 4,
       note: "seq D4/4 — só um farol alcança aquela luz. Quatro faróis e seis rochas. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (um \"e se?\" no caminho).",
     }),
     puzzle('beacon.trial.5', {
@@ -256,7 +256,7 @@ const P: AreaPuzzles = {
         .  .  . .  . .
         .  .  . .  . .
       `,
-      difficulty: 5,
+      difficulty: 3,
       note: "seq E1/4 — feixes que se cruzam contam para os dois. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.trial.6', {
@@ -268,7 +268,7 @@ const P: AreaPuzzles = {
         .  . .   .  # .
         b1 . #   b7 . .
       `,
-      difficulty: 6,
+      difficulty: 3,
       note: "seq E2/4 — feixes que se cruzam contam para os dois. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.trial.7', {
@@ -280,7 +280,7 @@ const P: AreaPuzzles = {
         . # b8 .  . .
         # . .  .  . .
       `,
-      difficulty: 6,
+      difficulty: 3,
       note: "seq E3/4 — feixes que se cruzam contam para os dois. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende.",
     }),
     puzzle('beacon.trial.8', {
@@ -292,7 +292,7 @@ const P: AreaPuzzles = {
         . .  D  # . #
         # .  .  . . .
       `,
-      difficulty: 7,
+      difficulty: 4,
       note: "seq E4/4 — feixes que se cruzam contam para os dois. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.trial.9', {
@@ -304,7 +304,7 @@ const P: AreaPuzzles = {
         . .   . . . b8
         . b8  . . . .
       `,
-      difficulty: 5,
+      difficulty: 3,
       note: "seq F1/4 — \"e se?\": um farol veria demais. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.trial.10', {
@@ -316,7 +316,7 @@ const P: AreaPuzzles = {
         .  . .  . . b7
         b5 . .  . . .
       `,
-      difficulty: 6,
+      difficulty: 3,
       note: "seq F2/4 — \"e se?\": um farol veria demais. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.trial.11', {
@@ -328,7 +328,7 @@ const P: AreaPuzzles = {
         . . . b7 . b7
         . . . #  # #
       `,
-      difficulty: 6,
+      difficulty: 3,
       note: "seq F3/4 — \"e se?\": um farol veria demais. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.trial.12', {
@@ -340,7 +340,7 @@ const P: AreaPuzzles = {
         . . . .  b3 b6
         # . # b3 .  .
       `,
-      difficulty: 7,
+      difficulty: 4,
       note: "seq F4/4 — \"e se?\": um farol veria demais. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
   ],
@@ -355,7 +355,7 @@ const P: AreaPuzzles = {
         D b10 . . .   b8 .
         . .   . # b8  .  .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq G1/4 — a costa inteira: fontes, cruzamentos e rochas. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.mastery.2', {
@@ -368,7 +368,7 @@ const P: AreaPuzzles = {
         . b9 . b6 .  .   .
         . L  . .  .  .   D
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq G2/4 — a costa inteira: fontes, cruzamentos e rochas. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.mastery.3', {
@@ -381,7 +381,7 @@ const P: AreaPuzzles = {
         b5 .  . .  .   . .
         #  .  . b4 .   . D
       `,
-      difficulty: 8,
+      difficulty: 5,
       note: "seq G3/4 — a costa inteira: fontes, cruzamentos e rochas. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.mastery.4', {
@@ -394,7 +394,7 @@ const P: AreaPuzzles = {
         . . . # .  .  b3
         . . . . .  #  .
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "seq G4/4 — a costa inteira: fontes, cruzamentos e rochas. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.mastery.5', {
@@ -407,7 +407,7 @@ const P: AreaPuzzles = {
         # .  . b11 . .  .
         . .  . .   . b9 L
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq H1/4 — faróis que dependem uns dos outros. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.mastery.6', {
@@ -420,7 +420,7 @@ const P: AreaPuzzles = {
         .   . # .   b3 .  .
         L   . . .   .  .  .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq H2/4 — faróis que dependem uns dos outros. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.mastery.7', {
@@ -433,7 +433,7 @@ const P: AreaPuzzles = {
         b8 .  L L  .  . .
         .  b7 . .  b7 # .
       `,
-      difficulty: 8,
+      difficulty: 5,
       note: "seq H3/4 — faróis que dependem uns dos outros. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
     puzzle('beacon.mastery.8', {
@@ -446,7 +446,7 @@ const P: AreaPuzzles = {
         .  b7 . .  . .  .
         b7 .  L L  . .  b2
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "seq H4/4 — faróis que dependem uns dos outros. Faróis que se enxergam. Ahá: imagine uma luz ali — algum farol veria demais.",
     }),
   ],
@@ -461,7 +461,7 @@ const P: AreaPuzzles = {
         L  . .  .  . b4 .
         #  . b6 .  . .  b7
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "Obra-prima 1/6. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (3 \"e se?\" no caminho).",
     }),
     puzzle('beacon.heart.2', {
@@ -474,7 +474,7 @@ const P: AreaPuzzles = {
         .  .  b6 #  # . .
         .  b3 .  b2 . . .
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "Obra-prima 2/6. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (4 \"e se?\" no caminho).",
     }),
     puzzle('beacon.heart.3', {
@@ -487,7 +487,7 @@ const P: AreaPuzzles = {
         #  . #  .  .  D  .
         b2 . .  b5 .  .  .
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Obra-prima 3/6. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (5 \"e se?\" no caminho).",
     }),
     puzzle('beacon.heart.4', {
@@ -500,7 +500,7 @@ const P: AreaPuzzles = {
         .  .  b10 . b10 .  .
         b7 .  .   . b8  #  .
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Obra-prima 4/6. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (5 \"e se?\" no caminho).",
     }),
     puzzle('beacon.heart.5', {
@@ -513,7 +513,7 @@ const P: AreaPuzzles = {
         . D  . . #  .  .
         . .  . . .  .  .
       `,
-      difficulty: 10,
+      difficulty: 7,
       note: "Obra-prima 5/6. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (5 \"e se?\" no caminho).",
     }),
     puzzle('beacon.heart.6', {
@@ -526,7 +526,7 @@ const P: AreaPuzzles = {
         . . .  . .   . .
         L . b8 . .   . .
       `,
-      difficulty: 10,
+      difficulty: 8,
       note: "Obra-prima 6/6. Faróis que se enxergam. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (8 \"e se?\" no caminho).",
     }),
   ],

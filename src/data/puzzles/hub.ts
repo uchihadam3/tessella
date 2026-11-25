@@ -7,21 +7,21 @@ const P: AreaPuzzles = {
   vault: [
     puzzle('hub.vault', {
       grid: `
-        b3 fA x2 .   .  .   m3 .  b3
-        .  .  .  .   .  .   .  .  .
-        .  .  .  .   .  .   .  .  @a
-        .  .  .  .   @b .   .  .  .
-        .  .  @a .   b5 .   .  .  .
-        .  @a .  b10 .  b10 .  .  .
-        .  .  .  .   .  .   .  .  .
-        .  .  b5 @b  @c .   b5 @b .
-        tm .  .  c2  @c @c  .  tm .
+        m4  .  @c @c .  .  .  .  tm
+        .   .  c1 .  .  .  @c .  x3
+        fA* b4 .  .  b5 .  .  b4 .
+        tm  .  .  b9 @b b9 .  @b .
+        .   .  @a .  .  .  .  .  .
+        .   .  .  .  .  .  @a .  .
+        b8  .  .  .  .  .  .  .  b8
+        .   @a .  .  .  .  .  .  .
+        .   .  .  .  .  .  .  .  .
       `,
-      shapes: {A: 'xxx'},
-      rows: '-|-|-|-|-|-|-|-|1 1',
-      cols: '-|-|1 1 2|6|-|-|-|-|-',
+      shapes: {A: 'x/x/x/x'},
+      rows: '-|-|-|-|1 3 1|-|-|-|-',
+      cols: '-|-|-|-|-|-|-|-|-',
       difficulty: 10,
-      note: "O Cofre Escondido — as oito linguagens da ilha (Farol, Forma, Mosaico, Medida, Afinidade, Gêmeos, Contorno e Trama) num só painel 9×9, solução única, resolvível sem nenhum chute. A resposta desenha um monumento simétrico: dois faróis nos cantos de cima e uma tocha no centro. Percepções, em ordem: (1) os fios da Trama e a conta dos sete faróis acendem as primeiras luzes — mas quase nada se decide só com isso; (2) a barra de três da Forma, lá no canto, só encaixa de um jeito, e esse encaixe destrava de uma vez quase trinta ladrilhos; (3) as famílias de gemas só conseguem se unir por gargalos — quatro cortes, um puxando o outro; (4) por fim, as luas gêmeas: a cópia só cabe de um lado, e a última sombra fecha a simetria.",
+      note: "O Cofre Escondido — as oito linguagens dos ladrilhos (Farol, Forma, Mosaico, Medida, Afinidade, Gêmeos, Contorno e Trama) num só painel 9×9, solução única, resolvível sem nenhum chute — e quem só lê as regras decide apenas um quarto dele. A resposta desenha um portal simétrico: duas torres finas, a chama ao centro e as muralhas descendo até o chão. Percepções, em ordem: (1) só um farol alcança a primeira luz; (2) a barra de quatro, que gira, não cabe na luz — esculpida na sombra, ela destrava treze ladrilhos de uma vez; (3) o quatro do canto só tem uma saída; (4) outro farol solitário, e então dois gargalos entre as gemas; (5) as luas gêmeas: a cópia só cabe de um jeito, do outro lado; (6) um último farol solitário e mais dois gargalos fecham o portal. Onze percepções de cinco tipos.",
     }),
   ],
   secret: [],

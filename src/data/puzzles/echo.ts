@@ -10,7 +10,7 @@ const P: AreaPuzzles = {
         .{-} .{-} .{-}
       `,
       target: '111',
-      difficulty: 2,
+      difficulty: 1,
       note: 'Tocar um cristal faz os vizinhos marcados ressoarem junto: o do meio acende os três.',
     }),
     puzzle('echo.intro.2', {
@@ -18,7 +18,7 @@ const P: AreaPuzzles = {
         .{-} .{-} .{-}
       `,
       target: '010',
-      difficulty: 3,
+      difficulty: 1,
       note: 'Tocar de novo desfaz; a ordem não importa: os três toques deixam só o meio.',
     }),
     puzzle('echo.intro.3', {
@@ -26,7 +26,7 @@ const P: AreaPuzzles = {
         .{-} ~. .{-}
       `,
       target: '101',
-      difficulty: 3,
+      difficulty: 1,
       note: 'O cristal mudo não aceita toque: só os vizinhos o alcançam — e duas ressonâncias se anulam.',
     }),
     puzzle('echo.intro.4', {
@@ -36,7 +36,7 @@ const P: AreaPuzzles = {
         . .    .
       `,
       target: '101/010/101',
-      difficulty: 3,
+      difficulty: 1,
       note: 'Marcas diagonais: o eco salta para os cantos.',
     }),
     puzzle('echo.intro.5', {
@@ -46,7 +46,7 @@ const P: AreaPuzzles = {
         .{+} .{+} .{+}
       `,
       target: '111/111/111',
-      difficulty: 5,
+      difficulty: 1,
       note: 'Todos ressoam em cruz: acender tudo exige pensar em que toques se somam.',
     }),
     puzzle('echo.intro.6', {
@@ -56,7 +56,7 @@ const P: AreaPuzzles = {
         .    . .{k}
       `,
       target: '110/001/001',
-      difficulty: 4,
+      difficulty: 1,
       note: 'Marcas longas: um toque vira a linha inteira, outro a coluna inteira.',
     }),
     puzzle('echo.intro.7', {
@@ -66,7 +66,7 @@ const P: AreaPuzzles = {
         .{-} .{|} .{-}
       `,
       target: '010/111/101',
-      difficulty: 5,
+      difficulty: 1,
       note: 'Portão: o centro mudo só acende pelos vizinhos verticais — conte quantas vezes ele ressoa.',
     }),
   ],
@@ -81,7 +81,7 @@ const P: AreaPuzzles = {
         .{n,s} .{e,w} .{e,w}     .{n,s,e,w}
       `,
       target: '0100/1100/1000/1000',
-      difficulty: 5,
+      difficulty: 2,
       note: "seq A1/3 — toques que se somam. Ahá: tocar duas vezes desfaz e a ordem não importa — cada cristal é tocado zero ou uma vez.",
     }),
     puzzle('echo.practice.2', {
@@ -92,7 +92,7 @@ const P: AreaPuzzles = {
         .{n,s}     .      .{e,w}     .{e,w}
       `,
       target: '0000/0110/0011/0101',
-      difficulty: 5,
+      difficulty: 2,
       note: "seq A2/3 — toques que se somam. Ahá: tocar duas vezes desfaz e a ordem não importa — cada cristal é tocado zero ou uma vez.",
     }),
     puzzle('echo.practice.3', {
@@ -103,7 +103,7 @@ const P: AreaPuzzles = {
         .{n,s}     .{e,w}     .          .{n,s}
       `,
       target: '1110/0110/1100/1010',
-      difficulty: 5,
+      difficulty: 2,
       note: "seq A3/3 — toques que se somam. Ahá: tocar duas vezes desfaz e a ordem não importa — cada cristal é tocado zero ou uma vez.",
     }),
     puzzle('echo.practice.4', {
@@ -114,7 +114,7 @@ const P: AreaPuzzles = {
         .{n,s,e,w}     .              .{n,s}         .{e,w}
       `,
       target: '0110/1001/0000/0100',
-      difficulty: 5,
+      difficulty: 2,
       note: "seq B1/3 — cristais mudos. Ahá: o cristal mudo só muda pela soma das ressonâncias dos vizinhos.",
     }),
     puzzle('echo.practice.5', {
@@ -125,7 +125,7 @@ const P: AreaPuzzles = {
         .{n,s,e,w} .{n,s}     .{n,s,e,w}     .
       `,
       target: '0011/1000/0101/0101',
-      difficulty: 6,
+      difficulty: 2,
       note: "seq B2/3 — cristais mudos. Ahá: o cristal mudo só muda pela soma das ressonâncias dos vizinhos.",
     }),
     puzzle('echo.practice.6', {
@@ -136,7 +136,7 @@ const P: AreaPuzzles = {
         .{ne,nw,se,sw} .{ne,nw,se,sw}  .{ne,nw,se,sw} .{n,s,e,w}
       `,
       target: '1000/0110/1101/0011',
-      difficulty: 6,
+      difficulty: 2,
       note: "seq B3/3 — cristais mudos. Ahá: os cristais mudos só mudam pela soma das ressonâncias dos vizinhos.",
     }),
     puzzle('echo.practice.7', {
@@ -148,7 +148,7 @@ const P: AreaPuzzles = {
         .{col} .          .{row} ~.     .{col}
       `,
       target: '00001/00000/00001/00011/01001',
-      difficulty: 6,
+      difficulty: 2,
       note: "seq C1/3 — ecos longos de linha e coluna. Ahá: um toque vira a linha inteira — comece pelas linhas que só um cristal alcança.",
     }),
     puzzle('echo.practice.8', {
@@ -160,7 +160,7 @@ const P: AreaPuzzles = {
         .          .          .{row}     .{row}     .
       `,
       target: '00011/00001/00100/10011/10011',
-      difficulty: 6,
+      difficulty: 2,
       note: "seq C2/3 — ecos longos de linha e coluna. Ahá: um toque vira a linha inteira — comece pelas linhas que só um cristal alcança.",
     }),
     puzzle('echo.practice.9', {
@@ -172,7 +172,7 @@ const P: AreaPuzzles = {
         .       .{col} .{n,s,e,w} ~.{col} .{n,s,e,w}
       `,
       target: '00111/11000/11001/01110/00110',
-      difficulty: 6,
+      difficulty: 2,
       note: "seq C3/3 — ecos longos de linha e coluna. Ahá: um toque vira a linha inteira — comece pelas linhas que só um cristal alcança.",
     }),
   ],
@@ -185,7 +185,7 @@ const P: AreaPuzzles = {
         .{n,s,e,w}        .      m4          .{n,s}     m1          .
         .{n,s,e,w}        .      .{n,s,e,w}  .          ~.{n,s,e,w} .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq D1/3 — eco + Medida: o tamanho pedido tem de ser alcançável. Eco + Medida. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz.",
     }),
     puzzle('echo.trial.2', {
@@ -196,7 +196,7 @@ const P: AreaPuzzles = {
         .{n,s}         .           ~.             ~.         .
         m4             .           .{ne,nw,se,sw} m1         ~.
       `,
-      difficulty: 7,
+      difficulty: 6,
       note: "seq D2/3 — eco + Medida: o tamanho pedido tem de ser alcançável. Eco + Medida. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (um \"e se?\" no caminho).",
     }),
     puzzle('echo.trial.3', {
@@ -207,7 +207,7 @@ const P: AreaPuzzles = {
         m15      m3         m15{ne,nw,se,sw} m6{ne,sw}      m15{n,s,e,w}
         m15      ~m3{nw,se} .                m15{nw,se}     ~.
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq D3/3 — eco + Medida: o tamanho pedido tem de ser alcançável. Eco + Medida. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (4 \"e se?\" no caminho).",
     }),
     puzzle('echo.trial.4', {
@@ -218,7 +218,7 @@ const P: AreaPuzzles = {
         c1{nw,se}   ~.         ~c3{nw,se} ~.             .
         ~.{n,s,e,w} .{n,s,e,w} ~.         .              c1
       `,
-      difficulty: 8,
+      difficulty: 4,
       note: "seq E1/3 — eco + Contorno: bordas que os ecos conseguem desenhar. Eco + Contorno. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
     }),
     puzzle('echo.trial.5', {
@@ -229,7 +229,7 @@ const P: AreaPuzzles = {
         .{n,s,e,w} c2     .      .               c3
         c0         c2     .      c3{ne,nw,se,sw} .{e,w}
       `,
-      difficulty: 7,
+      difficulty: 4,
       note: "seq E2/3 — eco + Contorno: bordas que os ecos conseguem desenhar. Eco + Contorno. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
     }),
     puzzle('echo.trial.6', {
@@ -240,7 +240,7 @@ const P: AreaPuzzles = {
         ~c0{ne,sw} .   c2       ~c2      ~.{nw,se}       .
         .{nw,se}   .   c3{e,w}  .        c2{ne,nw,se,sw} ~.{e,w}
       `,
-      difficulty: 8,
+      difficulty: 4,
       note: "seq E3/3 — eco + Contorno: bordas que os ecos conseguem desenhar. Eco + Contorno. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
     }),
     puzzle('echo.trial.7', {
@@ -251,7 +251,7 @@ const P: AreaPuzzles = {
         x4        .               .{ne,nw,se,sw} ~.{n,s,e,w}  ~x2
         x3        .               .{e,w}         ~x3{n,s,e,w} ~.{n,s}
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "seq F1/3 — eco + Mosaico: janelas alcançáveis. Eco + Mosaico. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (3 \"e se?\" no caminho).",
     }),
     puzzle('echo.trial.8', {
@@ -262,7 +262,7 @@ const P: AreaPuzzles = {
         ~.        .        .         .            .{e,w}
         ~.        .{nw,se} x2{ne,sw} ~x1{n,s,e,w} .{e,w}
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "seq F2/3 — eco + Mosaico: janelas alcançáveis. Eco + Mosaico. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (4 \"e se?\" no caminho).",
     }),
     puzzle('echo.trial.9', {
@@ -290,7 +290,7 @@ const P: AreaPuzzles = {
       `,
       rows: '1 1|1|1|1|0|1|3',
       cols: '-|-|1|-|1 2|2 1|-',
-      difficulty: 10,
+      difficulty: 6,
       note: "Obra-prima 1/5. Eco + Afinidade + Contorno + Trama: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um gargalo: o único caminho que liga as gemas; (2 \"e se?\" no caminho).",
     }),
     puzzle('echo.heart.2', {
@@ -302,7 +302,7 @@ const P: AreaPuzzles = {
         .{ne,nw,se,sw} .{ne,sw}   .              ~c0{ne,sw}     .          c0{nw,se}
         ~c1{n,s,e,w}   c0{e,w}    .{ne,nw,se,sw} .              @a         .
       `,
-      difficulty: 10,
+      difficulty: 6,
       note: "Obra-prima 2/5. Eco + Afinidade + Contorno: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
     puzzle('echo.heart.3', {
@@ -314,7 +314,7 @@ const P: AreaPuzzles = {
         .       x2        ~.{nw,se}  .{nw,se}        .{ne,sw} x3{n,s}
         .       .{ne,sw}  .          ~c2             .        ~x1{ne,nw,se,sw}
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Obra-prima 3/5. Eco + Contorno + Mosaico: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (5 \"e se?\" no caminho).",
     }),
     puzzle('echo.heart.4', {
@@ -327,7 +327,7 @@ const P: AreaPuzzles = {
         ~.          .          ~.{n,s,e,w} ~m23       .            ~.{e,w}
       `,
       shapes: {A: 'xx/x.'},
-      difficulty: 9,
+      difficulty: 8,
       note: "Obra-prima 4/5. Eco + Medida + Forma: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um número que não cabe de um lado da luz só pode estar do outro; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (4 \"e se?\" no caminho).",
     }),
     puzzle('echo.heart.5', {
@@ -339,7 +339,7 @@ const P: AreaPuzzles = {
         x2     x3         .{ne,sw}       .               .           ~.{n,s,e,w} .
         ~.     x2         .{ne,nw,se,sw} .{e,w}          .{e,w}      ~.          ~x0
       `,
-      difficulty: 10,
+      difficulty: 9,
       note: "Obra-prima 5/5. Eco + Mosaico + Medida: a resposta precisa obedecer às regras e ser alcançável pelos ecos. Ahá: um número que não cabe de um lado da luz só pode estar do outro; depois: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (6 \"e se?\" no caminho).",
     }),
   ],

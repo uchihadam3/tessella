@@ -50,7 +50,8 @@ export class Input {
     // short taps = use what is under the finger. While a panel is engaged, touches paint tiles.
     el.addEventListener('touchstart', (e) => {
       this.setTouch();
-      const now = performance.now();
+      // the time the finger landed (not when a busy frame got around to handling it)
+      const now = e.timeStamp || performance.now();
       for (const t of Array.from(e.changedTouches)) {
         if (this.pointerMode) {
           if (this.ptrId === null) {
@@ -103,7 +104,7 @@ export class Input {
       e.preventDefault();
     }, { passive: false });
     const end = (e: TouchEvent) => {
-      const now = performance.now();
+      const now = e.timeStamp || performance.now();
       for (const t of Array.from(e.changedTouches)) {
         if (t.identifier === this.ptrId) {
           this.ptrId = null;

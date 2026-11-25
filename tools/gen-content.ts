@@ -869,7 +869,7 @@ async function reorderLate(area: AreaId): Promise<void> {
       const FIN = 'O último painel da Torre';
       out = byEffort(list).map((p, i, arr) => {
         let n = p.note!.replace(new RegExp(`^${FIN}: a`), 'A').replace(new RegExp(`^${FIN} — `), '');
-        if (i === arr.length - 1) n = `${FIN} — ${n.replace(/^./, (x) => x.toLowerCase())}`;
+        if (i === arr.length - 1) n = `${FIN} — ${n}`;
         p.note = n;
         return p;
       });

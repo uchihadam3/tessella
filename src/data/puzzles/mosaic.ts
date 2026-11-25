@@ -34,7 +34,7 @@ const P: AreaPuzzles = {
         .  . .
         x2 . x1
       `,
-      difficulty: 3,
+      difficulty: 1,
       note: 'Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos.',
     }),
     puzzle('mosaic.intro.5', {
@@ -44,7 +44,7 @@ const P: AreaPuzzles = {
         .  x3 .  x5
         .  .  .  .
       `,
-      difficulty: 3,
+      difficulty: 1,
       note: 'Zero apaga a janela inteira; o que sobra para os vizinhos fica contado.',
     }),
     puzzle('mosaic.intro.6', {
@@ -53,7 +53,7 @@ const P: AreaPuzzles = {
         .  x0 x3 .  .
         .  .  .  x2 .
       `,
-      difficulty: 3,
+      difficulty: 1,
       note: 'Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê.',
     }),
     puzzle('mosaic.intro.7', {
@@ -63,7 +63,7 @@ const P: AreaPuzzles = {
         .  x8 .  .
         .  .  .  x1
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: 'Portão: janelas quase cheias e um 1 solitário no canto.',
     }),
   ],
@@ -89,7 +89,7 @@ const P: AreaPuzzles = {
         .  x0 x1 .  x4
         .  .  .  .  .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq A2/4 — janelas de canto e de borda são menores. Um ornamento 5×5 com 7 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.practice.3', {
@@ -100,7 +100,7 @@ const P: AreaPuzzles = {
         x0 .  .  . x1
         .  .  x3 . .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq A3/4 — janelas de canto e de borda são menores. Um ornamento 5×5 com 7 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.practice.4', {
@@ -155,7 +155,7 @@ const P: AreaPuzzles = {
         .  .  .  .  .  x1
         .  x2 x1 .  x1 .
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq B4/4 — zeros apagam, cheios acendem. Um ornamento 6×5 com 8 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.practice.9', {
@@ -199,7 +199,7 @@ const P: AreaPuzzles = {
         .  .  .  x5 .  x4
         x0 .  x1 .  x5 .
       `,
-      difficulty: 5,
+      difficulty: 6,
       note: "seq C4/4 — duas janelas vizinhas: a diferença é uma faixa. Um ornamento 6×5 com 13 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
   ],
@@ -225,7 +225,7 @@ const P: AreaPuzzles = {
         . x6 x4 x2 . .  .
         . .  .  .  . .  x0
       `,
-      difficulty: 6,
+      difficulty: 5,
       note: "seq D2/4 — subtrações em cadeia. Um ornamento 7×6 com 10 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.trial.3', {
@@ -288,7 +288,7 @@ const P: AreaPuzzles = {
         .  .  x3 x2 .  x3 x3
         x3 .  .  .  .  .  .
       `,
-      difficulty: 6,
+      difficulty: 7,
       note: "seq E3/4 — o ornamento simétrico. Um ornamento 7×7 com 18 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.trial.8', {
@@ -340,7 +340,7 @@ const P: AreaPuzzles = {
         .  x9 .  .  x9 .  .
         .  .  .  .  .  .  x4
       `,
-      difficulty: 6,
+      difficulty: 7,
       note: "seq F3/4 — \"e se?\": uma janela passaria da conta. Um ornamento 7×7 com 16 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (3 \"e se?\" no caminho).",
     }),
     puzzle('mosaic.trial.12', {
@@ -353,7 +353,7 @@ const P: AreaPuzzles = {
         .  x1 .  .  .  .  .
         .  x1 .  x4 .  x6 .
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq F4/4 — \"e se?\": uma janela passaria da conta. Um ornamento 7×7 com 17 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (4 \"e se?\" no caminho).",
     }),
   ],
@@ -369,7 +369,7 @@ const P: AreaPuzzles = {
         .  .  x4 .  .  .  .  x2
         .  x1 .  .  .  x0 .  .
       `,
-      difficulty: 7,
+      difficulty: 6,
       note: "seq G1/4 — a rosácea girada. Um ornamento 8×8 com 21 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.mastery.2', {
@@ -397,7 +397,7 @@ const P: AreaPuzzles = {
         .  .  x5 .  .  x5 x6 .
         x2 .  .  x5 .  .  .  .
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "seq G3/4 — a rosácea girada. Um ornamento 8×8 com 22 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.mastery.4', {
@@ -411,7 +411,7 @@ const P: AreaPuzzles = {
         x3 .  x3 x1 .  .  .  .
         x2 x3 .  .  x0 .  .  x4
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq G4/4 — a rosácea girada. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (6 \"e se?\" no caminho).",
     }),
     puzzle('mosaic.mastery.5', {
@@ -471,7 +471,7 @@ const P: AreaPuzzles = {
         .  x7 x4 .  .  .  x4 .  x5
         .  .  .  x2 .  .  .  x4 .
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq H4/4 — o grande piso do templo. Um ornamento 9×9 com 27 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (6 \"e se?\" no caminho).",
     }),
   ],
@@ -501,7 +501,7 @@ const P: AreaPuzzles = {
         x3 .  x6 x5 .  .  x5 .
         .  .  .  .  .  x1 .  .
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "Obra-prima 2/6. Um ornamento 8×8 com 21 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.heart.3', {
@@ -515,7 +515,7 @@ const P: AreaPuzzles = {
         .  x6 .  .  x2 x2 x5 .
         x3 .  x4 .  .  .  .  .
       `,
-      difficulty: 9,
+      difficulty: 8,
       note: "Obra-prima 3/6. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.heart.4', {
@@ -529,7 +529,7 @@ const P: AreaPuzzles = {
         .  .  .  . .  x6 .  x2
         x1 .  x5 . .  x5 .  .
       `,
-      difficulty: 9,
+      difficulty: 8,
       note: "Obra-prima 4/6. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.heart.5', {
@@ -543,7 +543,7 @@ const P: AreaPuzzles = {
         .  x6 .  x2 .  x5 .  x5
         .  .  .  .  .  x2 .  .
       `,
-      difficulty: 10,
+      difficulty: 8,
       note: "Obra-prima 5/6. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('mosaic.heart.6', {
@@ -557,7 +557,7 @@ const P: AreaPuzzles = {
         .  x7 .  .  x4 .  x6 .
         .  .  .  .  .  x5 .  .
       `,
-      difficulty: 10,
+      difficulty: 8,
       note: "Obra-prima 6/6. Um ornamento 8×8 com 22 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (6 \"e se?\" no caminho).",
     }),
   ],

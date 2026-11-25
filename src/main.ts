@@ -23,9 +23,6 @@ async function boot() {
   const app = document.getElementById('app')!;
   const ui = new UI();
   const game = new Game(app);
-  const query = new URLSearchParams(location.search);
-  // screenshots and tests want the full resolution every frame
-  if (query.has('dev') || query.has('fullres')) game.engine.autoResolution = false;
   ui.bind(game);
   window.__game = game;
   ui.loading(0.02, 'terrain');

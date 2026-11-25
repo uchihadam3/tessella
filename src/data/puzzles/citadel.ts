@@ -13,7 +13,7 @@ const P: AreaPuzzles = {
         x4 x5 .  .  x1
         .  .  x4 c4 #
       `,
-      difficulty: 6,
+      difficulty: 4,
       note: "Sem tutorial — Mosaico + Contorno: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga.",
     }),
     puzzle('citadel.gate.2', {
@@ -24,7 +24,7 @@ const P: AreaPuzzles = {
         c3 .  c0 @a .
         @c .  c1 c1 @a
       `,
-      difficulty: 6,
+      difficulty: 4,
       note: "Sem tutorial — Contorno + Afinidade: o que uma linguagem decide, a outra aproveita. Ahá: um gargalo: o único caminho que liga as gemas; (3 \"e se?\" no caminho).",
     }),
     puzzle('citadel.gate.3', {
@@ -37,7 +37,7 @@ const P: AreaPuzzles = {
       `,
       rows: '-|-|-|-|2',
       cols: '1|-|-|2|1',
-      difficulty: 6,
+      difficulty: 4,
       note: "Sem tutorial — Farol + Trama: o que uma linguagem decide, a outra aproveita. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (um \"e se?\" no caminho).",
     }),
     puzzle('citadel.gate.4', {
@@ -49,7 +49,7 @@ const P: AreaPuzzles = {
         fA  . . . .
       `,
       shapes: {A: 'x./xx/x.'},
-      difficulty: 7,
+      difficulty: 6,
       note: "Sem tutorial — Medida + Forma: o que uma linguagem decide, a outra aproveita. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde.",
     }),
     puzzle('citadel.gate.5', {
@@ -89,7 +89,7 @@ const P: AreaPuzzles = {
       shapes: {A: 'xxx'},
       rows: '-|-|-|-|-|3 2',
       cols: '1|3|1 4|1|1 1|1',
-      difficulty: 7,
+      difficulty: 5,
       note: "Sem tutorial — Forma + Trama: o que uma linguagem decide, a outra aproveita. Ahá: o molde incompleto só tem uma saída.",
     }),
     puzzle('citadel.court.2', {
@@ -101,7 +101,7 @@ const P: AreaPuzzles = {
         .  . .  .  .  .
         x1 . b5 .  b7 .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "Sem tutorial — Mosaico + Farol: o que uma linguagem decide, a outra aproveita. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (2 \"e se?\" no caminho).",
     }),
     puzzle('citadel.court.3', {
@@ -113,7 +113,7 @@ const P: AreaPuzzles = {
         m2 .  .   . .  .
         .  .  m11 . b6 .
       `,
-      difficulty: 7,
+      difficulty: 6,
       note: "Sem tutorial — Farol + Medida: o que uma linguagem decide, a outra aproveita. Ahá: só um farol alcança aquela luz — o caminho até ela acende; depois: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (2 \"e se?\" no caminho).",
     }),
     puzzle('citadel.court.4', {
@@ -127,7 +127,7 @@ const P: AreaPuzzles = {
       `,
       rows: '2 1|1 1|1|2|-|2',
       cols: '2 1|-|-|1 3|-|1 1',
-      difficulty: 7,
+      difficulty: 6,
       note: "Sem tutorial — Afinidade + Trama: o que uma linguagem decide, a outra aproveita. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('citadel.court.5', {
@@ -139,7 +139,7 @@ const P: AreaPuzzles = {
         c2 #  .  c3 .  c1
         c3 .  c1 .  c1 .
       `,
-      difficulty: 7,
+      difficulty: 6,
       note: "Sem tutorial — Contorno + Gêmeos: o que uma linguagem decide, a outra aproveita. Ahá: a cópia só cabe num lugar; (4 \"e se?\" no caminho).",
     }),
     puzzle('citadel.court.6', {
@@ -175,7 +175,7 @@ const P: AreaPuzzles = {
         .  .  .  x5 x7 x6
         @b .  @b .  .  .
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "Sem tutorial — Mosaico + Afinidade: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: um gargalo: o único caminho que liga as gemas; (3 \"e se?\" no caminho).",
     }),
     puzzle('citadel.court.9', {
@@ -188,7 +188,7 @@ const P: AreaPuzzles = {
         x3 fD .   .  .  x3
       `,
       shapes: {A: 'x',B: 'xx/x./xx',C: '..x/xxx',D: 'xx'},
-      difficulty: 8,
+      difficulty: 9,
       note: "Sem tutorial — Forma + Mosaico: o que uma linguagem decide, a outra aproveita. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (4 \"e se?\" no caminho).",
     }),
     puzzle('citadel.court.10', {
@@ -201,7 +201,7 @@ const P: AreaPuzzles = {
         fD .  @c .  .  fE
       `,
       shapes: {A: 'xx',B: 'xx/.x/.x',C: 'x/x',D: 'xx./xxx',E: 'x'},
-      difficulty: 8,
+      difficulty: 9,
       note: "Sem tutorial — Afinidade + Forma: o que uma linguagem decide, a outra aproveita. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; e por fim: o molde incompleto só tem uma saída.",
     }),
   ],
@@ -218,7 +218,7 @@ const P: AreaPuzzles = {
       shapes: {A: 'xx/xx'},
       rows: '3 1|3 1|-|4|3|5',
       cols: '-|-|6|3|4|2|-',
-      difficulty: 8,
+      difficulty: 6,
       note: "Sem tutorial — Contorno + Forma + Trama: o que uma linguagem decide, a outra aproveita. Ahá: só existe um encaixe para o molde.",
     }),
     puzzle('citadel.halls.2', {
@@ -233,7 +233,7 @@ const P: AreaPuzzles = {
       `,
       rows: '4|1 1 1|7|2 1|1 1|1 1 1 1|2 1',
       cols: '1 1|4|-|-|-|2 1|-',
-      difficulty: 8,
+      difficulty: 6,
       note: "Sem tutorial — Medida + Mosaico + Trama: o que uma linguagem decide, a outra aproveita. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali.",
     }),
     puzzle('citadel.halls.3', {
@@ -247,7 +247,7 @@ const P: AreaPuzzles = {
         .  @b .  #  . .  .
       `,
       shapes: {A: 'xxx/.x./.x.'},
-      difficulty: 8,
+      difficulty: 6,
       note: "Sem tutorial — Afinidade + Farol + Forma: o que uma linguagem decide, a outra aproveita. Ahá: só um farol alcança aquela luz — o caminho até ela acende; depois: um gargalo: o único caminho que liga as gemas; e por fim: só existe um encaixe para o molde.",
     }),
     puzzle('citadel.halls.4', {
@@ -261,7 +261,7 @@ const P: AreaPuzzles = {
       `,
       rows: '-|-|-|-|-|-',
       cols: '-|1|-|1|-|-',
-      difficulty: 8,
+      difficulty: 6,
       note: "Sem tutorial — Farol + Contorno + Trama: o que uma linguagem decide, a outra aproveita. Ahá: imagine o ladrilho do outro jeito — uma pista quebraria na hora.",
     }),
     puzzle('citadel.halls.5', {
@@ -273,7 +273,7 @@ const P: AreaPuzzles = {
         .   . @c m8 .  .   .
         @c  . .  b4 .  @a  .
       `,
-      difficulty: 9,
+      difficulty: 6,
       note: "Sem tutorial — Afinidade + Medida + Farol: o que uma linguagem decide, a outra aproveita. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; e por fim: só um farol alcança aquela luz — o caminho até ela acende; (2 \"e se?\" no caminho).",
     }),
     puzzle('citadel.halls.6', {
@@ -286,7 +286,7 @@ const P: AreaPuzzles = {
         x4 .  b6 .  . .  .
         .  b4 .  .  . .  .
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "Sem tutorial — Farol + Contorno + Mosaico: o que uma linguagem decide, a outra aproveita. Ahá: só um farol alcança aquela luz — o caminho até ela acende; (4 \"e se?\" no caminho).",
     }),
     puzzle('citadel.halls.7', {
@@ -298,7 +298,7 @@ const P: AreaPuzzles = {
         .  .  .  x8 .  tm
         .  x4 .  .  x3 .
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Sem tutorial — Medida + Mosaico + Gêmeos: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; e por fim: a cópia só cabe num lugar; (2 \"e se?\" no caminho).",
     }),
     puzzle('citadel.halls.8', {
@@ -325,7 +325,7 @@ const P: AreaPuzzles = {
         c1 @a .  .  @b .
         .  .  .  c3 .  @b
       `,
-      difficulty: 9,
+      difficulty: 8,
       note: "Sem tutorial — Contorno + Afinidade + Medida: o que uma linguagem decide, a outra aproveita. Ahá: um gargalo: o único caminho que liga as gemas; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (6 \"e se?\" no caminho).",
     }),
     puzzle('citadel.halls.10', {
@@ -350,7 +350,7 @@ const P: AreaPuzzles = {
         x3 x3 .  .  x5 x6 @c
         .  x2 .  c2 .  .  @c
       `,
-      difficulty: 9,
+      difficulty: 8,
       note: "Sem tutorial — Afinidade + Contorno + Mosaico: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: um gargalo: o único caminho que liga as gemas; (5 \"e se?\" no caminho).",
     }),
     puzzle('citadel.halls.12', {
@@ -363,7 +363,7 @@ const P: AreaPuzzles = {
         .  .  .  .  .  @a
       `,
       shapes: {A: 'xx/.x',B: 'x',C: 'xx/xx/x.',D: 'x/x'},
-      difficulty: 9,
+      difficulty: 8,
       note: "Sem tutorial — Forma + Mosaico + Afinidade: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
     puzzle('citadel.halls.13', {
@@ -390,7 +390,7 @@ const P: AreaPuzzles = {
         m7 @c .  .  m11 @a @a
         .  .  @c .  @c  .  m1
       `,
-      difficulty: 9,
+      difficulty: 10,
       note: "Sem tutorial — Medida + Afinidade + Gêmeos: o que uma linguagem decide, a outra aproveita. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um gargalo: o único caminho que liga as gemas; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (3 \"e se?\" no caminho).",
     }),
   ],
@@ -405,7 +405,7 @@ const P: AreaPuzzles = {
         b6     .{e,w} .          .      x2{n,s}     .{n,s,e,w} .
         @b     .      ~.{e,w}    .{n,s} .{e,w}      .          .{n,s,e,w}
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Sem tutorial — Afinidade + Farol + Medida + Mosaico + Eco: o que uma linguagem decide, a outra aproveita. Ahá: só um farol alcança aquela luz — o caminho até ela acende; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('citadel.crown.2', {
@@ -421,7 +421,7 @@ const P: AreaPuzzles = {
       shapes: {A: 'x'},
       rows: '0|1 1|2|1|1|1|-',
       cols: '1|-|-|1 2|-|-|-',
-      difficulty: 9,
+      difficulty: 7,
       note: "Sem tutorial — Forma + Afinidade + Contorno + Trama + Eco: o que uma linguagem decide, a outra aproveita. Ahá: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.3', {
@@ -433,7 +433,7 @@ const P: AreaPuzzles = {
         ~.               .              .           x2           x3         ~x2
         x2               .{ne,nw,se,sw} .           .{e,w}       .          ~.{n,s,e,w}
       `,
-      difficulty: 10,
+      difficulty: 7,
       note: "Sem tutorial — Afinidade + Mosaico + Eco: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro; e por fim: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.4', {
@@ -445,7 +445,7 @@ const P: AreaPuzzles = {
         .{e,w}          .{n,s,e,w}  ~c2     #      x3  ~.         c1{ne,nw,se,sw}
         x4              ~.{n,s,e,w} .{n,s}  #      .   x3{e,w}    .{ne,nw,se,sw}
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Sem tutorial — Contorno + Mosaico + Medida + Eco: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (4 \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.5', {
@@ -457,7 +457,7 @@ const P: AreaPuzzles = {
         @c             #       .               ~.{n,s} .                ~c1{e,w}    m31
         @c             @c{e,w} .{ne,nw,se,sw}  @b{e,w} ~@b{ne,nw,se,sw} m31         @a
       `,
-      difficulty: 10,
+      difficulty: 7,
       note: "Sem tutorial — Medida + Afinidade + Contorno + Eco: o que uma linguagem decide, a outra aproveita. Ahá: um gargalo: o único caminho que liga as gemas; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (3 \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.6', {
@@ -470,7 +470,7 @@ const P: AreaPuzzles = {
         @a         .      .       @b     c2      .          b3
         .{n,s,e,w} .      .       .      ~.      .{n,s}     #
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Sem tutorial — Afinidade + Contorno + Farol + Eco: o que uma linguagem decide, a outra aproveita. Ahá: só um farol alcança aquela luz — o caminho até ela acende; depois: um gargalo: o único caminho que liga as gemas; (5 \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.7', {
@@ -485,7 +485,7 @@ const P: AreaPuzzles = {
       `,
       rows: '0|1 1|-|1|1|1 1|1 1',
       cols: '-|1 1|2 1|1 1|1|-|-',
-      difficulty: 9,
+      difficulty: 7,
       note: "Sem tutorial — Afinidade + Medida + Trama + Eco: o que uma linguagem decide, a outra aproveita. Ahá: um gargalo: o único caminho que liga as gemas; (6 \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.8', {
@@ -498,7 +498,7 @@ const P: AreaPuzzles = {
         c2      .      .{n,s}      ~@a        .           c0      ~@b
       `,
       shapes: {A: 'x/x',B: 'xx/x./x.'},
-      difficulty: 10,
+      difficulty: 8,
       note: "Sem tutorial — Forma + Afinidade + Contorno + Eco: o que uma linguagem decide, a outra aproveita. Ahá: um gargalo: o único caminho que liga as gemas; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.9', {
@@ -512,7 +512,7 @@ const P: AreaPuzzles = {
         .              .{ne,nw,se,sw} m1             .{n,s,e,w}      .               fD*{ne,nw,se,sw} #
       `,
       shapes: {A: 'xx',B: 'x',C: 'x../xxx',D: 'x/x'},
-      difficulty: 10,
+      difficulty: 8,
       note: "Sem tutorial — Forma + Medida + Afinidade + Gêmeos + Eco: o que uma linguagem decide, a outra aproveita. Ahá: o molde incompleto só tem uma saída; depois: um gargalo: o único caminho que liga as gemas; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (um \"e se?\" no caminho).",
     }),
     puzzle('citadel.crown.10', {
@@ -525,7 +525,7 @@ const P: AreaPuzzles = {
         x2{ne,nw,se,sw} .               x3{n,s,e,w}    .              .               m3             .
         x2{ne,nw,se,sw} .               .              .              .               tm             m1{n,s,e,w}
       `,
-      difficulty: 10,
+      difficulty: 9,
       note: "Sem tutorial — Mosaico + Gêmeos + Medida + Eco: o que uma linguagem decide, a outra aproveita. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; depois: a cópia só cabe num lugar; e por fim: um número que não cabe de um lado da luz só pode estar do outro; (5 \"e se?\" no caminho).",
     }),
   ],

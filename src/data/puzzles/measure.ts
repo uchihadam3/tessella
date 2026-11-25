@@ -16,7 +16,7 @@ const P: AreaPuzzles = {
       grid: `
         m2 . .
       `,
-      difficulty: 1,
+      difficulty: 3,
       note: 'Uma região de dois — e o terceiro do outro lado.',
     }),
     puzzle('measure.intro.3', {
@@ -33,7 +33,7 @@ const P: AreaPuzzles = {
         . m1 .
         . .  m8
       `,
-      difficulty: 2,
+      difficulty: 4,
       note: 'O centro sozinho... e o anel ao redor também é uma região: a escuridão conta.',
     }),
     puzzle('measure.intro.5', {
@@ -41,7 +41,7 @@ const P: AreaPuzzles = {
         Lm2 . .
         .   . m4
       `,
-      difficulty: 3,
+      difficulty: 2,
       note: 'O número pode morar num ladrilho apagado: ele mede a sombra.',
     }),
     puzzle('measure.intro.6', {
@@ -74,7 +74,7 @@ const P: AreaPuzzles = {
         .  . . m1
         m2 . . #
       `,
-      difficulty: 3,
+      difficulty: 4,
       note: "seq A1/4 — a região incompleta só tem uma saída. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali.",
     }),
     puzzle('measure.practice.2', {
@@ -85,7 +85,7 @@ const P: AreaPuzzles = {
         m1 .  .  m3 m1
         .  .  m1 .  m1
       `,
-      difficulty: 4,
+      difficulty: 6,
       note: "seq A2/4 — a região incompleta só tem uma saída. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (2 \"e se?\" no caminho).",
     }),
     puzzle('measure.practice.3', {
@@ -96,7 +96,7 @@ const P: AreaPuzzles = {
         . .  m1 . .
         . .  .  . m1
       `,
-      difficulty: 4,
+      difficulty: 6,
       note: "seq A3/4 — a região incompleta só tem uma saída. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (um \"e se?\" no caminho).",
     }),
     puzzle('measure.practice.4', {
@@ -107,7 +107,7 @@ const P: AreaPuzzles = {
         .  .  .  m1 m2
         m4 .  .  .  .
       `,
-      difficulty: 5,
+      difficulty: 6,
       note: "seq A4/4 — a região incompleta só tem uma saída. O 7 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (2 \"e se?\" no caminho).",
     }),
     puzzle('measure.practice.5', {
@@ -117,7 +117,7 @@ const P: AreaPuzzles = {
         .  .  m3 .
         .  m1 m1 .
       `,
-      difficulty: 3,
+      difficulty: 4,
       note: "seq B1/4 — a escuridão também é uma região — e o número a mede. O 8 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz.",
     }),
     puzzle('measure.practice.6', {
@@ -128,7 +128,7 @@ const P: AreaPuzzles = {
         m1 .  .  .  .
         .  .  m1 m1 m10
       `,
-      difficulty: 4,
+      difficulty: 5,
       note: "seq B2/4 — a escuridão também é uma região — e o número a mede. O 10 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (um \"e se?\" no caminho).",
     }),
     puzzle('measure.practice.7', {
@@ -139,7 +139,7 @@ const P: AreaPuzzles = {
         .  m3  . m2 .
         m1 m1  . #  .
       `,
-      difficulty: 4,
+      difficulty: 6,
       note: "seq B3/4 — a escuridão também é uma região — e o número a mede. O 11 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (um \"e se?\" no caminho).",
     }),
     puzzle('measure.practice.8', {
@@ -150,7 +150,7 @@ const P: AreaPuzzles = {
         .  .  .  .  m5
         m1 m5 .  .  .
       `,
-      difficulty: 5,
+      difficulty: 6,
       note: "seq B4/4 — a escuridão também é uma região — e o número a mede. O 7 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro.",
     }),
     puzzle('measure.practice.9', {
@@ -160,7 +160,7 @@ const P: AreaPuzzles = {
         .  .  m5 .
         m5 m1 .  .
       `,
-      difficulty: 3,
+      difficulty: 4,
       note: "seq C1/4 — o espaço que sobra é exatamente o pedido. O 9 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz.",
     }),
     puzzle('measure.practice.10', {
@@ -171,7 +171,7 @@ const P: AreaPuzzles = {
         .  m2 .  # m1
         .  .  .  . m1
       `,
-      difficulty: 4,
+      difficulty: 5,
       note: "seq C2/4 — o espaço que sobra é exatamente o pedido. O 7 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (um \"e se?\" no caminho).",
     }),
     puzzle('measure.practice.11', {
@@ -182,7 +182,7 @@ const P: AreaPuzzles = {
         .  . m1 m9 .
         m1 . m1 .  m1
       `,
-      difficulty: 4,
+      difficulty: 6,
       note: "seq C3/4 — o espaço que sobra é exatamente o pedido. O 9 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (2 \"e se?\" no caminho).",
     }),
     puzzle('measure.practice.12', {
@@ -193,7 +193,7 @@ const P: AreaPuzzles = {
         . .  .   m4 .
         . m4 .   m1 m1
       `,
-      difficulty: 5,
+      difficulty: 6,
       note: "seq C4/4 — o espaço que sobra é exatamente o pedido. O 10 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (2 \"e se?\" no caminho).",
     }),
   ],
@@ -217,7 +217,7 @@ const P: AreaPuzzles = {
         .  . .  .  .  m1
         m6 . m1 .  .  .
       `,
-      difficulty: 6,
+      difficulty: 8,
       note: "seq D2/4 — um número que não cabe na luz mora na sombra. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; (4 \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.3', {
@@ -229,7 +229,7 @@ const P: AreaPuzzles = {
         m1 .  .  .  . .
         .  m6 m3 m6 . m10
       `,
-      difficulty: 6,
+      difficulty: 8,
       note: "seq D3/4 — um número que não cabe na luz mora na sombra. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; (4 \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.4', {
@@ -241,7 +241,7 @@ const P: AreaPuzzles = {
         m12 . .  m9 m2 .
         #   . .  #  #  .
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq D4/4 — um número que não cabe na luz mora na sombra. Há números morando na sombra. Ahá: um número que não cabe de um lado da luz só pode estar do outro; depois: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (4 \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.5', {
@@ -264,7 +264,7 @@ const P: AreaPuzzles = {
         .   m14 .  m9 m3 .
         .   .   m1 .  .  .
       `,
-      difficulty: 6,
+      difficulty: 7,
       note: "seq E2/4 — o fundo escuro inteiro em um só número. O 14 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; (4 \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.7', {
@@ -276,7 +276,7 @@ const P: AreaPuzzles = {
         .  m5 . .   .   .
         .  .  . m1  m2  .
       `,
-      difficulty: 6,
+      difficulty: 8,
       note: "seq E3/4 — o fundo escuro inteiro em um só número. O 10 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (um \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.8', {
@@ -288,7 +288,7 @@ const P: AreaPuzzles = {
         . m3 . #  .  m12
         . .  . .  m1 m1
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq E4/4 — o fundo escuro inteiro em um só número. O 12 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (2 \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.9', {
@@ -311,7 +311,7 @@ const P: AreaPuzzles = {
         # #   .  .  m1 .
         . m1  m1 m4 .  .
       `,
-      difficulty: 6,
+      difficulty: 7,
       note: "seq F2/4 — \"e se?\": imagine a região maior. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (3 \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.11', {
@@ -323,7 +323,7 @@ const P: AreaPuzzles = {
         m1 m1 .  .  .  m1
         .  .  m4 .  m4 .
       `,
-      difficulty: 6,
+      difficulty: 8,
       note: "seq F3/4 — \"e se?\": imagine a região maior. O 7 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; (4 \"e se?\" no caminho).",
     }),
     puzzle('measure.trial.12', {
@@ -335,7 +335,7 @@ const P: AreaPuzzles = {
         .   .  .  .  .  .
         .   m1 .  .  .  m3
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq F4/4 — \"e se?\": imagine a região maior. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (4 \"e se?\" no caminho).",
     }),
   ],
@@ -362,7 +362,7 @@ const P: AreaPuzzles = {
         . .  m6  .   .  .   m6
         . m1 .   .   .  .   .
       `,
-      difficulty: 7,
+      difficulty: 9,
       note: "seq G2/4 — saídas e espaços exatos encadeados. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (5 \"e se?\" no caminho).",
     }),
     puzzle('measure.mastery.3', {
@@ -375,7 +375,7 @@ const P: AreaPuzzles = {
         m6 . m1 #  .  .   .
         m2 . m1 .  .  .   .
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq G3/4 — saídas e espaços exatos encadeados. O 13 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (7 \"e se?\" no caminho).",
     }),
     puzzle('measure.mastery.4', {
@@ -388,7 +388,7 @@ const P: AreaPuzzles = {
         .  m1 m1 .  m14 m14 .
         m4 .  m1 m4 .   .   .
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq G4/4 — saídas e espaços exatos encadeados. O 14 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (7 \"e se?\" no caminho).",
     }),
     puzzle('measure.mastery.5', {
@@ -400,7 +400,7 @@ const P: AreaPuzzles = {
         #  .  .   .  .  .
         .  m1 .   m9 .  .
       `,
-      difficulty: 7,
+      difficulty: 6,
       note: "seq H1/4 — tudo junto: luz, sombra e números que não cabem. Há números morando na sombra. Ahá: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; depois: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; (3 \"e se?\" no caminho).",
     }),
     puzzle('measure.mastery.6', {
@@ -413,7 +413,7 @@ const P: AreaPuzzles = {
         m2 .  m4 . .   .  .
         .  m3 .  . .   .  m1
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq H2/4 — tudo junto: luz, sombra e números que não cabem. O 15 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (4 \"e se?\" no caminho).",
     }),
     puzzle('measure.mastery.7', {
@@ -426,7 +426,7 @@ const P: AreaPuzzles = {
         .  m3 .  .  .  .  .
         .  .  .  m1 m4 .  #
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq H3/4 — tudo junto: luz, sombra e números que não cabem. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (5 \"e se?\" no caminho).",
     }),
     puzzle('measure.mastery.8', {
@@ -439,7 +439,7 @@ const P: AreaPuzzles = {
         .  m6 . .  m3 m5 .
         .  .  . .  m1 .  .
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq H4/4 — tudo junto: luz, sombra e números que não cabem. O 8 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (7 \"e se?\" no caminho).",
     }),
   ],
@@ -454,7 +454,7 @@ const P: AreaPuzzles = {
         .  .  #  .  .  .  m5
         .  m2 m1 m2 m5 .  .
       `,
-      difficulty: 8,
+      difficulty: 10,
       note: "Obra-prima 1/6. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (7 \"e se?\" no caminho).",
     }),
     puzzle('measure.heart.2', {
@@ -467,7 +467,7 @@ const P: AreaPuzzles = {
         .  . .  . m1 #  .
         .  . .  . .  m3 .
       `,
-      difficulty: 8,
+      difficulty: 10,
       note: "Obra-prima 2/6. Há números morando na sombra. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; e por fim: um número que não cabe de um lado da luz só pode estar do outro; (3 \"e se?\" no caminho).",
     }),
     puzzle('measure.heart.3', {
@@ -480,7 +480,7 @@ const P: AreaPuzzles = {
         .  . m12 .  .  m12 m1
         .  . .   .  m1 .   .
       `,
-      difficulty: 9,
+      difficulty: 10,
       note: "Obra-prima 3/6. O 12 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: um número que não cabe de um lado da luz só pode estar do outro; e por fim: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (8 \"e se?\" no caminho).",
     }),
     puzzle('measure.heart.4', {
@@ -493,7 +493,7 @@ const P: AreaPuzzles = {
         m8 m5 m2 m8 .   .  .
         #  .  .  #  .   .  .
       `,
-      difficulty: 9,
+      difficulty: 10,
       note: "Obra-prima 4/6. O 12 mora na sombra: ele mede a escuridão. Ahá: uma região que ainda precisa crescer tem uma só saída — ela passa por ali; depois: o espaço que sobra é exatamente o tamanho pedido: tudo nele é da mesma luz; (8 \"e se?\" no caminho).",
     }),
     puzzle('measure.heart.5', {

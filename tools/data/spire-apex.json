@@ -1,0 +1,97 @@
+{
+ "score": 86.78378378378379,
+ "trace": [
+  [
+   "mosaic",
+   9
+  ],
+  [
+   "weave",
+   3
+  ],
+  [
+   "beacon",
+   11
+  ],
+  [
+   "regions",
+   6
+  ],
+  [
+   "contour",
+   1
+  ],
+  [
+   "weave",
+   1
+  ],
+  [
+   "beacon",
+   3
+  ],
+  [
+   "regions",
+   1
+  ],
+  [
+   "beacon",
+   1
+  ],
+  [
+   "regions",
+   3
+  ],
+  [
+   "beacon",
+   5
+  ],
+  [
+   "regions",
+   2
+  ],
+  [
+   "beacon",
+   3
+  ],
+  [
+   "regions",
+   1
+  ],
+  [
+   "beacon",
+   2
+  ],
+  [
+   "regions",
+   1
+  ],
+  [
+   "beacon",
+   1
+  ],
+  [
+   "regions",
+   1
+  ],
+  [
+   "beacon",
+   1
+  ],
+  [
+   "regions",
+   6
+  ],
+  [
+   "beacon",
+   12
+  ]
+ ],
+ "compact": {
+  "grid": ". . @b . . . . . .\n. . . . b7 . . . .\n. . . . . @a . . @c\n@b x0 . . @a . @c . .\n. . . . . . . . .\n. c1 . b9 . b9 . . .\nfA . b7 . . @a b7 . tm\ntm' . . . . . . @c .\nb4 . . . . . m8 . b4",
+  "shapes": {
+   "A": "x./x./xx"
+  },
+  "rows": "-|-|-|-|-|-|-|-|-",
+  "cols": "-|-|3|-|-|-|-|-|-"
+ }
+}

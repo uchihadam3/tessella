@@ -10,7 +10,7 @@ const P: AreaPuzzles = {
         fA . .
       `,
       shapes: { A: 'xx' },
-      difficulty: 1,
+      difficulty: 3,
       note: 'A região do molde tem a forma desenhada: um dominó.',
     }),
     puzzle('mold.intro.2', {
@@ -19,7 +19,7 @@ const P: AreaPuzzles = {
         .  .
       `,
       shapes: { B: 'x./xx' },
-      difficulty: 1,
+      difficulty: 3,
       note: 'Um L de três.',
     }),
     puzzle('mold.intro.3', {
@@ -28,7 +28,7 @@ const P: AreaPuzzles = {
         . .  .
       `,
       shapes: { T: 'xxx/.x.' },
-      difficulty: 2,
+      difficulty: 3,
       note: 'A orientação importa: o T de cabeça para baixo não serve.',
     }),
     puzzle('mold.intro.4', {
@@ -38,7 +38,7 @@ const P: AreaPuzzles = {
         . . L
       `,
       shapes: { O: 'xx/xx' },
-      difficulty: 3,
+      difficulty: 4,
       note: 'Os rebites acesos não deixam o quadrado ser luz: o molde se esculpe na sombra.',
     }),
     puzzle('mold.intro.5', {
@@ -84,7 +84,7 @@ const P: AreaPuzzles = {
         fA .  fA fA
       `,
       shapes: {A: 'x',B: 'x./xx/.x'},
-      difficulty: 3,
+      difficulty: 4,
       note: "seq A1/4 — só existe um encaixe. Três moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde.",
     }),
     puzzle('mold.practice.2', {
@@ -96,7 +96,7 @@ const P: AreaPuzzles = {
         .  fD .  .  .
       `,
       shapes: {A: 'xx/x.',B: 'x',C: '.x/xx',D: 'xx'},
-      difficulty: 4,
+      difficulty: 6,
       note: "seq A2/4 — só existe um encaixe. Quatro moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde; (um \"e se?\" no caminho).",
     }),
     puzzle('mold.practice.3', {
@@ -108,7 +108,7 @@ const P: AreaPuzzles = {
         .  fD .  .  .
       `,
       shapes: {A: 'x',B: 'xx',C: 'xx/xx',D: 'x./x./xx'},
-      difficulty: 4,
+      difficulty: 6,
       note: "seq A3/4 — só existe um encaixe. Dois moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde.",
     }),
     puzzle('mold.practice.4', {
@@ -120,7 +120,7 @@ const P: AreaPuzzles = {
         fD .  . . fE
       `,
       shapes: {A: 'xxxx',B: 'x/x',C: 'xx/xx',D: 'xx',E: 'x'},
-      difficulty: 5,
+      difficulty: 6,
       note: "seq A4/4 — só existe um encaixe. Dois moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (um \"e se?\" no caminho).",
     }),
     puzzle('mold.practice.5', {
@@ -132,7 +132,7 @@ const P: AreaPuzzles = {
         .  fB .  .  .
       `,
       shapes: {A: 'xxx/.x.',B: 'x',C: 'x/x'},
-      difficulty: 3,
+      difficulty: 4,
       note: "seq B1/4 — a forma esculpida na sombra. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída.",
     }),
     puzzle('mold.practice.6', {
@@ -144,7 +144,7 @@ const P: AreaPuzzles = {
         .  .  . .  #
       `,
       shapes: {A: 'xx/x.',B: 'x',C: 'x/x',D: 'xx/xx'},
-      difficulty: 4,
+      difficulty: 6,
       note: "seq B2/4 — a forma esculpida na sombra. Seis moldes esculpidos na sombra. Ahá: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); depois: só existe um encaixe para o molde; e por fim: o molde incompleto só tem uma saída.",
     }),
     puzzle('mold.practice.7', {
@@ -156,7 +156,7 @@ const P: AreaPuzzles = {
         .  fC . .  fC
       `,
       shapes: {A: 'xx/x./x.',B: 'xx/.x/.x',C: 'x',D: '.x/xx'},
-      difficulty: 4,
+      difficulty: 6,
       note: "seq B3/4 — a forma esculpida na sombra. Quatro moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; (2 \"e se?\" no caminho).",
     }),
     puzzle('mold.practice.8', {
@@ -168,7 +168,7 @@ const P: AreaPuzzles = {
         .  . fC .  .
       `,
       shapes: {A: 'xx./.xx',B: 'x./xx',C: 'x',D: 'xx',E: 'x/x'},
-      difficulty: 5,
+      difficulty: 6,
       note: "seq B4/4 — a forma esculpida na sombra. Cinco moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.practice.9', {
@@ -179,7 +179,7 @@ const P: AreaPuzzles = {
         .  fC .  fA
       `,
       shapes: {A: 'x',B: '.x/xx',C: 'xx'},
-      difficulty: 3,
+      difficulty: 4,
       note: "seq C1/4 — a peça incompleta só tem uma saída. Quatro moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde.",
     }),
     puzzle('mold.practice.10', {
@@ -191,7 +191,7 @@ const P: AreaPuzzles = {
         .  fA . .  fD
       `,
       shapes: {A: 'x',B: 'x./xx/.x',C: 'x./xx/x.',D: 'x/x/x'},
-      difficulty: 4,
+      difficulty: 6,
       note: "seq C2/4 — a peça incompleta só tem uma saída. Cinco moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.practice.11', {
@@ -203,7 +203,7 @@ const P: AreaPuzzles = {
         .  .  fD #  .
       `,
       shapes: {A: 'xxx',B: 'xx',C: 'x/x',D: 'x'},
-      difficulty: 4,
+      difficulty: 6,
       note: "seq C3/4 — a peça incompleta só tem uma saída. Seis moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.practice.12', {
@@ -215,7 +215,7 @@ const P: AreaPuzzles = {
         .  fA .  . .
       `,
       shapes: {A: 'xx',B: 'xxx/..x',C: 'x',D: 'x/x/x'},
-      difficulty: 5,
+      difficulty: 6,
       note: "seq C4/4 — a peça incompleta só tem uma saída. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída; (um \"e se?\" no caminho).",
     }),
   ],
@@ -253,7 +253,7 @@ const P: AreaPuzzles = {
         #  . fE* .  . .
       `,
       shapes: {A: 'x',B: 'xx/.x/.x',C: 'x../xx./.xx',D: '.x/xx',E: '.xx/xx.'},
-      difficulty: 6,
+      difficulty: 8,
       note: "seq D3/4 — o anel deixa girar — mas só um giro cabe. Três moldes que giram e quatro moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (2 \"e se?\" no caminho).",
     }),
     puzzle('mold.trial.4', {
@@ -265,7 +265,7 @@ const P: AreaPuzzles = {
         .   #  .  . fC .
       `,
       shapes: {A: 'xx/x.',B: 'xx/.x',C: 'x',D: 'x./xx/x.',E: '.x/xx/.x'},
-      difficulty: 7,
+      difficulty: 8,
       note: "seq D4/4 — o anel deixa girar — mas só um giro cabe. Um molde que gira e cinco moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde.",
     }),
     puzzle('mold.trial.5', {
@@ -301,7 +301,7 @@ const P: AreaPuzzles = {
         fE . .   . . .
       `,
       shapes: {A: 'x./x./xx',B: 'xxxx/.x..',C: '..x/xxx/.x.',D: 'x./xx',E: 'x'},
-      difficulty: 6,
+      difficulty: 7,
       note: "seq E3/4 — na luz o molde não cabe. Um molde que gira e um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (um \"e se?\" no caminho).",
     }),
     puzzle('mold.trial.8', {
@@ -313,7 +313,7 @@ const P: AreaPuzzles = {
         .  fE . .  .  .
       `,
       shapes: {A: 'x./xx/xx',B: 'xx/.x/.x',C: '.x/.x/.x/xx',D: 'xx../.xxx',E: 'xx./xxx'},
-      difficulty: 7,
+      difficulty: 8,
       note: "seq E4/4 — na luz o molde não cabe. Dois moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: o molde incompleto só tem uma saída.",
     }),
     puzzle('mold.trial.9', {
@@ -351,7 +351,7 @@ const P: AreaPuzzles = {
         .  fA . fA . .
       `,
       shapes: {A: 'x',B: 'xx/xx',C: '.x/xx/.x',D: '.x/.x/xx/x.'},
-      difficulty: 6,
+      difficulty: 8,
       note: "seq F3/4 — um encaixe decide o outro. Três moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); (2 \"e se?\" no caminho).",
     }),
     puzzle('mold.trial.12', {
@@ -364,7 +364,7 @@ const P: AreaPuzzles = {
         fE .   fC .  .  .
       `,
       shapes: {A: 'x../x../xxx',B: 'xxx/xx.',C: 'x',D: 'xx/.x',E: 'x/x'},
-      difficulty: 7,
+      difficulty: 8,
       note: "seq F4/4 — um encaixe decide o outro. Um molde que gira e um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; (3 \"e se?\" no caminho).",
     }),
   ],
@@ -379,7 +379,7 @@ const P: AreaPuzzles = {
         .   fE* .  .  fA .
       `,
       shapes: {A: 'x',B: 'xx/.x',C: 'xx',D: 'x/x/x',E: 'x./x./xx'},
-      difficulty: 7,
+      difficulty: 6,
       note: "seq G1/4 — pentominós que giram, na luz e na sombra. Três moldes que giram e seis moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário); e por fim: só existe um encaixe para o molde.",
     }),
     puzzle('mold.mastery.2', {
@@ -431,7 +431,7 @@ const P: AreaPuzzles = {
         .  . fA  .  fB . fA
       `,
       shapes: {A: 'x',B: 'xx',C: 'x./x./xx',D: '.x/xx'},
-      difficulty: 7,
+      difficulty: 6,
       note: "seq H1/4 — a pedreira inteira: encaixe por exclusão. Um molde que gira e nove moldes esculpidos na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída.",
     }),
     puzzle('mold.mastery.6', {
@@ -444,7 +444,7 @@ const P: AreaPuzzles = {
         .  . .  fA .  .  .
       `,
       shapes: {A: 'x',B: 'xx/.x',C: 'x/x',D: 'xx./.xx',E: '.x/xx'},
-      difficulty: 7,
+      difficulty: 6,
       note: "seq H2/4 — a pedreira inteira: encaixe por exclusão. Cinco moldes esculpidos na sombra. Ahá: o molde incompleto só tem uma saída; depois: só existe um encaixe para o molde; e por fim: na luz o molde não cabe — ele é esculpido na sombra (ou o contrário).",
     }),
     puzzle('mold.mastery.7', {
@@ -470,7 +470,7 @@ const P: AreaPuzzles = {
         .  .  .  . fB .   .
       `,
       shapes: {A: 'xx',B: 'x',C: 'xxx',D: 'x./xx',E: 'xx/.x',F: 'x/x'},
-      difficulty: 8,
+      difficulty: 9,
       note: "seq H4/4 — a pedreira inteira: encaixe por exclusão. Dois moldes que giram e um molde esculpido na sombra. Ahá: só existe um encaixe para o molde; depois: o molde incompleto só tem uma saída; (6 \"e se?\" no caminho).",
     }),
   ],

@@ -19,7 +19,7 @@ const P: AreaPuzzles = {
       grid: `
         @a L @a
       `,
-      difficulty: 1,
+      difficulty: 3,
       note: 'Cores iguais precisam estar juntas: unir pela luz.',
     }),
     puzzle('kinship.intro.3', {
@@ -27,7 +27,7 @@ const P: AreaPuzzles = {
         @a . @a
         @b . @b
       `,
-      difficulty: 2,
+      difficulty: 4,
       note: 'Uma família na luz, a outra na sombra.',
     }),
     puzzle('kinship.intro.4', {
@@ -45,7 +45,7 @@ const P: AreaPuzzles = {
         L  @c L
         @a .  @b
       `,
-      difficulty: 3,
+      difficulty: 4,
       note: 'Duas famílias acesas não podem se tocar: entre elas abre-se um fosso de sombra — e é ali que mora a terceira.',
     }),
     puzzle('kinship.intro.6', {
@@ -54,7 +54,7 @@ const P: AreaPuzzles = {
         @c  .  .
         @b  .  @b
       `,
-      difficulty: 3,
+      difficulty: 4,
       note: 'Uma corrente: o rebite acende a âmbar; a carmim encosta nela e vira sombra; a azul encosta na carmim e só pode ser luz — e o meio vira fosso.',
     }),
     puzzle('kinship.intro.7', {
@@ -64,7 +64,7 @@ const P: AreaPuzzles = {
         .   @a  .   .
         D@b .   @b  .
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: 'Portão: o rebite apaga a azul, e suas gemas só se unem pela base; a âmbar, encostada nela, vira luz — e a carmim, encostada na âmbar, sombra.',
     }),
   ],
@@ -79,7 +79,7 @@ const P: AreaPuzzles = {
         .  .  . .  .
         .  .  . .  @a
       `,
-      difficulty: 3,
+      difficulty: 4,
       note: "seq A1/4 — quem é luz e quem é sombra. Três famílias e uma rocha. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.practice.2', {
@@ -101,7 +101,7 @@ const P: AreaPuzzles = {
         @b .  .  .  @a
         .  #  @a .  .
       `,
-      difficulty: 4,
+      difficulty: 5,
       note: "seq A3/4 — quem é luz e quem é sombra. Três famílias e uma rocha. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.practice.4', {
@@ -112,7 +112,7 @@ const P: AreaPuzzles = {
         @a .  . @c .
         .  .  . .  @c
       `,
-      difficulty: 5,
+      difficulty: 6,
       note: "seq A4/4 — quem é luz e quem é sombra. Três famílias e duas rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
     puzzle('kinship.practice.5', {
@@ -134,7 +134,7 @@ const P: AreaPuzzles = {
         @a .  .  .  @b
         .  .  .  .  @a
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq B2/4 — o gargalo entre as gemas. Três famílias. Ahá: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.practice.7', {
@@ -145,7 +145,7 @@ const P: AreaPuzzles = {
         #  .  @c .  .
         @c .  @a .  #
       `,
-      difficulty: 4,
+      difficulty: 6,
       note: "seq B3/4 — o gargalo entre as gemas. Três famílias e quatro rochas. Ahá: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.practice.8', {
@@ -156,7 +156,7 @@ const P: AreaPuzzles = {
         @j @b .  .  @c
         .  .  @a .  @a
       `,
-      difficulty: 5,
+      difficulty: 6,
       note: "seq B4/4 — o gargalo entre as gemas. Quatro famílias e uma rocha. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.practice.9', {
@@ -178,7 +178,7 @@ const P: AreaPuzzles = {
         @a .  .  .  @c
         .  .  .  @a @c
       `,
-      difficulty: 4,
+      difficulty: 3,
       note: "seq C2/4 — duas famílias na mesma luz precisam de um fosso. Três famílias e três rochas. Ahá: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.practice.11', {
@@ -200,7 +200,7 @@ const P: AreaPuzzles = {
         .  @b .  .  @a
         @b @b .  @j @j
       `,
-      difficulty: 5,
+      difficulty: 6,
       note: "seq C4/4 — duas famílias na mesma luz precisam de um fosso. Quatro famílias e duas rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
   ],
@@ -213,7 +213,7 @@ const P: AreaPuzzles = {
         @c .  L@c . @j
         @c .  .   . L@j
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq D1/4 — decidir a cor de cinco famílias. Quatro famílias e uma rocha. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; (um \"e se?\" no caminho).",
     }),
     puzzle('kinship.trial.2', {
@@ -237,7 +237,7 @@ const P: AreaPuzzles = {
         #  .   @a .  #  L@c
         .  #   .  .  .  .
       `,
-      difficulty: 6,
+      difficulty: 7,
       note: "seq D3/4 — decidir a cor de cinco famílias. Quatro famílias e cinco rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.trial.4', {
@@ -249,7 +249,7 @@ const P: AreaPuzzles = {
         .   .   .  @b . .
         @j  .   @a .  . @a
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq D4/4 — decidir a cor de cinco famílias. Quatro famílias. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.trial.5', {
@@ -261,7 +261,7 @@ const P: AreaPuzzles = {
         . @c @a  .  .  #
         . .  @j  @j .  L@j
       `,
-      difficulty: 5,
+      difficulty: 4,
       note: "seq E1/4 — gargalos em cadeia. Quatro famílias e duas rochas. Ahá: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.trial.6', {
@@ -273,7 +273,7 @@ const P: AreaPuzzles = {
         @a .  .  .  @b #
         .  .  #  .  .  .
       `,
-      difficulty: 6,
+      difficulty: 5,
       note: "seq E2/4 — gargalos em cadeia. Cinco famílias e quatro rochas. Ahá: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.trial.7', {
@@ -285,7 +285,7 @@ const P: AreaPuzzles = {
         .  .  @c .  @c @j
         @a #  .  @c @j .
       `,
-      difficulty: 6,
+      difficulty: 7,
       note: "seq E3/4 — gargalos em cadeia. Cinco famílias e duas rochas. Ahá: um gargalo: o único caminho que liga as gemas; depois: uma família que não consegue se unir de um lado da luz tem de estar do outro.",
     }),
     puzzle('kinship.trial.8', {
@@ -309,7 +309,7 @@ const P: AreaPuzzles = {
         .   .  .  .  .  @b
         .   @a .  .  @b .
       `,
-      difficulty: 5,
+      difficulty: 3,
       note: "seq F1/4 — o rebite decide a família. Cinco famílias e quatro rochas. Ahá: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.trial.10', {
@@ -321,7 +321,7 @@ const P: AreaPuzzles = {
         .  .   #  #  .   #
         @c .   #  .  .   .
       `,
-      difficulty: 6,
+      difficulty: 4,
       note: "seq F2/4 — o rebite decide a família. Quatro famílias e cinco rochas. Ahá: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.trial.11', {
@@ -345,7 +345,7 @@ const P: AreaPuzzles = {
         .   . .  .  @b .
         @b  # #  .  .  D@a
       `,
-      difficulty: 7,
+      difficulty: 8,
       note: "seq F4/4 — o rebite decide a família. Quatro famílias e quatro rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
   ],
@@ -359,7 +359,7 @@ const P: AreaPuzzles = {
         .   @j @b .   .  @a .
         #   @j #  .   .  .  .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq G1/4 — cor e caminho ao mesmo tempo. Cinco famílias e três rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.mastery.2', {
@@ -371,7 +371,7 @@ const P: AreaPuzzles = {
         .  .   @b .  . L@i .
         .  .   .  @a . .   .
       `,
-      difficulty: 7,
+      difficulty: 5,
       note: "seq G2/4 — cor e caminho ao mesmo tempo. Cinco famílias e três rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.mastery.3', {
@@ -383,7 +383,7 @@ const P: AreaPuzzles = {
         .  .  .  .  .  .  @j
         .  .  @b .  @a .  #
       `,
-      difficulty: 8,
+      difficulty: 7,
       note: "seq G3/4 — cor e caminho ao mesmo tempo. Cinco famílias e quatro rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (4 \"e se?\" no caminho).",
     }),
     puzzle('kinship.mastery.4', {
@@ -395,7 +395,7 @@ const P: AreaPuzzles = {
         .  .  .  .  .  .  .
         .  @a @b .  .  .  .
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq G4/4 — cor e caminho ao mesmo tempo. Seis famílias e uma rocha. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
     puzzle('kinship.mastery.5', {
@@ -447,7 +447,7 @@ const P: AreaPuzzles = {
         .  #  @c .  .  .  @a
         #  .  .  @c .  #  .
       `,
-      difficulty: 8,
+      difficulty: 9,
       note: "seq H4/4 — seis famílias num bosque apertado. Seis famílias e seis rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
   ],
@@ -462,7 +462,7 @@ const P: AreaPuzzles = {
         .  .   .  .  .  .  #
         #  .   @a .  .  @b #
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "Obra-prima 1/6. Cinco famílias e cinco rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.heart.2', {
@@ -475,7 +475,7 @@ const P: AreaPuzzles = {
         @b .  .  . @c . @a
         .  .  @b . @c . @c
       `,
-      difficulty: 8,
+      difficulty: 6,
       note: "Obra-prima 2/6. Cinco famílias e três rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas; (3 \"e se?\" no caminho).",
     }),
     puzzle('kinship.heart.3', {
@@ -488,7 +488,7 @@ const P: AreaPuzzles = {
         @c .  .  .  .   .   @b
         .  @c @a .  @i  @i  .
       `,
-      difficulty: 9,
+      difficulty: 6,
       note: "Obra-prima 3/6. Cinco famílias e duas rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.heart.4', {
@@ -501,7 +501,7 @@ const P: AreaPuzzles = {
         .  @a .  .   . . @a
         @i @i .  @a  . . .
       `,
-      difficulty: 9,
+      difficulty: 7,
       note: "Obra-prima 4/6. Cinco famílias e três rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.heart.5', {
@@ -514,7 +514,7 @@ const P: AreaPuzzles = {
         #  #   .  @a @i  @i .
         @j .   @j @j .   .  .
       `,
-      difficulty: 10,
+      difficulty: 7,
       note: "Obra-prima 5/6. Cinco famílias e quatro rochas. Ahá: uma família que não consegue se unir de um lado da luz tem de estar do outro; depois: um gargalo: o único caminho que liga as gemas.",
     }),
     puzzle('kinship.heart.6', {
@@ -527,7 +527,7 @@ const P: AreaPuzzles = {
         @i .  .  @j @a .  .
         @i .  .  .  #  .  .
       `,
-      difficulty: 10,
+      difficulty: 8,
       note: "Obra-prima 6/6. Cinco famílias e uma rocha. Ahá: um gargalo: o único caminho que liga as gemas; (um \"e se?\" no caminho).",
     }),
   ],

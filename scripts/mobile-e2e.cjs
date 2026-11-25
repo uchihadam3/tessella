@@ -32,11 +32,12 @@ const ok = (name, cond, extra = '') => {
   page.on('crash', () => console.log('[page crashed]'));
   const W = page.viewportSize().width, H = page.viewportSize().height;
 
-  const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], i) => ({ x, y, id: i + 1, radiusX: 4, radiusY: 4, force: 1 })) });
+  // timestamps say when the finger moved, as a real device does (software rendering delays handling)
+  const touch = (type, pts, ts) => cdp.send('Input.dispatchTouchEvent', { type, timestamp: ts ?? Date.now() / 1000, touchPoints: pts.map(([x, y], i) => ({ x, y, id: i + 1, radiusX: 4, radiusY: 4, force: 1 })) });
   const tap = async (x, y) => {
-    await touch('touchStart', [[x, y]]);
-    await page.waitForTimeout(60);
-    await touch('touchEnd', []);
+    const t0 = Date.now() / 1000;
+    await touch('touchStart', [[x, y]], t0);
+    await touch('touchEnd', [], t0 + 0.08);
   };
   const tapEl = async (sel) => {
     const el = typeof sel === 'string' ? await page.waitForSelector(sel, { state: 'visible' }) : sel;

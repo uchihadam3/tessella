@@ -306,6 +306,8 @@ export interface Placement {
   z: number;
   s: number;
   r: number;
+  /** grown for a constellation (see Forest.plant) */
+  planted?: boolean;
 }
 
 export interface Exclusion {
@@ -322,7 +324,7 @@ export class Forest {
   private treeMat = makeWindMaterial({ flutter: 1 });
   private rockMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, flatShading: true });
   /** colliders produced for trunks / rocks: x, z, radius */
-  readonly colliders: { x: number; z: number; r: number }[] = [];
+  readonly colliders: { x: number; z: number; r: number; planted?: boolean }[] = [];
 
   constructor(private terrain: Terrain) {}
 
@@ -348,6 +350,89 @@ export class Forest {
     if (kind.startsWith('rock')) {
       if (s > 0.9) this.colliders.push({ x, z, r: s * 0.85 });
     } else if (kind !== 'bush') this.colliders.push({ x, z, r: 0.35 * s });
+  }
+
+  /** the model a tree or rock standing at (x,z) gets (its variant comes from where it stands) */
+  keyAt(kind: string, x: number, z: number): string {
+    return `${kind}#${Math.floor(hash2(Math.round(x * 10), Math.round(z * 10)) * this.variants)}`;
+  }
+
+  /** its turn, from where it stands (as add() gives it) */
+  turnAt(x: number, z: number): number {
+    return hash2(Math.round(x * 7) + 11, Math.round(z * 7) - 5) * Math.PI * 2;
+  }
+
+  /** a model's crown (or a rock's body) as an ellipsoid: centre and half-sizes, local units */
+  shape(key: string): { c: THREE.Vector3; e: THREE.Vector3 } {
+    return this.shapeFor(key);
+  }
+
+  /**
+   * A tree or rock grown for a constellation (see constellations.ts) — an ordinary one of the
+   * place's own kinds. Kept apart only so that the island's signature, which the pictures' places
+   * are checked against, does not count the trees grown for them.
+   */
+  plant(kind: string, x: number, z: number, s: number): { key: string; p: Placement } {
+    const key = this.keyAt(kind, x, z);
+    if (!this.placements.has(key)) this.placements.set(key, []);
+    const p: Placement = { x, y: this.terrain.heightAt(x, z) - 0.15, z, s, r: this.turnAt(x, z), planted: true };
+    this.placements.get(key)!.push(p);
+    if (kind.startsWith('rock')) {
+      if (s > 0.9) this.colliders.push({ x, z, r: s * 0.85, planted: true });
+    } else if (kind !== 'bush') this.colliders.push({ x, z, r: 0.35 * s, planted: true });
+    this.hitGrid = null;
+    return { key, p };
+  }
+
+  /** take a grown one away again (a picture that did not fit after all) */
+  unplant(p: Placement) {
+    for (const list of this.placements.values()) {
+      const i = list.indexOf(p);
+      if (i >= 0) list.splice(i, 1);
+    }
+    const ci = this.colliders.findIndex((c) => c.planted && c.x === p.x && c.z === p.z);
+    if (ci >= 0) this.colliders.splice(ci, 1);
+    this.hitGrid = null;
+  }
+
+  /** the matrix one is drawn with (i: its index in build()'s list; grown ones need none) */
+  matrixOf(key: string, p: Placement, i = 0): THREE.Matrix4 {
+    const o = new THREE.Object3D();
+    o.position.set(p.x, p.y, p.z);
+    o.rotation.set(0, p.r, 0);
+    o.scale.setScalar(p.s);
+    if (key.startsWith('rock')) {
+      // (a rock is a little wider one way than the other)
+      const a = p.planted ? hash2(Math.round(p.x * 10), 3) : hash2(i, 3), b = p.planted ? hash2(Math.round(p.z * 10), 7) : hash2(i, 7);
+      o.scale.set(p.s * (0.8 + a * 0.5), p.s, p.s * (0.8 + b * 0.5));
+    }
+    o.updateMatrix();
+    return o.matrix.clone();
+  }
+
+  /** a grown one drawn at once, before the forest is built again (while the pictures are placed) */
+  meshOf(key: string, p: Placement): THREE.InstancedMesh {
+    const mesh = new THREE.InstancedMesh(this.geometryFor(key), key.startsWith('rock') ? this.rockMat : this.treeMat, 1);
+    mesh.setMatrixAt(0, this.matrixOf(key, p));
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.computeBoundingSphere();
+    mesh.name = `veg_${key}`;
+    mesh.userData.planted = true;
+    return mesh;
+  }
+
+  /** is there a trunk (or a rock) within r of (x,z)? */
+  standsNear(x: number, z: number, r: number): boolean {
+    const C = Forest.HIT_CELL;
+    if (!this.hitGrid) this.raycast(new THREE.Vector3(x, 0, z), new THREE.Vector3(0, 1, 0), 0.01); // builds the grid
+    const cx = Math.floor(x / C), cz = Math.floor(z / C);
+    const reach = Math.ceil(r / C);
+    for (let ix = cx - reach; ix <= cx + reach; ix++) for (let iz = cz - reach; iz <= cz + reach; iz++) {
+      for (const { p } of this.hitGrid!.get(`${ix},${iz}`) ?? []) if ((p.x - x) ** 2 + (p.z - z) ** 2 < r * r) return true;
+    }
+    return false;
   }
 
   /** Scatter a species over the island with a density function. */
@@ -396,13 +481,9 @@ export class Forest {
       for (let i = 0; i < list.length; i++) {
         const p = list[i];
         if (Math.abs(p.x - x) > tol || Math.abs(p.z - z) > tol) continue;
-        const o = new THREE.Object3D();
-        o.position.set(p.x, p.y, p.z);
-        o.rotation.set(0, p.r, 0);
-        o.scale.setScalar(p.s);
-        if (key.startsWith('rock')) o.scale.set(p.s * (0.8 + hash2(i, 3) * 0.5), p.s, p.s * (0.8 + hash2(i, 7) * 0.5));
-        o.updateMatrix();
-        return { key, geometry: this.geometryFor(key), matrix: o.matrix.clone() };
+        // (build() numbers the grown ones apart from the others)
+        const idx = p.planted ? 0 : list.filter((q) => !q.planted).indexOf(p);
+        return { key, geometry: this.geometryFor(key), matrix: this.matrixOf(key, p, idx) };
       }
     }
     return null;
@@ -555,27 +636,24 @@ export class Forest {
   }
 
   build(): THREE.Group {
-    const dummy = new THREE.Object3D();
-    for (const [key, list] of this.placements) {
-      if (!list.length) continue;
-      const kind = key.split('#')[0];
-      const geo = this.geometryFor(key);
-      const mat: THREE.Material = kind.startsWith('rock') ? this.rockMat : this.treeMat;
-      const mesh = new THREE.InstancedMesh(geo, mat, list.length);
-      list.forEach((p, i) => {
-        dummy.position.set(p.x, p.y, p.z);
-        dummy.rotation.set(0, p.r, 0);
-        dummy.scale.setScalar(p.s);
-        if (kind.startsWith('rock')) dummy.scale.set(p.s * (0.8 + hash2(i, 3) * 0.5), p.s, p.s * (0.8 + hash2(i, 7) * 0.5));
-        dummy.updateMatrix();
-        mesh.setMatrixAt(i, dummy.matrix);
-      });
-      mesh.instanceMatrix.needsUpdate = true;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.computeBoundingSphere();
-      mesh.name = `veg_${key}`;
-      this.group.add(mesh);
+    for (const [key, all] of this.placements) {
+      // (the ones grown for the constellations in a mesh of their own: see plant())
+      for (const grown of [false, true]) {
+        const list = all.filter((p) => !!p.planted === grown);
+        if (!list.length) continue;
+        const kind = key.split('#')[0];
+        const geo = this.geometryFor(key);
+        const mat: THREE.Material = kind.startsWith('rock') ? this.rockMat : this.treeMat;
+        const mesh = new THREE.InstancedMesh(geo, mat, list.length);
+        list.forEach((p, i) => mesh.setMatrixAt(i, this.matrixOf(key, p, i)));
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.computeBoundingSphere();
+        mesh.name = `veg_${key}`;
+        if (grown) mesh.userData.planted = true;
+        this.group.add(mesh);
+      }
     }
     return this.group;
   }

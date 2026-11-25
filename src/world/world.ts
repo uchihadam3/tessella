@@ -7,6 +7,7 @@ import { WaterSystem } from './water';
 import { BlossomField, Forest, GrassField, windUniforms } from './vegetation';
 import { Weathering } from './weathering';
 import { scatterVegetation, grassRules } from './biomes';
+import SAVED_PLACES from '../data/constellation-places.json';
 import { CollisionWorld } from '../player/collision';
 import { ANCHORS, CALDERA } from './layout';
 
@@ -82,13 +83,22 @@ export class World {
 
   finalize() {
     this.scatter();
+    // the trees grown for the constellations (saved with their places — see constellations.ts;
+    // a picture being placed again grows its own)
+    const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+    const again = q?.has('starsCompute') ? new Set((q.get('starsOnly') ?? '').split(',').filter(Boolean)) : null;
+    const places = (SAVED_PLACES as { places?: Record<string, { t?: [string, number, number, number][] }> }).places ?? {};
+    for (const [id, pl] of Object.entries(places)) {
+      if (again && (again.size === 0 || again.has(id))) continue;
+      for (const [kind, x, z, s] of pl.t ?? []) this.forest.plant(kind, x, z, s);
+    }
     this.root.add(this.forest.build());
     this.blossoms = new BlossomField(this.forest);
     this.blossoms.group.userData.castAs = 'skip';
     this.root.add(this.blossoms.group);
     this.weathering = new Weathering(this);
     this.root.add(this.weathering.group);
-    for (const c of this.forest.colliders) this.collision.addBlocker({ x: c.x, z: c.z, r: c.r, y0: -100, y1: 400 });
+    for (const c of this.forest.colliders) this.collision.addBlocker({ x: c.x, z: c.z, r: c.r, y0: -100, y1: 400, sig: c.planted ? false : undefined });
     // no grass where floors/plazas/decks cover the ground
     this.grass.covered = (x, z, h) => this.collision.groundAt(x, z, h + 40)[0] > h + 0.03 || this.forest.isExcluded(x, z, -1.2);
     this.root.add(this.grass.group);

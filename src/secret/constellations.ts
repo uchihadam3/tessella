@@ -118,6 +118,50 @@ const DRAWS: Record<string, Draws> = {
   beacon: { crowns: new Set(['pine']), ground: null, stone: true, reeds: false, pitches: LEVEL },
   spire: { crowns: new Set(), ground: null, stone: true, reeds: false, pitches: LEVEL },
 };
+/**
+ * The trees grown for each place's pictures — its own kind, of its own sizes: the scenery is made
+ * with the pictures in mind (a grove where a picture is), never anything the place lacks.
+ */
+// (sizes a little past the scattered ones' at the top: a grove has its old big trees)
+const GROW: Partial<Record<AreaId, { kind: string; s: [number, number]; w: number }[]>> = {
+  twins: [{ kind: 'blossom', s: [0.85, 1.4], w: 1 }],
+  kinship: [{ kind: 'autumn', s: [0.85, 1.5], w: 1 }],
+  hub: [{ kind: 'oak', s: [0.8, 1.5], w: 1 }],
+  measure: [{ kind: 'oak', s: [0.8, 1.5], w: 1 }],
+  weave: [{ kind: 'poplar', s: [0.9, 1.45], w: 0.55 }, { kind: 'oak', s: [0.8, 1.45], w: 0.45 }],
+  contour: [{ kind: 'oak', s: [0.8, 1.45], w: 0.6 }, { kind: 'blossom', s: [0.85, 1.35], w: 0.4 }],
+  prologue: [{ kind: 'oak', s: [0.8, 1.4], w: 1 }],
+  beacon: [{ kind: 'pine', s: [0.85, 1.5], w: 1 }],
+  echo: [{ kind: 'pine', s: [0.85, 1.5], w: 1 }],
+};
+/** whose grounds a point is on (the nearest place; the Spire's island is the caldera's) */
+function territory(x: number, z: number): string {
+  let best = 'hub', bd = Infinity;
+  for (const [id, a] of Object.entries(ANCHORS)) {
+    const d = (a.x - x) ** 2 + (a.z - z) ** 2;
+    if (d < bd) {
+      bd = d;
+      best = id;
+    }
+  }
+  return territoryOf(best);
+}
+function territoryOf(area: string): string {
+  return area === 'spire' ? 'echo' : area;
+}
+/** a tree or bush grown for a picture: where it stands, its size and turn, its crown (world) */
+interface Grown {
+  kind: string;
+  x: number;
+  z: number;
+  s: number;
+  r: number;
+  c: THREE.Vector3;
+  e: THREE.Vector3;
+}
+
+/** how low (degrees above the horizon) a kind's crowns are still seen across a level meadow */
+const LOW_CROWN: Record<string, number> = { oak: 9, autumn: 9, blossom: 6, poplar: 6.5, pine: 6 };
 function placeDraws(x: number, z: number): Draws {
   let best = 'hub', bd = Infinity;
   for (const [id, a] of Object.entries(ANCHORS)) {
@@ -265,7 +309,7 @@ export interface PlaceRecord {
   signature: string;
   /** per picture: eye, ground, facing, corner hits [kind, dist], and per line its runs as
    *  [kind, normal x,y,z, then t,dist for every sample] */
-  places: Record<string, { e: number[]; g: number; f: number[]; h: number[][]; l: number[][][] }>;
+  places: Record<string, { e: number[]; g: number; f: number[]; h: number[][]; l: number[][][]; t?: [string, number, number, number][] }>;
   /** decoy lines per area: eye, the two directions, runs (as above) */
   decoys: Record<string, { e: number[]; a: number[]; b: number[]; l: number[][] }[]>;
 }
@@ -510,7 +554,11 @@ export class ConstellationSystem {
     //   the lake garden: its blossom trees' blossoms and its meadow's flowers
     //   meadows: their flowers; the autumn wood: its fallen leaves (and flowers)
     //   ruins and rocks: cracks in the stone
-    const dr = placeDraws(p.x, p.z);
+    // a picture is drawn within its own place's grounds, with its own things (the last, relaxed
+    // passes take what the island has wherever it is)
+    const at = territory(p.x, p.z);
+    if (this.ownOnly && this.curArea && at !== territoryOf(this.curArea)) return this.gapAt(eye, dir, h.t, h.n);
+    const dr = DRAWS[this.ownOnly && this.curArea ? this.curArea : at] ?? DRAWS.hub;
     const seen = Math.abs(h.n.dot(dir));
     if (h.cls === 'tree') {
       // a crown of the place's own trees, near enough to see its leaves (not its trunk)
@@ -743,7 +791,8 @@ export class ConstellationSystem {
     scene.updateMatrixWorld(true);
     const walk = (o: THREE.Object3D, cls: string | null) => {
       const tag = (o.userData?.castAs as string | undefined) ?? cls;
-      if (tag === 'skip') return;
+      // (the trees grown for the pictures are saved with them: they do not count)
+      if (tag === 'skip' || o.userData?.planted) return;
       const m = o as THREE.Mesh;
       if (m.isMesh) {
         mix(m.geometry.attributes.position?.count ?? 0);
@@ -861,6 +910,25 @@ export class ConstellationSystem {
       for (const def of defs) {
         if (pick && !pick.has(def.id)) continue;
         let done = false;
+        // first: a grove grown for it, in its own place (the scenery made with the picture in mind)
+        if (GROW[area]) {
+          const quickG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsQuick');
+          const triesG = quickG ? 120 : 450;
+          let realG = 0;
+          for (let attempt = 0; realG < triesG && attempt < triesG * 30 && !done; attempt++) {
+            const ang = rnd() * Math.PI * 2;
+            const r = rMin + Math.sqrt(rnd()) * (rMax - rMin);
+            const vx = center.x + Math.cos(ang) * r, vz = center.z + Math.sin(ang) * r;
+            if (Math.hypot(vx, vz - 20) > 520) continue;
+            if (this.okPoint(vx, vz) === null) {
+              if (attempt % 25 === 0) yield;
+              continue;
+            }
+            realG++;
+            done = this.tryGrow(def, area, vx, vz, rnd);
+            yield;
+          }
+        }
         // strict first (a picture across several kinds of scenery), then relaxed, then wider
         for (let pass = 0; pass < 6 && !done; pass++) {
           // (only places with standing room count as attempts: most random points are slopes or water)
@@ -905,22 +973,350 @@ export class ConstellationSystem {
     }
   }
 
-  private tryPlace(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number, pass: number): boolean {
+  /** a viewing spot: standing room, off the Spire's island, apart from the others, clear of crowns */
+  private spotFor(area: AreaId, vx: number, vz: number, pass: number): { gy: number; eye: THREE.Vector3 } | null {
     const gy = this.okPoint(vx, vz);
-    if (gy === null) return this.no('ground');
-    if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return this.no('spire'); // the Spire's island and landings
-    if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return this.no('crater');
+    if (gy === null) return this.no('ground') || null;
+    if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return this.no('spire') || null; // the Spire's island and landings
+    if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return this.no('crater') || null;
     const spacing = SPOT_SPACING * (pass === 5 ? 0.6 : pass >= 3 ? 0.7 : 1);
-    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return this.no('spacing');
+    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return this.no('spacing') || null;
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
-    if (this.world.forest.crownNear(eye, 2.2)) return this.no('crown');
-    // look around from here: for many facings, check the picture's own points directly — every
-    // one must land on what this place draws with (its flowers, leaves, blossoms, stone)
+    if (this.world.forest.crownNear(eye, 2.2)) return this.no('crown') || null;
+    return { gy, eye };
+  }
+
+  /** the picture's points (its stars, then its bell) as directions from the spot */
+  private figureDirs(def: ConstellationDef, f: THREE.Vector3, rt: THREE.Vector3, upv: THREE.Vector3, spanDeg = SPAN_DEG): THREE.Vector3[] {
     const pts2 = [...def.stars.map((st) => [st.x, st.z]), [def.bell.x, def.bell.z]];
     const xs = def.stars.map((s) => s.x), zs = def.stars.map((s) => s.z);
     const mx = (Math.min(...xs) + Math.max(...xs)) / 2, mz = (Math.min(...zs) + Math.max(...zs)) / 2;
     const maxR = Math.max(0.3, ...pts2.map((q) => Math.hypot(q[0] - mx, q[1] - mz)));
-    const k = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG)) / maxR;
+    const k = Math.tan(THREE.MathUtils.degToRad(spanDeg)) / maxR;
+    return pts2.map(([x, z]) => f.clone().addScaledVector(rt, (x - mx) * k).addScaledVector(upv, -(z - mz) * k).normalize());
+  }
+
+  /** what each of the picture's points lands on — every one on what its place draws with */
+  private starHits(eye: THREE.Vector3, dirs: THREE.Vector3[], pass: number): Hit[] | null {
+    const hs: Hit[] = [];
+    for (const d of dirs) {
+      const h = this.castRay(eye, d, 1.5, 48);
+      // (on the ground a picture spreads over the meadow: never right at your feet)
+      const near = h && h.kind === 'ground' ? (pass >= 4 ? 3.2 : 4.5) : 3;
+      if (!h || h.kind === 'sky' || h.kind === 'gap' || h.dist < near) {
+        this.lastWhy = 'corner:' + (h ? (h.dist < near ? 'near' : h.kind) : 'null');
+        return null;
+      }
+      hs.push(h);
+    }
+    return hs;
+  }
+
+  /**
+   * A picture made with the place in mind: from a spot, a few trees of the place's own kind are
+   * grown at different depths so that their crowns carry the picture's points and lines (some of
+   * their leaves a shade apart) — from anywhere else they are just trees of a grove.
+   */
+  private tryGrow(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number): boolean {
+    const kinds = GROW[area];
+    if (!kinds) return false;
+    this.curArea = area;
+    this.ownOnly = true;
+    const spot = this.spotFor(area, vx, vz, 0);
+    if (!spot) return false;
+    const { gy, eye } = spot;
+    const forest = this.world.forest, terrain = this.world.terrain, col = this.world.collision;
+    const yaw = rnd() * Math.PI * 2;
+    // the picture up among a grove's crowns, its lowest point a little above the horizon (from
+    // there down to the ground nothing could carry it: too low for the crowns, too far for bushes)
+    // (and far enough that no single crown fills it: each crown carries a part, at its own depth)
+    const span = 7.5 + rnd() * 2;
+    const pitch = THREE.MathUtils.degToRad(span + 4 + rnd() * 2.5);
+    const f = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+    const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
+    const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
+    const dirs = this.figureDirs(def, f, rt, upv, span);
+    this.curArea = area;
+    const bushes = (DRAWS[area] ?? DRAWS.hub).crowns.has('bush');
+    // each point at its own depth: two points joined by a line in different bands (near, middle,
+    // far), so that every line falls apart when seen from anywhere else
+    const n = dirs.length;
+    const adj: number[][] = Array.from({ length: n }, () => []);
+    for (const th of def.threads) {
+      adj[th.a].push(th.b);
+      adj[th.b].push(th.a);
+    }
+    const band = new Array<number>(n).fill(-1);
+    const b0 = Math.floor(rnd() * 3);
+    for (const i of [...Array(n).keys()].sort((x, y) => adj[y].length - adj[x].length)) {
+      const used = new Set(adj[i].map((j) => band[j]).filter((x) => x >= 0));
+      band[i] = [0, 1, 2].map((k) => (k + b0 + i) % 3).find((k) => !used.has(k)) ?? Math.floor(rnd() * 3);
+    }
+    // (not too near: a crown close by would fill the whole picture and hide the others)
+    const BANDS: [number, number][] = [[18, 24], [24, 30], [30, 38]];
+    const plan: Grown[] = [];
+    let missed = 0;
+    for (let i = 0; i < n; i++) {
+      const d = dirs[i];
+      // already on a crown grown for it, or on something the place has there of its own
+      if (plan.some((g) => this.enters(eye, g, d, 0.6) !== null)) continue;
+      const h0 = this.castRay(eye, d, 1.5, 48);
+      if (h0 && h0.kind !== 'gap' && h0.kind !== 'sky' && h0.dist >= 4.5) continue;
+      // up among the crowns: a tree of the place's own; low down: a bush where you look at the ground
+      const g = d.y > 0.035 ? this.growCrown(eye, d, kinds, BANDS[band[i]], plan, rnd) : bushes ? this.growBush(eye, d, plan, rnd) : null;
+      // (a point no tree could carry may still land in a neighbour's crown: checked once grown)
+      if (!g) {
+        if (++missed > Math.max(1, n * 0.2)) return this.no(d.y > 0.035 ? 'grow:star' : 'grow:low');
+        continue;
+      }
+      plan.push(g);
+    }
+    // a line leaping a long way through open sky: one more crown on it, between its ends' depths
+    for (const th of def.threads) {
+      const a = dirs[th.a], b = dirs[th.b];
+      const m = Math.max(1, Math.round(THREE.MathUtils.radToDeg(a.angleTo(b)) / 3));
+      let open = 0;
+      for (let j = 1; j < m; j++) {
+        const d = a.clone().lerp(b, j / m).normalize();
+        const h0 = plan.some((g) => this.enters(eye, g, d, 0.85) !== null) ? null : this.castRay(eye, d, 1.5, 48);
+        if (!h0 || (h0.kind !== 'gap' && h0.kind !== 'sky')) {
+          open = 0;
+          continue;
+        }
+        if (++open < 2 || d.y <= 0.035) continue;
+        const g = this.growCrown(eye, d, kinds, BANDS[1], plan, rnd, 6);
+        if (g) {
+          plan.push(g);
+          open = 0;
+        }
+      }
+    }
+    if (plan.length < 2) return this.no('grow:few');
+    // grow them (drawn at once, and seen by the lines of sight)
+    const grown = plan.map((g) => {
+      const { key, p } = forest.plant(g.kind, g.x, g.z, g.s);
+      const mesh = forest.meshOf(key, p);
+      forest.group.add(mesh);
+      const ids = this.ensureCaster().add(mesh);
+      const b = g.kind === 'bush' ? null : col.addBlocker({ x: g.x, z: g.z, r: 0.35 * g.s, y0: -100, y1: 400, sig: false });
+      return { g, p, mesh, ids, b };
+    });
+    const undo = () => {
+      for (const k of grown) {
+        forest.unplant(k.p);
+        k.mesh.removeFromParent();
+        k.mesh.dispose();
+        this.ensureCaster().remove(k.ids);
+        if (k.b) col.removeBlocker(k.b);
+      }
+    };
+    const hits = this.starHits(eye, dirs, 0);
+    if (!hits) {
+      this.no(this.lastWhy);
+      undo();
+      return false;
+    }
+    const ok = this.settle(def, area, vx, vz, gy, eye, f, rt, upv, dirs, hits, 0, grown.map((k) => [k.g.kind, k.g.x, k.g.z, k.g.s] as [string, number, number, number]));
+    if (!ok) undo();
+    else this.grownCrowns.push(...plan.map((g) => ({ c: g.c, e: g.e, r: g.r })));
+    return ok;
+  }
+
+  /** where a line of sight from the spot enters a grown crown (its ellipsoid, shrunk: well inside), or null */
+  private enters(eye: THREE.Vector3, g: Grown, d: THREE.Vector3, shrink: number): number | null {
+    const cs = Math.cos(-g.r), sn = Math.sin(-g.r);
+    const ox = eye.x - g.c.x, oy = eye.y - g.c.y, oz = eye.z - g.c.z;
+    const lx = (ox * cs + oz * sn) / (g.e.x * shrink), ly = oy / (g.e.y * shrink), lz = (-ox * sn + oz * cs) / (g.e.z * shrink);
+    const dx = (d.x * cs + d.z * sn) / (g.e.x * shrink), dy = d.y / (g.e.y * shrink), dz = (-d.x * sn + d.z * cs) / (g.e.z * shrink);
+    const A = dx * dx + dy * dy + dz * dz, B = 2 * (lx * dx + ly * dy + lz * dz), C = lx * lx + ly * ly + lz * lz - 1;
+    const disc = B * B - 4 * A * C;
+    if (disc < 0) return null;
+    const t = (-B - Math.sqrt(disc)) / (2 * A);
+    return t > 0 ? t : null;
+  }
+
+  /** a tree of one of the place's kinds whose crown carries the direction d, at a depth in `band` */
+  private growCrown(eye: THREE.Vector3, d: THREE.Vector3, kinds: { kind: string; s: [number, number]; w: number }[], band: [number, number], plan: Grown[], rnd: () => number, attempts = 18): Grown | null {
+    const forest = this.world.forest, terrain = this.world.terrain;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      let pickW = rnd() * kinds.reduce((acc, k) => acc + k.w, 0);
+      const kd = kinds.find((k) => (pickW -= k.w) <= 0) ?? kinds[0];
+      // how far such a crown must be to carry it: between the heights its crowns reach (the
+      // smallest tree seen through its crown's bottom, the tallest through its top)
+      const sh0 = forest.shape(forest.keyAt(kd.kind, eye.x + d.x * 15, eye.z + d.z * 15));
+      const hLo = (sh0.c.y - 0.4 * sh0.e.y) * kd.s[0] - 0.15 - EYE_H, hHi = (sh0.c.y + 0.4 * sh0.e.y) * kd.s[1] - 0.15 - EYE_H;
+      const sinEl = Math.max(0.02, d.y);
+      let dLo = Math.max(16, hLo / sinEl), dHi = Math.min(38, hHi / sinEl);
+      if (dLo >= dHi) {
+        this.no('g:depth');
+        return null;
+      }
+      // (in its band, if it can be)
+      if (Math.max(dLo, band[0]) < Math.min(dHi, band[1])) {
+        dLo = Math.max(dLo, band[0]);
+        dHi = Math.min(dHi, band[1]);
+      }
+      const D = dLo + rnd() * (dHi - dLo);
+      const C = eye.clone().addScaledVector(d, D);
+      // where the tree must stand for its crown's middle to be there (its turn and model come from that spot)
+      let bx = C.x, bz = C.z, sc = 1, key = '', r = 0;
+      let sh = sh0;
+      for (let it = 0; it < 3; it++) {
+        bx = Math.round(bx * 100) / 100;
+        bz = Math.round(bz * 100) / 100;
+        key = forest.keyAt(kd.kind, bx, bz);
+        r = forest.turnAt(bx, bz);
+        sh = forest.shape(key);
+        sc = THREE.MathUtils.clamp((C.y - (terrain.heightAt(bx, bz) - 0.15)) / sh.c.y, kd.s[0], kd.s[1]);
+        const cs = Math.cos(r), sn = Math.sin(r);
+        bx = C.x - (sh.c.x * cs + sh.c.z * sn) * sc;
+        bz = C.z - (-sh.c.x * sn + sh.c.z * cs) * sc;
+      }
+      bx = Math.round(bx * 100) / 100;
+      bz = Math.round(bz * 100) / 100;
+      key = forest.keyAt(kd.kind, bx, bz);
+      r = forest.turnAt(bx, bz);
+      sh = forest.shape(key);
+      const y0 = terrain.heightAt(bx, bz) - 0.15;
+      let want = (C.y - y0) / sh.c.y;
+      // (a tree of the place's sizes whose crown this line of sight still crosses, high or low in it)
+      if (want < kd.s[0] || want > kd.s[1]) {
+        const s2 = THREE.MathUtils.clamp(want, kd.s[0], kd.s[1]);
+        if (Math.abs(y0 + sh.c.y * s2 - C.y) > 0.4 * sh.e.y * s2) {
+          this.no('g:size');
+          continue;
+        }
+        want = s2;
+      }
+      sc = Math.round(want * 1000) / 1000;
+      if (!this.canGrow(bx, bz, sc, eye, plan)) continue;
+      const cs = Math.cos(r), sn = Math.sin(r);
+      const g: Grown = {
+        kind: kd.kind, x: bx, z: bz, s: sc, r,
+        c: new THREE.Vector3(bx + (sh.c.x * cs + sh.c.z * sn) * sc, y0 + sh.c.y * sc, bz + (-sh.c.x * sn + sh.c.z * cs) * sc),
+        e: sh.e.clone().multiplyScalar(sc),
+      };
+      if (!this.clearView(eye, d, g)) continue;
+      return g;
+    }
+    return null;
+  }
+
+  /** a bush (where the place has them) whose crown carries a direction that looks at the ground */
+  private growBush(eye: THREE.Vector3, d: THREE.Vector3, plan: Grown[], rnd: () => number): Grown | null {
+    const forest = this.world.forest, terrain = this.world.terrain;
+    // where the line of sight meets the ground
+    let tg = -1;
+    for (let t = 4; t < 34; t += 0.25) {
+      if (eye.y + d.y * t < terrain.heightAt(eye.x + d.x * t, eye.z + d.z * t) + 0.05) {
+        tg = t;
+        break;
+      }
+    }
+    if (tg < 8) {
+      this.no('g:bushnear');
+      return null;
+    }
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const D = tg - 0.6 - rnd() * 1.6;
+      let bx = Math.round((eye.x + d.x * D) * 100) / 100, bz = Math.round((eye.z + d.z * D) * 100) / 100;
+      const key = forest.keyAt('bush', bx, bz), r = forest.turnAt(bx, bz), sh = forest.shape(key);
+      const y0 = terrain.heightAt(bx, bz) - 0.15;
+      const ray = eye.y + d.y * D - y0; // the line of sight's height over the bush's foot
+      const sc = Math.round(THREE.MathUtils.clamp(ray / sh.c.y, 0.75, 1.3) * 1000) / 1000;
+      if (Math.abs(y0 + sh.c.y * sc - (eye.y + d.y * D)) > 0.45 * sh.e.y * sc) {
+        this.no('g:bushsize');
+        continue;
+      }
+      // its crown's middle on the line of sight (the bush stands a little off its own centre)
+      const cs = Math.cos(r), sn = Math.sin(r);
+      bx = Math.round((bx - (sh.c.x * cs + sh.c.z * sn) * sc) * 100) / 100;
+      bz = Math.round((bz - (-sh.c.x * sn + sh.c.z * cs) * sc) * 100) / 100;
+      if (forest.keyAt('bush', bx, bz) !== key) continue;
+      if (!this.canGrow(bx, bz, sc * 0.6, eye, plan)) continue;
+      const g: Grown = {
+        kind: 'bush', x: bx, z: bz, s: sc, r,
+        c: new THREE.Vector3(bx + (sh.c.x * cs + sh.c.z * sn) * sc, y0 + sh.c.y * sc, bz + (-sh.c.x * sn + sh.c.z * cs) * sc),
+        e: sh.e.clone().multiplyScalar(sc),
+      };
+      if (!this.clearView(eye, d, g)) continue;
+      return g;
+    }
+    return null;
+  }
+
+  /** a grown crown carries d, seen from the spot with nothing in front, and hides no other picture */
+  private clearView(eye: THREE.Vector3, d: THREE.Vector3, g: Grown): boolean {
+    const tIn = this.enters(eye, g, d, 0.6);
+    if (tIn === null) return this.no('g:miss');
+    const h = this.ensureCaster().cast(eye, d, 0.05, tIn);
+    if (h && h.t < tIn - 0.4) return this.no('g:front:' + h.cls);
+    if (this.hidesOther(g.c, g.e, g.r)) return this.no('g:hides');
+    return true;
+  }
+
+  /** the picture being placed: its place, and whether it must keep to its grounds */
+  private curArea: AreaId | null = null;
+  private ownOnly = false;
+
+  /** the crowns grown so far (a later tree must not hide an earlier picture, nor grow into them) */
+  private grownCrowns: { c: THREE.Vector3; e: THREE.Vector3; r: number }[] = [];
+
+  /** room for a tree to grow there: open, level, off the paths and away from trunks, panels, floors */
+  private canGrow(x: number, z: number, s: number, eye: THREE.Vector3, plan: { x: number; z: number; s: number }[]): boolean {
+    const t = this.world.terrain;
+    const h = t.heightAt(x, z);
+    if (h < 0.8 || this.world.waterAt(x, z) > h - 0.3) return this.no('g:water');
+    if (t.pathAt(x, z) > 0.2) return this.no('g:path');
+    const n = new THREE.Vector3();
+    t.normalAt(x, z, n);
+    if (n.y < 0.82) return this.no('g:slope');
+    if (Math.hypot(x - eye.x, z - eye.z) < 6) return this.no('g:close');
+    if (this.world.forest.isExcluded(x, z, s * 1.4)) return this.no('g:excluded');
+    if (this.world.forest.standsNear(x, z, 2.3 * s)) return this.no('g:trunk');
+    if (plan.some((g) => Math.hypot(g.x - x, g.z - z) < 2.0 * Math.max(s, g.s))) return this.no('g:grove');
+    // not inside or under anything built, not by a panel
+    const col = this.world.collision;
+    if (col.solidAt(x, h + 1, z) !== 0 || col.groundAt(x, z, h + 30)[0] > h + 0.2) return this.no('g:built');
+    for (const [ox, oz] of [[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]]) if (this.nearAnchor(x + ox, z + oz, h)) return this.no('g:panel');
+    // nor where another picture's spot stands, or its lines pass
+    if (this.spots.some((v) => Math.hypot(v.x - x, v.z - z) < 5)) return this.no('g:spot');
+    return true;
+  }
+
+  /** would a crown there stand in front of a picture placed before (or of its spot's view)? */
+  private hidesOther(c: THREE.Vector3, e: THREE.Vector3, r: number): boolean {
+    const cs = Math.cos(-r), sn = Math.sin(-r);
+    for (const it of this.items) {
+      const eye = it.view.eye;
+      if (Math.hypot(eye.x - c.x, eye.z - c.z) > 75) continue;
+      for (const q of it.starPos) {
+        // the line of sight from that spot to the point: does it pass through this crown first?
+        const d = q.clone().sub(eye);
+        const len = d.length();
+        d.divideScalar(len);
+        const ox = eye.x - c.x, oy = eye.y - c.y, oz = eye.z - c.z;
+        const g = 1.15; // (a little margin)
+        const lx = (ox * cs + oz * sn) / (e.x * g), ly = oy / (e.y * g), lz = (-ox * sn + oz * cs) / (e.z * g);
+        const dx = (d.x * cs + d.z * sn) / (e.x * g), dy = d.y / (e.y * g), dz = (-d.x * sn + d.z * cs) / (e.z * g);
+        const A = dx * dx + dy * dy + dz * dz, B = 2 * (lx * dx + ly * dy + lz * dz), Cc = lx * lx + ly * ly + lz * lz - 1;
+        const disc = B * B - 4 * A * Cc;
+        if (disc < 0) continue;
+        const t0 = (-B - Math.sqrt(disc)) / (2 * A);
+        if (t0 > 0 && t0 < len - 0.5) return true;
+      }
+    }
+    return false;
+  }
+
+  private tryPlace(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number, pass: number): boolean {
+    this.curArea = area;
+    this.ownOnly = pass < 4;
+    const spot = this.spotFor(area, vx, vz, pass);
+    if (!spot) return false;
+    const { gy, eye } = spot;
+    // look around from here: for many facings, check the picture's own points directly — every
+    // one must land on what this place draws with (its flowers, leaves, blossoms, stone)
     const yaw0 = rnd() * Math.PI * 2;
     const pitches = placeDraws(vx, vz).pitches;
     let fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3();
@@ -934,21 +1330,12 @@ export class ConstellationSystem {
         const f = new THREE.Vector3(Math.sin(yw) * Math.cos(pt), Math.sin(pt), Math.cos(yw) * Math.cos(pt));
         const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
         const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
-        const ds = pts2.map(([x, z]) => f.clone().addScaledVector(rt, (x - mx) * k).addScaledVector(upv, -(z - mz) * k).normalize());
-        const hs: Hit[] = [];
-        let ok = true;
-        for (const d of ds) {
-          const h = this.castRay(eye, d, 1.5, 48);
-          // (on the ground a picture spreads over the meadow: never right at your feet)
-          const near = h && h.kind === 'ground' ? (pass >= 4 ? 3.2 : 4.5) : 3;
-          if (!h || h.kind === 'sky' || h.kind === 'gap' || h.dist < near) {
-            ok = false;
-            lastWhy = 'corner:' + (h ? (h.dist < near ? 'near' : h.kind) : 'null');
-            break;
-          }
-          hs.push(h);
+        const ds = this.figureDirs(def, f, rt, upv);
+        const hs = this.starHits(eye, ds, pass);
+        if (!hs) {
+          lastWhy = this.lastWhy;
+          continue;
         }
-        if (!ok) continue;
         fwd = f;
         right = rt;
         up = upv;
@@ -959,6 +1346,19 @@ export class ConstellationSystem {
       }
     }
     if (!found) return this.no(lastWhy);
+    return this.settle(def, area, vx, vz, gy, eye, fwd, right, up, dirs, hits, pass);
+  }
+
+  /**
+   * The rest of the checks for a picture whose points have found their places: a clear frame, the
+   * lines traced through the scenery, the depth jumps that make it a picture only from here; then
+   * it is built and saved (with the trees grown for it, if any).
+   */
+  private settle(
+    def: ConstellationDef, area: AreaId, vx: number, vz: number, gy: number, eye: THREE.Vector3,
+    fwd: THREE.Vector3, right: THREE.Vector3, up: THREE.Vector3, dirs: THREE.Vector3[], hits: Hit[], pass: number,
+    grown?: [string, number, number, number][],
+  ): boolean {
     // a good frame: nothing big right in your face around the picture
     for (let kk = 0; kk < 12; kk++) {
       const a = (kk / 12) * Math.PI * 2;
@@ -977,7 +1377,10 @@ export class ConstellationSystem {
     let total = 0;
     for (const th of def.threads) {
       const runs = this.traceLine(eye, dirs[th.a], dirs[th.b]);
-      if (!runs) return this.no('trace:' + this.lastMiss);
+      if (!runs) {
+        if ((globalThis as { __growDebug?: boolean }).__growDebug && grown) console.log('trace', this.lastMiss, JSON.stringify({ grown: grown.length }));
+        return this.no('trace:' + this.lastMiss);
+      }
       for (const r of runs) for (const s of r.samples) {
         count[s.hit.kind]++;
         total++;
@@ -999,16 +1402,15 @@ export class ConstellationSystem {
     // up in the crowns: across several trees at different depths, never one crown carrying it all
     // (a picture on one crown would still be a picture on that crown from everywhere)
     if (count.tree / total > 0.3) {
-      const trees = new Set<string>();
-      let near = Infinity, far = 0;
+      const trees = new Map<string, number>();
       for (const runs of lines) for (const r of runs) if (r.kind === 'tree') {
-        trees.add(`${Math.round((r.tx ?? 0) * 10)},${Math.round((r.tz ?? 0) * 10)}`);
-        for (const sm of r.samples) {
-          near = Math.min(near, sm.hit.dist);
-          far = Math.max(far, sm.hit.dist);
-        }
+        const k = `${Math.round((r.tx ?? 0) * 10)},${Math.round((r.tz ?? 0) * 10)}`;
+        trees.set(k, (trees.get(k) ?? 0) + r.samples.length);
       }
-      if (trees.size < (def.stars.length >= 7 ? 3 : 2) || far < near * 1.45) return this.no('one crown');
+      if (trees.size < 2 || Math.max(...trees.values()) / total > 0.7) {
+        if ((globalThis as { __growDebug?: boolean }).__growDebug && grown) console.log('one crown', JSON.stringify({ grown: grown.length, trees: [...trees.entries()], total, count }));
+        return this.no('one crown');
+      }
     }
     void onGround;
     void kinds;
@@ -1048,6 +1450,7 @@ export class ConstellationSystem {
       h: hits.map((h) => [KINDS.indexOf(h.kind), r2(h.dist)]),
       l: lines.map((runs) => runs.map(packRun)),
     };
+    if (grown?.length) this.record.places[def.id].t = grown;
     return true;
   }
 

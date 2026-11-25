@@ -16,6 +16,8 @@ export interface Blocker {
   y1: number;
   enabled?: boolean;
   tag?: string;
+  /** false: left out of fingerprint() (a tree grown for a constellation; see Forest.plant) */
+  sig?: false;
 }
 
 export interface Floor {
@@ -67,6 +69,16 @@ export class CollisionWorld {
     const rad = b.r ?? Math.hypot(b.hw ?? 0, b.hd ?? 0);
     for (const k of this.cellsFor(b.x, b.z, rad + 1)) this.bucket(k).b.push(b);
     return b;
+  }
+  /** take a blocker out again */
+  removeBlocker(b: Blocker) {
+    const i = this.blockers.indexOf(b);
+    if (i >= 0) this.blockers.splice(i, 1);
+    const rad = b.r ?? Math.hypot(b.hw ?? 0, b.hd ?? 0);
+    for (const k of this.cellsFor(b.x, b.z, rad + 1)) {
+      const cell = this.grid.get(k);
+      if (cell) cell.b = cell.b.filter((o) => o !== b);
+    }
   }
   addFloor(f: Floor): Floor {
     if (f.enabled === undefined) f.enabled = true;
@@ -181,8 +193,9 @@ export class CollisionWorld {
 
   /** A number that changes whenever the solid world changes (for caches built from it). */
   fingerprint(): number {
-    let h = this.blockers.length * 7 + this.floors.length * 13;
-    for (const b of this.blockers) h = (h * 31 + Math.round(b.x * 3 + b.z * 7 + b.y1 * 11 + (b.r ?? b.hw ?? 0) * 13)) % 1000000007;
+    const counted = this.blockers.filter((b) => b.sig !== false);
+    let h = counted.length * 7 + this.floors.length * 13;
+    for (const b of counted) h = (h * 31 + Math.round(b.x * 3 + b.z * 7 + b.y1 * 11 + (b.r ?? b.hw ?? 0) * 13)) % 1000000007;
     for (const f of this.floors) h = (h * 37 + Math.round(f.x * 5 + f.z * 3 + (typeof f.top === 'number' ? f.top : 1) * 17)) % 1000000007;
     return h;
   }

@@ -2,7 +2,7 @@
 // minutes) and saves them in src/data/constellation-places.json, so the game only has to build
 // them. The file carries a signature of the island; if the island changes, the game notices and
 // searches again by itself in the background — run this tool again and rebuild to make it fast.
-// Usage: BASE=http://localhost:5180/ node scripts/place-constellations.cjs
+// Usage: BASE=http://localhost:5180/ node scripts/place-constellations.cjs  (QUICK=1: fewer tries; ONLY=ids; OUT=file)
 const { chromium } = require('playwright');
 const fs = require('fs');
 const out = process.env.OUT || 'src/data/constellation-places.json';
@@ -14,7 +14,9 @@ const out = process.env.OUT || 'src/data/constellation-places.json';
   page.on('console', (m) => { if (/not placed/.test(m.text())) notPlaced.push(m.text()); });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
   const t0 = Date.now();
-  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&starsCompute' + (process.env.QUICK ? '&starsQuick' : '') + '&at=8,52,180,0', { waitUntil: 'load' });
+  // ONLY=id,id… places just those (a quick look at why some do not fit; write OUT elsewhere then)
+  const only = process.env.ONLY ? `&starsOnly=${process.env.ONLY}` : '';
+  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&starsCompute' + (process.env.QUICK ? '&starsQuick' : '') + only + '&at=8,52,180,0', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true && window.__game?.state === 'play');
   await page.evaluate(() => window.__game.stars.placeAll());
   const res = await page.evaluate(() => {

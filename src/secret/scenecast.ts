@@ -192,6 +192,29 @@ export class SceneCaster {
     }
   }
 
+  /** something drawn later (a tree grown for a picture): returns its entries, to take them out again */
+  add(o: THREE.Object3D): number[] {
+    o.updateMatrixWorld(true);
+    const from = this.entries.length;
+    this.collect(o, null, false);
+    return Array.from({ length: this.entries.length - from }, (_, i) => from + i);
+  }
+
+  /** take entries out again (see add) */
+  remove(ids: number[]) {
+    for (const id of ids) {
+      const e = this.entries[id];
+      if (!e) continue;
+      const i0 = Math.floor(e.box[0] / CELL), i1 = Math.floor(e.box[3] / CELL);
+      const j0 = Math.floor(e.box[2] / CELL), j1 = Math.floor(e.box[5] / CELL);
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const k = key(i, j);
+        const cell = this.grid.get(k);
+        if (cell) this.grid.set(k, cell.filter((q) => q !== e));
+      }
+    }
+  }
+
   /** first thing drawn along o + t·d (tMin < t < tMax), or null when nothing is there (sky) */
   cast(o: THREE.Vector3, d: THREE.Vector3, tMin: number, tMax: number): CastHit | null {
     const stamp = ++this.stamp;

@@ -28,7 +28,7 @@ export type StarGlyph =
   | { kind: 'mosaic'; n: number };
 
 export interface Star {
-  /** local position in metres (footprint roughly within a 7 m radius around 0,0) */
+  /** position in the drawing (any unit; the world rescales it): x to the right, z downward */
   x: number;
   z: number;
   glyph?: StarGlyph;
@@ -45,9 +45,12 @@ export interface ConstellationDef {
   /** e.g. 'kinship.c07' */
   id: string;
   area: AreaId;
+  /** what the drawing shows (shown in the Journal once solved) */
+  name: { pt: string; en: string };
+  /** the stars and threads form this line drawing; x to the right, z downward (z = screen y) */
   stars: Star[];
   threads: Thread[];
-  /** local position of the bell (submit) */
+  /** the bell (orb) that checks the constellation: a meaningful spot of the drawing, same coordinates as the stars */
   bell: { x: number; z: number };
   /** pressing a star also flips its neighbours */
   echo?: boolean;

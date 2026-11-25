@@ -4,7 +4,8 @@ import type { Engine } from '../core/engine';
 import { Terrain } from './terrain';
 import { Sky } from './sky';
 import { WaterSystem } from './water';
-import { Forest, GrassField, windUniforms } from './vegetation';
+import { BlossomField, Forest, GrassField, windUniforms } from './vegetation';
+import { Weathering } from './weathering';
 import { scatterVegetation, grassRules } from './biomes';
 import { CollisionWorld } from '../player/collision';
 import { ANCHORS, CALDERA } from './layout';
@@ -22,6 +23,11 @@ export class World {
   readonly water: WaterSystem;
   readonly forest: Forest;
   readonly grass: GrassField;
+  /** the blossom trees in flower (around the player) */
+  blossoms: BlossomField | null = null;
+  /** cracks on the old stone walls (around the player) */
+  weathering: Weathering | null = null;
+  private weatherTimer = 0;
   readonly collision: CollisionWorld;
   readonly root = new THREE.Group();
   readonly waterBodies: WaterBody[] = [];
@@ -40,6 +46,7 @@ export class World {
     this.collision.waterAt = (x, z) => this.waterAt(x, z);
     this.forest = new Forest(this.terrain);
     this.grass = new GrassField(this.terrain, grassRules, (x, z, out) => this.terrain.colorAt(x, z, out));
+    this.grass.waterAt = (x, z) => this.waterAt(x, z);
     // fixed water bodies
     const tw = ANCHORS.twins;
     this.addLake(tw.x, tw.z, 74, 7.5, { shallow: '#86d9cf', deep: '#2f6f95', calm: 1, waveScale: 0.9 });
@@ -76,6 +83,11 @@ export class World {
   finalize() {
     this.scatter();
     this.root.add(this.forest.build());
+    this.blossoms = new BlossomField(this.forest);
+    this.blossoms.group.userData.castAs = 'skip';
+    this.root.add(this.blossoms.group);
+    this.weathering = new Weathering(this);
+    this.root.add(this.weathering.group);
     for (const c of this.forest.colliders) this.collision.addBlocker({ x: c.x, z: c.z, r: c.r, y0: -100, y1: 400 });
     // no grass where floors/plazas/decks cover the ground
     this.grass.covered = (x, z, h) => this.collision.groundAt(x, z, h + 40)[0] > h + 0.03 || this.forest.isExcluded(x, z, -1.2);
@@ -93,6 +105,12 @@ export class World {
     this.water.update(t, this.sky.sunDir, this.tmpC1.set(s.sunColor), this.tmpC2.set(s.zenith), this.tmpC3.set(s.horizon));
     this.engine.renderer.toneMappingExposure = s.exposure;
     this.grass.update(focus.x, focus.z);
+    this.blossoms?.update(focus.x, focus.z);
+    this.weatherTimer -= dt;
+    if (this.weathering && this.weatherTimer <= 0) {
+      this.weatherTimer = 0.5;
+      this.weathering.update(focus);
+    }
     for (const u of this.updaters) u(dt, t);
   }
 }

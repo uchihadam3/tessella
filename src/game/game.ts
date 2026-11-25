@@ -23,6 +23,7 @@ import { loadSettings, saveSettings, type Settings } from '../core/settings';
 import { Cutscene, type Shot } from './cutscene';
 import { ACHIEVEMENTS, type AchievementId } from './achievements';
 import type { UI } from '../ui/ui';
+import { CONSTELLATIONS } from '../data/constellations';
 import { ConstellationSystem, VAULT_THRESHOLD, type CItem } from '../secret/constellations';
 import { buildVault, type VaultRuntime } from '../world/areas/vault';
 import { playMainEnding, playSecretEnding } from './endings';
@@ -69,7 +70,7 @@ export class Game {
   /** secret layer */
   stars!: ConstellationSystem;
   vault!: VaultRuntime;
-  secretSummary = () => ({ found: this.stars?.solvedCount ?? 0, solved: this.stars?.solvedCount ?? 0, total: this.stars?.items.length ?? 0 });
+  secretSummary = () => ({ found: this.stars?.revealedCount ?? 0, solved: this.stars?.solvedCount ?? 0, total: this.stars?.total ?? 0 });
   secretClick = (): boolean => (this.state === 'play' && !this.pm.engaged ? this.stars.click() : false);
   /** touch: use the constellation star / orb under the finger */
   secretTap = (clientX: number, clientY: number): boolean => {
@@ -97,6 +98,7 @@ export class Game {
     await tick();
     this.world = new World(this.engine);
     this.pm = new PanelManager(this.engine.camera, this.engine.renderer.domElement);
+    this.pm.group.userData.castAs = 'bad'; // panels and cables: never part of a constellation
     this.engine.scene.add(this.pm.group);
     progress(0.25, 'areas');
     await tick();
@@ -124,7 +126,6 @@ export class Game {
       const r = p.view.root.position;
       return { x: r.x, z: r.z, y: this.world.collision.groundAt(r.x, r.z, r.y + 0.5)[0] };
     }));
-    this.stars.place();
     this.stars.onSolved = (it) => this.onStarSolved(it);
     this.stars.onRevealed = (it) => {
       this.save.flags['r:' + it.def.id] = true;
@@ -138,6 +139,8 @@ export class Game {
     this.world.finalize();
     for (const a of this.areas.values()) a.finalize();
     this.vault.finalize();
+    // the constellations lie on the island as it is drawn, so they come once everything is there
+    this.stars.startPlacing();
     progress(0.9, 'light');
     await tick();
     // gating that depends on flags
@@ -184,6 +187,11 @@ export class Game {
       this.world.grass.densityScale = s.quality === 'low' ? 0.45 : s.quality === 'medium' ? 0.75 : 1;
       this.world.grass.radius = s.quality === 'low' ? 38 : s.quality === 'medium' ? 48 : 58;
       this.world.grass.update(this.player?.pos.x ?? 0, this.player?.pos.z ?? 0, true);
+      // (the blossoms on the garden's crowns: nearer ones only on lighter settings)
+      if (this.world.blossoms) {
+        this.world.blossoms.radius = s.quality === 'low' ? 36 : s.quality === 'medium' ? 50 : 64;
+        this.world.blossoms.update(this.player?.pos.x ?? 0, this.player?.pos.z ?? 0, true);
+      }
     }
     saveSettings(s);
   }
@@ -209,11 +217,10 @@ export class Game {
       for (const p of a.panels) if (p.solved) for (const f of p.onSolved) this.silently(() => f(p));
     }
     for (const a of this.areas.values()) for (const d of a.doors.values()) if (d.open) d.openNow(false);
-    for (const it of this.stars.items) {
-      const rec = data.panels['c:' + it.def.id];
-      it.solved = false;
-      it.state.fill(0);
-      this.stars.restore(it.def.id, rec?.s, !!rec?.done, !!data.flags['r:' + it.def.id]);
+    // every picture, placed already or not yet (those get their state as soon as they are placed)
+    for (const def of CONSTELLATIONS) {
+      const rec = data.panels['c:' + def.id];
+      this.stars.restore(def.id, rec?.s, !!rec?.done, !!data.flags['r:' + def.id]);
     }
     this.updateVault(true);
     if (data.flags.hollowOpen) this.hub.openHollow(true);
@@ -380,7 +387,7 @@ export class Game {
   private onStarSolved(it: CItem) {
     this.save.panels['c:' + it.def.id] = { s: this.stars.stateOf(it), done: 1 };
     const n = this.stars.solvedCount;
-    const total = this.stars.items.length;
+    const total = this.stars.total;
     this.ui?.toast(`✦  ${n} / ${total}`, 'info');
     if (n === 1) this.unlock('first_star');
     if (n >= 30) this.unlock('stars_30');

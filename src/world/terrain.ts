@@ -514,6 +514,18 @@ float th_noise(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); vec2 u=f*f*(3.0-2.0*f)
   float strata = th_noise(vec2(vWorldPos.y*1.7, (wp.x+wp.y)*0.05));
   diffuseColor.rgb *= mix(0.86, 1.1, n);
   diffuseColor.rgb *= mix(1.0, mix(0.82, 1.08, strata), smoothstep(0.25, 0.55, slope));
+  // meadows: painterly warm/cool drifts, sun-dried patches and darker clover, so a lawn is never flat
+  float grass = smoothstep(0.02, 0.12, diffuseColor.g - max(diffuseColor.r, diffuseColor.b)) * (1.0 - smoothstep(0.3, 0.6, slope));
+  if (grass > 0.0) {
+    float big = th_noise(wp * 0.031 + 3.7);
+    float mid = th_noise(wp * 0.093 - 11.0);
+    float fine = th_noise(wp * 0.37 + 5.0);
+    vec3 tint = mix(vec3(0.9, 1.0, 0.97), vec3(1.07, 1.03, 0.84), big);
+    vec3 g = diffuseColor.rgb * tint;
+    g = mix(g, g * vec3(1.12, 1.02, 0.62) + vec3(0.06, 0.05, 0.0), smoothstep(0.62, 0.82, mid) * 0.55);
+    g *= mix(1.0, 0.8, smoothstep(0.55, 0.85, fine) * (1.0 - smoothstep(0.5, 0.7, mid)) * 0.8);
+    diffuseColor.rgb = mix(diffuseColor.rgb, g, grass);
+  }
 }`,
       );
   };

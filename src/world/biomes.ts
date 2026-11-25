@@ -32,13 +32,15 @@ export function scatterVegetation(f: Forest) {
   f.scatter('oak', 15, (x, z, h, s, p) => 0.32 * meadow(x, z) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.8, 1.3], 11);
   f.scatter('bush', 10, (x, z, h, s, p) => 0.22 * (meadow(x, z) + 0.5 * w('hub', x, z, 60, 95)) * flatOk(s, 0.35) * offPath(p) * (h > 3 ? 1 : 0), [0.7, 1.3], 12);
   // autumn grove
-  f.scatter('autumn', 7.5, (x, z, h, s, p) => 0.72 * w('kinship', x, z, 70, 115) * flatOk(s, 0.4) * offPath(p), [0.85, 1.35], 13);
-  f.scatter('bush', 9, (x, z, h, s, p) => 0.3 * w('kinship', x, z, 70, 115) * offPath(p), [0.8, 1.2], 14);
+  // (the mirror lake's cherry garden keeps to itself: no autumn wood among its trees)
+  const garden = (x: number, z: number) => 1 - w('twins', x, z, 105, 125);
+  f.scatter('autumn', 7.5, (x, z, h, s, p) => 0.72 * w('kinship', x, z, 70, 115) * garden(x, z) * flatOk(s, 0.4) * offPath(p), [0.85, 1.35], 13);
+  f.scatter('bush', 9, (x, z, h, s, p) => 0.3 * w('kinship', x, z, 70, 115) * garden(x, z) * offPath(p), [0.8, 1.2], 14);
   // blossoms around the mirror lake
   f.scatter('blossom', 8, (x, z, h, s, p) => {
     const a = ANCHORS.twins;
     const r = Math.hypot(x - a.x, z - a.z);
-    return 0.55 * smoothstep(48, 60, r) * smoothstep(105, 80, r) * flatOk(s, 0.35) * offPath(p) * (h > 8.2 ? 1 : 0);
+    return 0.85 * smoothstep(48, 60, r) * smoothstep(112, 90, r) * flatOk(s, 0.35) * offPath(p) * (h > 8.2 ? 1 : 0);
   }, [0.8, 1.25], 15);
   // pines on the caldera slopes and the cliffs
   f.scatter('pine', 8, (x, z, h, s, p) => {
@@ -76,6 +78,10 @@ export function scatterVegetation(f: Forest) {
 
 const C = (hex: string) => new THREE.Color(hex);
 
+/** the autumn wood's fallen leaves (the drawing's are of the deeper red, rarer, colour) */
+export const LITTER = ['#e2662f', '#f0a033', '#d9572b', '#f2c14e', '#e08a2e', '#c9412a'];
+export const LITTER_LINE = '#c9412a';
+
 export const grassRules: GrassRules = {
   density(x, z, h, slope, path) {
     let d = 0.92;
@@ -93,7 +99,7 @@ export const grassRules: GrassRules = {
     return d;
   },
   flowerChance(x, z) {
-    return 0.05 + 0.4 * w('weave', x, z, 50, 90) + 0.12 * w('twins', x, z, 50, 100) + 0.08 * w('contour', x, z, 50, 90) + 0.06 * w('hub', x, z, 40, 80);
+    return 0.05 + 0.4 * w('weave', x, z, 50, 90) + 0.3 * w('twins', x, z, 75, 120) + 0.08 * w('contour', x, z, 50, 90) + 0.06 * w('hub', x, z, 40, 80);
   },
   flower(x, z) {
     const r = (Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
@@ -104,6 +110,19 @@ export const grassRules: GrassRules = {
     if (w('kinship', x, z, 60, 110) > 0.4) return q < 0.5 ? '#f2a03b' : '#e0562d';
     if (w('measure', x, z, 60, 110) > 0.4) return q < 0.7 ? '#f6e05a' : '#ffffff';
     return q < 0.4 ? '#ffffff' : q < 0.7 ? '#ffd84a' : q < 0.88 ? '#e8453c' : '#9fb7ff';
+  },
+  ripples(x, z) {
+    return 0.95 * w('mosaic', x, z, 70, 120);
+  },
+  reeds(x, z, depth) {
+    // in the shallows and along the wet edge of the lakes
+    return depth < -0.15 || depth > 0.75 ? 0 : 0.85 * (1 - Math.abs(depth - 0.25) / 0.6);
+  },
+  litter(x, z) {
+    return 0.9 * w('kinship', x, z, 95, 120);
+  },
+  litterColor(x, z, r) {
+    return LITTER[Math.floor(r * LITTER.length) % LITTER.length];
   },
   tint(x, z, base) {
     const out = base.clone();

@@ -6,6 +6,7 @@ import { CONSTELLATIONS } from '../src/data/constellations';
 import { checkConstellation, initialState, isInversionSymmetric, neighbors, pressSet, wantsAllLit } from '../src/secret/graph';
 import { distinctSolutions, estimateDifficulty, reachable } from '../src/secret/solver';
 import type { ConstellationDef } from '../src/secret/types';
+import { drawingProblems, similarity, type P } from '../tools/lib/drawing-rules';
 
 declare const test: (name: string, fn: () => void) => void;
 
@@ -19,18 +20,6 @@ const EXPECT: Record<string, number> = {
   prologue: 4, hub: 10, kinship: 15, measure: 15, mold: 13, contour: 13, mosaic: 15, beacon: 13, weave: 15, twins: 15, citadel: 12, echo: 10,
 };
 
-type P = [number, number];
-const dist = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-function segInter(a: P, b: P, c: P, d: P): boolean {
-  const o = (p: P, q: P, r: P) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
-  return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
-}
-function pointSegDist(p: P, a: P, b: P): number {
-  const dx = b[0] - a[0], dz = b[1] - a[1];
-  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / (dx * dx + dz * dz)));
-  return Math.hypot(p[0] - (a[0] + dx * t), p[1] - (a[1] + dz * t));
-}
-const pts = (d: ConstellationDef): P[] => d.stars.map((s) => [s.x, s.z]);
 const toState = (s: string) => Uint8Array.from(s.split('').map((c) => (c === '1' ? 1 : 0)));
 
 test('constellations: 150 in total with the planned distribution and well-formed ids', () => {
@@ -47,9 +36,12 @@ test('constellations: 150 in total with the planned distribution and well-formed
   }
 });
 
-test('constellations: valid threads, planar, spaced, inside the footprint, bell clear', () => {
+test('constellations: every one is a readable line drawing with a name', () => {
+  const names = new Set<string>();
   for (const d of CONSTELLATIONS) {
-    const P = pts(d);
+    assert.ok(d.name && d.name.pt.length > 1 && d.name.en.length > 1, `${d.id} needs a name`);
+    assert.ok(!names.has(d.name.pt), `${d.id}: drawing name ${d.name.pt} used twice`);
+    names.add(d.name.pt);
     const keys = new Set<string>();
     d.threads.forEach((t) => {
       assert.ok(t.a >= 0 && t.b >= 0 && t.a < d.stars.length && t.b < d.stars.length && t.a !== t.b, `${d.id} bad thread`);
@@ -57,28 +49,24 @@ test('constellations: valid threads, planar, spaced, inside the footprint, bell 
       assert.ok(!keys.has(k), `${d.id} duplicate thread ${k}`);
       keys.add(k);
     });
-    for (let i = 0; i < P.length; i++) {
-      assert.ok(Math.hypot(P[i][0], P[i][1]) <= 7.01, `${d.id} star ${i} outside 7 m`);
-      for (let j = i + 1; j < P.length; j++) assert.ok(dist(P[i], P[j]) >= 1.6 - 1e-6, `${d.id} stars ${i},${j} too close`);
-    }
-    for (let i = 0; i < d.threads.length; i++) {
-      const a = d.threads[i];
-      for (let j = i + 1; j < d.threads.length; j++) {
-        const b = d.threads[j];
-        if (a.a === b.a || a.a === b.b || a.b === b.a || a.b === b.b) continue;
-        assert.ok(!segInter(P[a.a], P[a.b], P[b.a], P[b.b]), `${d.id} threads ${i},${j} cross`);
-      }
-      for (let s = 0; s < P.length; s++) if (s !== a.a && s !== a.b) assert.ok(pointSegDist(P[s], P[a.a], P[a.b]) >= 0.5, `${d.id} star ${s} lies on thread ${i}`);
-    }
-    const B: P = [d.bell.x, d.bell.z];
-    assert.ok(Math.hypot(B[0], B[1]) <= 8.61, `${d.id} bell too far`);
-    for (const p of P) assert.ok(dist(p, B) >= 1.15, `${d.id} bell on a star`);
-    // connected network
+    // readability: 4..16 stars, one figure, no crossings, spacing, angles ≥ 20°, bell in a clear spot
+    const pts: P[] = d.stars.map((s) => [s.x, s.z]);
+    const problems = drawingProblems(pts, d.threads.map((t) => [t.a, t.b]), [d.bell.x, d.bell.z]);
+    assert.deepEqual(problems, [], `${d.id} (${d.name.pt}) is hard to read`);
+    // one connected network (also through the rules' own adjacency)
     const adj = neighbors(d);
     const seen = new Set([0]);
     const q = [0];
     while (q.length) for (const j of adj[q.pop()!]) if (!seen.has(j)) (seen.add(j), q.push(j));
     assert.equal(seen.size, d.stars.length, `${d.id} disconnected`);
+  }
+});
+
+test('constellations: no two drawings are nearly the same (also mirrored)', () => {
+  const nets = CONSTELLATIONS.map((d) => ({ id: d.id, pts: d.stars.map((s) => [s.x, s.z] as P), edges: d.threads.map((t) => [t.a, t.b] as [number, number]) }));
+  for (let i = 0; i < nets.length; i++) for (let j = i + 1; j < nets.length; j++) {
+    const s = similarity(nets[i], nets[j]);
+    assert.ok(s <= 0.55, `${nets[i].id} and ${nets[j].id} look alike (${(s * 100).toFixed(0)}%)`);
   }
 });
 
@@ -135,7 +123,7 @@ test('constellations: fair — a careful player can solve each one by reasoning 
 
 test('constellation rules: thread marks, echo, all-lit default', () => {
   const chain: ConstellationDef = {
-    id: 't', area: 'prologue', difficulty: 1, bell: { x: 0, z: 3 },
+    id: 't', area: 'prologue', name: { pt: 'Teste', en: 'Test' }, difficulty: 1, bell: { x: 0, z: 3 },
     stars: [{ x: 0, z: 0 }, { x: 2, z: 0 }, { x: 4, z: 0 }],
     threads: [{ a: 0, b: 1, mark: 'diff' }, { a: 1, b: 2, mark: 'same' }],
   };

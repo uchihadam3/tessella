@@ -466,6 +466,8 @@ export class PanelManager {
         v.tiles.forEach((t) => tiles.add(t));
         if (v.rows) rows.push(...v.rows);
         if (v.cols) cols.push(...v.cols);
+        // the whole answer is wrong: the whole board blinks (it tells nothing about which tiles)
+        if (v.whole) p.def.cells.forEach((c, i) => !c.hole && tiles.add(i));
       }
       p.view.blink([...tiles], rows, cols);
       audio.panelFailed();

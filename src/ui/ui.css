@@ -164,3 +164,23 @@
 #loading .lbar i { display: block; height: 100%; width: 0; background: var(--gold); box-shadow: 0 0 12px var(--gold); transition: width .4s ease; }
 #loading p { margin-top: 14px; color: var(--faint); letter-spacing: .14em; font-size: 13px; text-transform: uppercase; }
 @media (max-width: 700px) { .mi { font-size: 24px; } .dialog { padding: 22px 18px; } .opt { grid-template-columns: 1fr; } .arow { grid-template-columns: 30px 1fr 60px 40px; } }
+/* short windows (laptops, embedded pages): menus must fit without scrolling */
+@media (max-height: 820px) {
+  #menu .logo svg.emblem { width: 70px; height: 70px; }
+  #menu .logo .word { font-size: clamp(38px, 4.8vw, 64px); margin-top: 6px; }
+  .logo .sub { margin-top: 10px; font-size: 18px; }
+  .menu-items { margin-top: 30px; gap: 2px; }
+  .mi { font-size: 26px; padding: 4px 0 4px 22px; }
+  .dialog { padding: 26px 32px; }
+  .dialog h2 { font-size: 32px; margin-bottom: 14px; }
+}
+@media (max-height: 620px) {
+  #menu .logo svg.emblem { width: 52px; height: 52px; }
+  #menu .logo .word { font-size: clamp(32px, 4.2vw, 48px); margin-top: 4px; }
+  .logo .orn { margin-top: 6px; }
+  .logo .sub { margin-top: 6px; font-size: 15px; }
+  .menu-items { margin-top: 18px; gap: 0; }
+  .mi { font-size: 21px; padding: 3px 0 3px 20px; }
+  .dialog { padding: 18px 26px; }
+  .dialog h2 { font-size: 26px; margin-bottom: 10px; }
+}

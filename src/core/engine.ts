@@ -57,6 +57,8 @@ export class Engine {
   running = false;
   /** skip 3D rendering (e.g. while an opaque intro screen covers everything) */
   paused = false;
+  /** keep simulating but draw nothing (automated playtests on software GPUs) */
+  skipRender = false;
   /** frames-per-second (smoothed) */
   fps = 60;
   /** lower the resolution automatically on slow GPUs (and raise it back when there is headroom) */
@@ -155,7 +157,7 @@ export class Engine {
       this.adaptResolution(dt);
       for (const u of this.updaters) u(dt, this.time);
       this.grade.uniforms.uTime.value = this.time;
-      this.composer.render(dt);
+      if (!this.skipRender) this.composer.render(dt);
     };
     requestAnimationFrame(loop);
   }

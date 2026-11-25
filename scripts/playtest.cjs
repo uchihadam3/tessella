@@ -11,7 +11,7 @@ const shot = process.argv[3];
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
-  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&at=0,279.5,180,0', { waitUntil: 'load' });
+  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&at=0,279.5,180,0', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 240000 });
   await page.waitForTimeout(2000);
   for (const area of areas) {
@@ -57,7 +57,11 @@ const shot = process.argv[3];
   await page.waitForTimeout(6000);
   const flags = await page.evaluate(() => ({ flags: window.__game.save.flags, totems: window.__game.save.totems, solvedTotal: window.__game.solvedCount() }));
   console.log('state', JSON.stringify(flags));
-  if (shot) await page.screenshot({ path: shot });
+  if (shot) {
+    await page.evaluate(() => { window.__game.engine.skipRender = false; });
+    await page.waitForTimeout(4000);
+    await page.screenshot({ path: shot });
+  }
   console.log('errors:', errors.length ? errors.slice(0, 8) : 'none');
   await browser.close();
 })();

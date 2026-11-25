@@ -19,7 +19,15 @@ const ok = (name, cond, extra = '') => {
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
   const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, locale: 'pt-BR' });
   const page = await ctx.newPage();
+  page.setDefaultTimeout(180000);
   const errors = [];
+  // a real mouse click in the middle of an element (software rendering keeps the page busy, so no
+  // Playwright post-click waits)
+  const realClick = async (sel) => {
+    const el = typeof sel === 'string' ? await page.waitForSelector(sel, { state: 'visible' }) : sel;
+    const b = await el.boundingBox();
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+  };
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
 
@@ -38,11 +46,11 @@ const ok = (name, cond, extra = '') => {
   await page.screenshot({ path: `${shots}-1-menu.png` });
   const menuTexts = await page.$$eval('#menu .menu-items button', (b) => b.map((x) => x.textContent));
   ok('menu in Portuguese', menuTexts.includes('Novo jogo'), menuTexts.join(' | '));
-  await page.click('#menu .menu-items button:has-text("Novo jogo")');
+  await realClick('#menu .menu-items button:has-text("Novo jogo")');
   await page.waitForSelector('#slots.on .slotcard', { timeout: 30000 }).catch(() => {});
   const cards = await page.$$('.slotcard');
   ok('slot screen shows 3 slots', cards.length === 3, `${cards.length}`);
-  await cards[0].click();
+  await realClick(cards[0]);
   await waitPlay();
   await page.waitForTimeout(5000); // wake-up fade
   const start = await page.evaluate(() => ({ x: window.__game.player.pos.x, y: window.__game.player.pos.y, z: window.__game.player.pos.z }));
@@ -128,8 +136,8 @@ const ok = (name, cond, extra = '') => {
     const i = ps.findIndex((p) => p.id === id);
     return ps[i + 1] ? { id: ps[i + 1].id, powered: ps[i + 1].powered } : null;
   }, pid);
-  await page.waitForTimeout(4000); // cable travels
-  const nextPowered = await page.evaluate((id) => window.__game.pm.panels.find((p) => p.id === id)?.powered, next?.id);
+  // the cable travels at 9 m/s of game time (slow software rendering stretches that in wall time)
+  const nextPowered = await page.waitForFunction((id) => window.__game.pm.panels.find((p) => p.id === id)?.powered, next?.id, { timeout: 90000 }).then(() => true).catch(() => false);
   ok('the cable powers the next panel', !!nextPowered, JSON.stringify(next));
 
   // ── 5. pause menu + manual save ──
@@ -140,7 +148,7 @@ const ok = (name, cond, extra = '') => {
   ok('Esc opens the pause menu', paused === 'pause', paused);
   await page.screenshot({ path: `${shots}-6-pause.png` });
   const saveBtn = await page.$('button:has-text("Salvar agora")');
-  if (saveBtn) await saveBtn.click();
+  if (saveBtn) await realClick(saveBtn);
   await page.waitForTimeout(600);
   const stored = await page.evaluate((id) => {
     const keys = Object.keys(localStorage).filter((k) => k.includes('tessella'));
@@ -154,7 +162,7 @@ const ok = (name, cond, extra = '') => {
   const cont = await page.$('#menu .menu-items button:has-text("Continuar")');
   ok('menu offers Continue after reload', !!cont);
   if (cont) {
-    await cont.click();
+    await realClick(cont);
     await waitPlay();
     await page.waitForTimeout(2500);
     const back = await page.evaluate((id) => ({

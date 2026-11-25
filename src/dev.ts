@@ -6,6 +6,7 @@
  *   ?dev&engage=<panelId>         engage a panel
  *   ?dev&menu                     open the main menu instead
  *   ?dev&fly=x,y,z,tx,ty,tz       free camera shot
+ *   ?dev&norender                 simulate without drawing (fast automated playtests)
  */
 import type { Game } from './game/game';
 import type { UI } from './ui/ui';
@@ -13,6 +14,7 @@ import { skyForProgress } from './world/sky';
 import { newSave } from './core/save';
 
 export async function devStart(game: Game, ui: UI, params: URLSearchParams) {
+  if (params.has('norender')) game.engine.skipRender = true;
   if (params.has('menu')) {
     ui.openMenu();
     return;
@@ -63,6 +65,7 @@ export async function devStart(game: Game, ui: UI, params: URLSearchParams) {
       game.engine.camera.lookAt(f[3], f[4], f[5]);
     });
   }
-  // expose for console debugging
+  // expose for console debugging and the photo tour
   (window as unknown as { dev: unknown }).dev = { game, ui };
+  (window as unknown as { __setSky: (p: number) => void }).__setSky = (v: number) => game.world.sky.snap(skyForProgress(v));
 }

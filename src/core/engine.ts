@@ -115,7 +115,13 @@ export class Engine {
     this.bloom.enabled = q !== 'low';
     const rt = this.composer.renderTarget1 as THREE.WebGLRenderTarget;
     const rt2 = this.composer.renderTarget2 as THREE.WebGLRenderTarget;
-    rt.samples = rt2.samples = q === 'high' ? 4 : q === 'medium' ? 2 : 0;
+    const samples = q === 'high' ? 4 : q === 'medium' ? 2 : 0;
+    if (rt.samples !== samples) {
+      // the multisampled buffers were allocated with the old count: free them so they are rebuilt
+      rt.samples = rt2.samples = samples;
+      rt.dispose();
+      rt2.dispose();
+    }
     this.scene.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | undefined;
       if (m) m.needsUpdate = true;

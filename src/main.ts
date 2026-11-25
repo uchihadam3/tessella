@@ -117,6 +117,7 @@ async function boot() {
   // if the GPU resets the WebGL context, save and reload instead of showing a frozen frame
   canvas.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
+    console.warn('WebGL context lost: saving and reloading');
     try {
       if (game.state === 'play' || game.state === 'pause') game.saveNow();
     } catch {

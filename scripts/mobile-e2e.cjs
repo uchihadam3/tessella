@@ -23,7 +23,13 @@ const ok = (name, cond, extra = '') => {
   const cdp = await ctx.newCDPSession(page);
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
+  page.on('console', (m) => {
+    const t = m.text();
+    if (m.type() === 'error') errors.push(t.slice(0, 200));
+    if (/context|webgl|reload|fullscreen|orientation/i.test(t) && !/GPU stall/.test(t)) console.log('[console]', t.slice(0, 200));
+  });
+  page.on('framenavigated', (f) => { if (f === page.mainFrame()) console.log('[navigated]', f.url()); });
+  page.on('crash', () => console.log('[page crashed]'));
   const W = page.viewportSize().width, H = page.viewportSize().height;
 
   const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], i) => ({ x, y, id: i + 1, radiusX: 4, radiusY: 4, force: 1 })) });

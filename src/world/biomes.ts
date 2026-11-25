@@ -65,11 +65,9 @@ export function scatterVegetation(f: Forest) {
   // constellations are drawn in the crowns (as in the autumn wood)
   const grove = (x: number, z: number, k: number) => smoothstep(0.12, 0.42, simplex.noise(x / 46 + k * 17.3, z / 46 - k * 9.1));
   const inPlace = (id: AreaId, x: number, z: number, r0: number, r1: number) => w(id, x, z, r0, r1) * (1 - w(id, x, z, 26, 40));
-  // (wider woodland patches in the open meadow places, whose pictures are drawn in their crowns)
-  const groveWide = (x: number, z: number, k: number) => smoothstep(0.0, 0.32, simplex.noise(x / 52 + k * 17.3, z / 52 - k * 9.1));
-  f.scatter('oak', 8.5, (x, z, h, s, p) => 0.66 * inPlace('measure', x, z, 85, 125) * groveWide(x, z, 1) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.35], 41);
-  f.scatter('oak', 8.5, (x, z, h, s, p) => 0.6 * w('hub', x, z, 75, 120) * (1 - w('hub', x, z, 42, 55)) * groveWide(x, z, 2) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.35], 42);
-  f.scatter('oak', 8, (x, z, h, s, p) => 0.7 * inPlace('contour', x, z, 75, 122) * groveWide(x, z, 3) * flatOk(s, 0.35) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.3], 43);
+  f.scatter('oak', 8.5, (x, z, h, s, p) => 0.62 * inPlace('measure', x, z, 80, 120) * grove(x, z, 1) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.35], 41);
+  f.scatter('oak', 8.5, (x, z, h, s, p) => 0.55 * w('hub', x, z, 70, 115) * (1 - w('hub', x, z, 42, 55)) * grove(x, z, 2) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.35], 42);
+  f.scatter('oak', 8, (x, z, h, s, p) => 0.68 * inPlace('contour', x, z, 70, 118) * grove(x, z, 3) * flatOk(s, 0.35) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.3], 43);
   // the cherry garden spills out around the mirror lake in loose orchards
   f.scatter('blossom', 8.5, (x, z, h, s, p) => {
     const a = ANCHORS.twins;

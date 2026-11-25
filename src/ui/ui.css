@@ -132,7 +132,7 @@
 .roll .cl { margin: 26px 0; }
 .roll .cl span { display: block; color: var(--dim); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; }
 .roll .cl b { display: block; font-family: var(--serif); font-size: 30px; font-weight: 600; color: var(--gold2); margin-top: 6px; }
-#ending .roll { animation: rollup 48s linear forwards; }
+#ending .roll { animation: rollup 84s linear forwards; }
 @keyframes rollup { 0% { transform: translateY(70vh); } 100% { transform: translateY(-110%); } }
 
 /* HUD */

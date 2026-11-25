@@ -15,7 +15,79 @@ export class Input {
   private pressed = new Set<string>();
   private listeners: { [k: string]: ((e: Event) => void)[] } = {};
 
+  /** drag-to-look fallback (when pointer lock is unavailable, e.g. inside some iframes) */
+  dragLook = false;
+  private dragging = false;
+  private lastX = 0;
+  private lastY = 0;
+  private stickId: number | null = null;
+  private stickOrigin = { x: 0, y: 0 };
+  private lookId: number | null = null;
+  private lookLast = { x: 0, y: 0 };
+  private tapStart = { x: 0, y: 0, t: 0 };
+  /** how far the mouse travelled while the button was held (CSS px): a long drag is a look, not a click */
+  pressTravel = 0;
+  private pressX = 0;
+  private pressY = 0;
+  /** called for a short tap (touch) so the game can treat it as a click at that point */
+  onTap: (x: number, y: number) => void = () => {};
+
   constructor(private el: HTMLElement) {
+    // touch: left half = joystick, right half = look; short taps = clicks
+    el.addEventListener('touchstart', (e) => {
+      this.isTouch = true;
+      for (const t of Array.from(e.changedTouches)) {
+        if (t.clientX < window.innerWidth * 0.45 && this.stickId === null) {
+          this.stickId = t.identifier;
+          this.stickOrigin = { x: t.clientX, y: t.clientY };
+        } else if (this.lookId === null) {
+          this.lookId = t.identifier;
+          this.lookLast = { x: t.clientX, y: t.clientY };
+          this.tapStart = { x: t.clientX, y: t.clientY, t: performance.now() };
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+    el.addEventListener('touchmove', (e) => {
+      for (const t of Array.from(e.changedTouches)) {
+        if (t.identifier === this.stickId) {
+          const dx = (t.clientX - this.stickOrigin.x) / 60, dy = (t.clientY - this.stickOrigin.y) / 60;
+          const l = Math.hypot(dx, dy);
+          this.touchMove = l > 1 ? { x: dx / l, y: -dy / l } : { x: dx, y: -dy };
+        } else if (t.identifier === this.lookId) {
+          this.dx += (t.clientX - this.lookLast.x) * 1.6;
+          this.dy += (t.clientY - this.lookLast.y) * 1.6;
+          this.lookLast = { x: t.clientX, y: t.clientY };
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+    const end = (e: TouchEvent) => {
+      for (const t of Array.from(e.changedTouches)) {
+        if (t.identifier === this.stickId) {
+          this.stickId = null;
+          this.touchMove = { x: 0, y: 0 };
+        } else if (t.identifier === this.lookId) {
+          this.lookId = null;
+          const moved = Math.hypot(t.clientX - this.tapStart.x, t.clientY - this.tapStart.y);
+          if (moved < 12 && performance.now() - this.tapStart.t < 350) this.onTap(t.clientX, t.clientY);
+        }
+      }
+    };
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', end);
+    // mouse drag-to-look fallback
+    el.addEventListener('mousedown', (e) => {
+      this.pressX = e.clientX;
+      this.pressY = e.clientY;
+      this.pressTravel = 0;
+      if (this.dragLook && !this.locked && e.button === 0) {
+        this.dragging = true;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+      }
+    });
+    window.addEventListener('mouseup', () => (this.dragging = false));
     window.addEventListener('keydown', (e) => {
       if (e.repeat) return;
       this.keys.add(e.code);
@@ -30,6 +102,13 @@ export class Input {
     document.addEventListener('mousemove', (e) => {
       this.mx = e.clientX;
       this.my = e.clientY;
+      if (e.buttons & 1) this.pressTravel = Math.max(this.pressTravel, Math.hypot(e.clientX - this.pressX, e.clientY - this.pressY));
+      if (this.dragging && !this.locked) {
+        this.dx += e.clientX - this.lastX;
+        this.dy += e.clientY - this.lastY;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+      }
       if (this.locked) {
         // ignore absurd spikes some browsers produce right after locking
         if (Math.abs(e.movementX) < 400 && Math.abs(e.movementY) < 400) {
@@ -47,7 +126,11 @@ export class Input {
       this.locked = document.pointerLockElement === this.el;
       this.emit('lockchange', new Event('lockchange'));
     });
-    document.addEventListener('pointerlockerror', () => this.emit('lockerror', new Event('lockerror')));
+    document.addEventListener('pointerlockerror', () => {
+      // pointer lock refused (sandboxed iframe, some browsers): look by dragging instead
+      this.dragLook = true;
+      this.emit('lockerror', new Event('lockerror'));
+    });
   }
 
   on(type: string, fn: (e: Event) => void) {
@@ -74,13 +157,22 @@ export class Input {
   }
 
   lock() {
-    if (this.locked) return;
-    try {
-      const p = this.el.requestPointerLock?.() as unknown as Promise<void> | undefined;
-      if (p && typeof p.catch === 'function') p.catch(() => {});
-    } catch {
-      /* ignore */
+    if (this.locked || this.isTouch) return;
+    if (!this.el.requestPointerLock) {
+      this.dragLook = true;
+      return;
     }
+    try {
+      const p = this.el.requestPointerLock() as unknown as Promise<void> | undefined;
+      if (p && typeof p.catch === 'function') p.catch(() => (this.dragLook = true));
+    } catch {
+      this.dragLook = true;
+    }
+  }
+
+  /** true when the camera should follow mouse/touch deltas */
+  get looking(): boolean {
+    return this.locked || this.dragging || this.lookId !== null;
   }
   unlock() {
     if (document.pointerLockElement) document.exitPointerLock();

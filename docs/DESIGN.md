@@ -106,14 +106,18 @@ feitas em qualquer ordem depois da primeira.
 | Área | Painéis |
 |------|---------|
 | Prólogo | 8 |
-| 8 áreas de ensino × 20 | 160 |
-| Cidadela | 24 |
-| Caverna Ressonante | 18 |
-| Torre do Céu | 16 |
-| **Total de painéis** | **226** |
-| Segredos do mundo (opcionais) | 12 |
+| 8 áreas de ensino × 45 | 360 |
+| Cidadela | 40 |
+| Caverna Ressonante | 30 |
+| Torre do Céu | 24 |
+| Cofre Oculto | 1 |
+| **Total de painéis** | **463** |
+| Constelações secretas | 150 |
+| **Total de puzzles** | **613** |
 
-Cada área de ensino tem 4 estações: **Introdução (7)**, **Prática (5)**, **Provação (4)** e **Coração (4)**.
+Cada área de ensino tem 5 estações: **Introdução (7)** que ensina sem palavras, **Prática (12)** e
+**Provação (12)** em sequências de 4 painéis (cada sequência explora uma percepção nova, do simples ao
+difícil), **Maestria (8)** que combina as percepções e **Coração (6)**, as obras-primas da área.
 
 ### Onde ver o progresso
 
@@ -340,11 +344,32 @@ Ao resolver o último: todos os totens disparam juntos, a aurora toma o céu, o 
 
 ---
 
-## 6. Segredos do mundo (opcionais)
+## 6. As Constelações (a camada secreta)
 
-Doze puzzles escondidos na paisagem, feitos com objetos do mundo em vez de painéis (lanternas, arrozais,
-blocos, sebes, piso, rochas no mar, lavanda, vitórias-régias, estandartes, cristais). Usam as mesmas regras.
-Quem entendeu a linguagem começa a reconhecer grades no mundo. São contados no Salão das Tesselas e no Diário.
+O jogo nunca ensina isto. Pela ilha existem **150 constelações** escondidas em coisas comuns de cada lugar:
+conchas na praia, cogumelos no bosque, estacas de bambu nos terraços, sobras de mármore na pedreira,
+roseiras no jardim, potes de barro no templo, poças nas rochas dos penhascos, carretéis no vale, vasos de
+lótus no lago, braseiros na cidadela, cristais na caverna.
+
+**A ilha só se revela para quem para e observa.** Fique parado olhando um grupo desses objetos por alguns
+segundos: fios de luz se desenham entre eles, os glifos aparecem e uma pequena esfera de luz sobe (é ela que
+confirma a resposta). Mexeu, a visão se apaga. Quem passa correndo nunca vê.
+
+São puzzles em **rede**, não em grade: os vizinhos são quem está ligado por um fio. As linguagens dos painéis
+(Afinidade, Medida, Contorno, Mosaico, Eco) ganham comportamentos novos nessa geometria (ciclos ímpares,
+pontes, estrelas com muitos fios), e existe uma linguagem que só aparece aqui: **um nó no fio** quer as duas
+pontas iguais, **um fio cortado** quer as pontas diferentes.
+
+A porta redonda do **Observatório** ao lado do Pátio tem um anel de 150 luzes, uma por constelação
+resolvida. Com **100**, ela se abre: lá dentro está **a Tessela Oculta**, o puzzle mais difícil do jogo
+(9×9, oito linguagens), e resolvê-la leva ao **final secreto**.
+
+## 6b. Os dois finais
+
+- **Um Novo Dia** (Torre do Céu): a coroa acende, os feixes de todos os totens convergem, uma onda de luz
+  passa pela ilha enquanto a noite vira amanhecer; os créditos sobem sobre a ilha viva.
+- **Firmamento** (secreto): noite profunda, todas as constelações da ilha brilham, a luz delas sobe e
+  desenha o emblema no céu, com um décimo ladrilho que nunca apareceu antes. Créditos próprios.
 
 ---
 

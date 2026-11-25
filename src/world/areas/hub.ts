@@ -310,6 +310,16 @@ export function buildHub(world: World, pm: PanelManager): HubRuntime {
     void secrets;
   };
 
+  // planters with flowering shrubs between the lanterns
+  for (let i = 0; i < 8; i++) {
+    const ang = (i / 8) * Math.PI * 2 + Math.PI / 8;
+    const x = cx + Math.cos(ang) * 33.5, z = cz + Math.sin(ang) * 33.5;
+    const py = world.terrain.heightAt(x, z);
+    b.batch.add(G.box(3.2, 0.7, 1.4, 0.06), stone, mtx(x, py + 0.35, z, -ang + Math.PI / 2));
+    world.collision.addSolidBox(x, z, 1.6, 0.7, -ang + Math.PI / 2, py - 1, py + 0.7);
+    world.forest.add('bush', x + Math.cos(ang + Math.PI / 2) * 0.7, z + Math.sin(ang + Math.PI / 2) * 0.7, 0.75, 0, py + 0.6);
+    world.forest.add('bush', x - Math.cos(ang + Math.PI / 2) * 0.7, z - Math.sin(ang + Math.PI / 2) * 0.7, 0.7, 1, py + 0.6);
+  }
   // trees and benches around the court
   for (let i = 0; i < 10; i++) {
     const ang = (i / 10) * Math.PI * 2 + 0.2;

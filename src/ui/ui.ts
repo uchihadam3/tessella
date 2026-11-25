@@ -670,7 +670,7 @@ export class UI {
     this.show('ending', false);
     $('#crosshair', this.root).classList.add('hidden');
     await this.fadeTo(0, 2500, true);
-    await sleep(47000);
+    await sleep(82000);
     return new Promise<void>((res) => {
       const btn = h(`<button class="btn primary" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%)">${this.t('keepExploring')}</button>`);
       el.append(btn);

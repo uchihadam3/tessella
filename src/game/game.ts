@@ -538,10 +538,11 @@ export class Game {
   private update(dt: number, t: number) {
     const w = this.world;
     if (!w) return;
+    this.engine.autoActive = this.state === 'play';
     if (this.state === 'play' || this.state === 'cutscene') {
       const [mx, my] = this.input.consumeMouse();
       if (this.state === 'play' && !this.pm.controllingCamera) {
-        if (this.input.locked) this.player.look(mx, my);
+        if (this.input.looking) this.player.look(mx, my);
         this.player.update(dt);
         this.player.applyCamera(this.engine.camera);
         const aimed = this.pm.updateAim();

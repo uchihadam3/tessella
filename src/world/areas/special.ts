@@ -324,7 +324,7 @@ export function buildSpire(world: World, pm: PanelManager): SpireRuntime {
     crownGlow.rotation.y += dt * (0.3 + ignited * 2);
     const mm = crownGlow.material as THREE.MeshStandardMaterial;
     if (ignited > 0 && ignited < 1) ignited = Math.min(1, ignited + dt * 0.4);
-    mm.emissiveIntensity = 0.6 + 0.2 * Math.sin(t) + ignited * 7;
+    mm.emissiveIntensity = 0.6 + 0.2 * Math.sin(t) + ignited * 2.6;
     crownGlow.scale.set(1 + ignited * 0.6, 1.6 + ignited, 1 + ignited * 0.6);
   });
   let open = false;

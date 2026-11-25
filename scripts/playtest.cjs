@@ -15,6 +15,12 @@ const shot = process.argv[3];
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 240000 });
   await page.waitForTimeout(2000);
   for (const area of areas) {
+    if (area === 'spire' || area === 'echo') {
+      // gated areas: wait for the unlock set-piece to finish
+      await page.waitForFunction((a) => a === 'spire' ? window.__game.save.flags.spireOpen : window.__game.save.flags.hollowOpen, area, { timeout: 120000 }).catch(() => console.log('gate flag timeout', area));
+      await page.waitForTimeout(8000);
+      await page.evaluate(() => { const g = window.__game; g.state = 'play'; g.player.frozen = false; g.pm.refreshPower(); });
+    }
     const ids = await page.evaluate((a) => window.__game.pm.panels.filter((p) => p.area === a).map((p) => p.id), area);
     let solved = 0;
     for (let round = 0; round < ids.length + 2 && solved < ids.length; round++) {
@@ -48,7 +54,7 @@ const shot = process.argv[3];
     }, area);
     console.log(area, JSON.stringify(info));
   }
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(6000);
   const flags = await page.evaluate(() => ({ flags: window.__game.save.flags, totems: window.__game.save.totems, solvedTotal: window.__game.solvedCount() }));
   console.log('state', JSON.stringify(flags));
   if (shot) await page.screenshot({ path: shot });

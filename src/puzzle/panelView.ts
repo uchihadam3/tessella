@@ -4,6 +4,7 @@
  */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { PuzzleDef, WeaveClue } from './types';
 import { drawEcho, drawGlyph, roundRect } from './glyphs';
 import { geometryOf } from './rules';
@@ -186,6 +187,14 @@ export class PanelView {
       this.face.position.set(0, fh / 2 + 0.05, 0.0615);
       this.glow.position.copy(this.face.position).add(new THREE.Vector3(0, 0, 0.002));
       tiltG.add(this.face, this.glow);
+      // a thin gold inlay framing the face
+      const t = 0.018;
+      const bars = ([
+        [fw + 0.05, t, 0, fh + 0.075], [fw + 0.05, t, 0, 0.025],
+        [t, fh + 0.05, -fw / 2 - 0.025, fh / 2 + 0.05], [t, fh + 0.05, fw / 2 + 0.025, fh / 2 + 0.05],
+      ] as [number, number, number, number][]).map(([w, h, x, y]) => new THREE.BoxGeometry(w, h, 0.012).translate(x, y, 0.064));
+      const inlay = new THREE.Mesh(mergeGeometries(bars)!, M.gold());
+      tiltG.add(inlay);
     } else if (this.mount === 'wall' || this.mount === 'floor') {
       const g = new THREE.Group();
       if (this.mount === 'floor') g.rotation.x = -Math.PI / 2;

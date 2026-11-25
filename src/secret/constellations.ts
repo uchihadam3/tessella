@@ -22,7 +22,7 @@ import { rng, simplex } from '../world/noise';
 import { audio } from '../audio';
 
 export const VAULT_THRESHOLD = 100;
-const REVEAL_SECONDS = 2.6;
+const REVEAL_SECONDS = 3.4;
 
 // ───────────────────────── per-place objects ─────────────────────────
 
@@ -493,7 +493,7 @@ export class ConstellationSystem {
   watch(dt: number, camera: THREE.PerspectiveCamera, playerSpeed: number) {
     if (playerSpeed < 0.12) this.stillTime += dt;
     else this.stillTime = 0;
-    const still = this.stillTime > 0.35;
+    const still = this.stillTime > 0.9;
     const v = new THREE.Vector3();
     for (const it of this.items) {
       if (it.revealed || !it.near) {
@@ -506,9 +506,9 @@ export class ConstellationSystem {
       let looking = false;
       if (still) {
         const d = it.center.distanceTo(camera.position);
-        if (d < 14 && d > 0.8) {
+        if (d < 11 && d > 0.8) {
           v.copy(it.center).project(camera);
-          looking = v.z < 1 && Math.abs(v.x) < 0.38 && Math.abs(v.y) < 0.5;
+          looking = v.z < 1 && Math.abs(v.x) < 0.24 && Math.abs(v.y) < 0.32;
         }
       }
       const before = it.reveal;

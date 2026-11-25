@@ -144,6 +144,13 @@ export class CollisionWorld {
     return false;
   }
 
+  /** Is a circle at (x,z) with radius r overlapping any enabled blocker within [y0,y1]? */
+  blockedAt(x: number, z: number, r: number, y0: number, y1: number): boolean {
+    const p = { x, z };
+    this.resolve(p, r, y0, y1);
+    return Math.hypot(p.x - x, p.z - z) > 1e-4;
+  }
+
   /** Push a circle (player) out of blockers overlapping [y0,y1]. Mutates pos. */
   resolve(pos: { x: number; z: number }, radius: number, y0: number, y1: number) {
     for (let iter = 0; iter < 3; iter++) {

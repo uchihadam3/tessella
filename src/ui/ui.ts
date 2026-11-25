@@ -180,6 +180,7 @@ export class UI {
   /** Click-to-begin gate (needed to start audio), then studio logo, then title, then menu. */
   async intro() {
     this.show('gate', false);
+    this.game.engine.paused = true; // the intro screens are opaque
     await new Promise<void>((res) => {
       const go = () => {
         this.screens.get('gate')!.removeEventListener('click', go);
@@ -189,10 +190,14 @@ export class UI {
       this.screens.get('gate')!.addEventListener('click', go);
       window.addEventListener('keydown', go);
     });
-    await audio.unlock();
+    // never let a missing/blocked audio device stall the intro
+    await Promise.race([audio.unlock(), sleep(1500)]);
     const skip = () => (this.skipIntro = true);
-    window.addEventListener('keydown', skip, { once: true });
-    this.root.addEventListener('click', skip, { once: true });
+    // arm the skip only after the click that opened the gate has finished propagating
+    setTimeout(() => {
+      window.addEventListener('keydown', skip, { once: true });
+      this.root.addEventListener('click', skip, { once: true });
+    }, 400);
     // studio
     this.show('studio', false);
     const studio = this.screens.get('studio')!;
@@ -224,6 +229,7 @@ export class UI {
     await this.wait(3600);
     this.fadeTo(1, 900);
     await sleep(950);
+    this.game.engine.paused = false;
     this.openMenu();
     this.fadeTo(0, 1600);
   }
@@ -605,33 +611,78 @@ export class UI {
     this.show('credits');
   }
 
-  // ───────────────────────── ending ─────────────────────────
+  // ───────────────────────── ending credits ─────────────────────────
 
-  async playEnding() {
-    const g = this.game;
-    g.input.unlock();
-    $('#crosshair', this.root).classList.add('hidden');
-    audio.playEnding();
-    await this.fadeTo(1, 3500, true);
-    g.world.sky.snap(g.world.sky.state);
-    g.world.sky.setTarget((await import('../world/sky')).SKY_KEYS.newdawn, 6);
+  private creditLines(kind: 'main' | 'secret'): string {
+    const pt = this.game.settings.lang === 'pt';
+    const L = (a: string, b: string) => `<div class="cl"><span>${a}</span><b>${b}</b></div>`;
+    const big = (t: string) => `<div class="cl"><b style="font-size:44px;letter-spacing:.06em">${t}</b></div>`;
+    const quote = (t: string) => `<div class="cl"><b style="font-style:italic;font-weight:500;font-size:26px;max-width:640px;margin:0 auto;line-height:1.5">${t}</b></div>`;
+    const langs = pt ? 'Afinidade · Medida · Forma · Contorno · Mosaico · Farol · Trama · Gêmeos · Eco' : 'Kinship · Measure · Mold · Contour · Mosaic · Beacon · Weave · Twins · Echo';
+    const places = AREAS.filter((a) => a.id !== 'hub').map((a) => a.name[pt ? 'pt' : 'en']).join(' · ');
+    const common =
+      L(pt ? 'Uma produção' : 'A production by', 'Uchihadam Production') +
+      L(pt ? 'Criado e dirigido por' : 'Created and directed by', 'Uchihadam') +
+      L(pt ? 'Design de puzzles e do mundo' : 'Puzzle and world design', 'Uchihadam Production') +
+      L(pt ? 'Programação, arte e música' : 'Code, art and music', 'Uchihadam Production ' + (pt ? 'com' : 'with') + ' Claude') +
+      L(pt ? 'As nove linguagens' : 'The nine languages', langs) +
+      L(pt ? 'A ilha' : 'The island', places) +
+      L(pt ? 'Inspirado pelo jeito de ensinar sem palavras de' : 'Inspired by the wordless teaching of', 'The Witness (Thekla, Inc.)') +
+      L(pt ? 'Feito com' : 'Made with', 'Three.js · Web Audio · TypeScript') +
+      quote(pt
+        ? 'A Uchihadam Production faz jogos para quem gosta de descobrir as coisas sozinho — sem tutoriais, sem pressa, com o mundo inteiro como professor.'
+        : 'Uchihadam Production makes games for people who like to figure things out on their own — no tutorials, no hurry, the whole world as the teacher.');
+    if (kind === 'main') {
+      return `${logoHTML('')}${big(pt ? 'Um Novo Dia' : 'A New Day')}${common}
+        ${L(pt ? 'Agradecimento especial' : 'Special thanks', pt ? 'A você, que olhou com atenção.' : 'To you, who looked closely.')}
+        <div class="cl" style="margin-top:80px"><img src="${studioLogo}" style="width:min(420px,70vw)"></div>
+        ${L('© 2026', 'Uchihadam Production')}
+        <div class="cl" style="margin-top:70px"><b style="font-size:42px">${this.t('endingThanks')}</b></div>`;
+    }
+    return `${logoHTML('')}${big(pt ? 'Firmamento' : 'Firmament')}
+      ${quote(pt ? 'Você encontrou o que nunca foi ensinado.' : 'You found what was never taught.')}
+      ${L(pt ? 'A camada secreta' : 'The secret layer', pt ? '150 constelações · 1 cofre · nenhuma palavra' : '150 constellations · 1 vault · no words')}
+      ${quote(pt ? 'Para quem olha o mundo com atenção — e para quem não desiste.' : 'For those who look at the world closely — and never give up.')}
+      ${common}
+      ${L(pt ? 'Uma décima luz espera' : 'A tenth light waits', '…')}
+      <div class="cl" style="margin-top:80px"><img src="${studioLogo}" style="width:min(420px,70vw)"></div>
+      ${L(pt ? 'Com gratidão de verdade' : 'With true gratitude', 'Uchihadam Production')}
+      <div class="cl" style="margin-top:70px"><b style="font-size:42px">${this.t('endingThanks')}</b></div>`;
+  }
+
+  /** Rolls the credits over the living island; resolves when the player chooses to continue. */
+  async creditsRoll(kind: 'main' | 'secret'): Promise<void> {
     const el = this.screens.get('ending')!;
+    el.style.background = kind === 'secret' ? 'rgba(3,4,14,0.55)' : 'rgba(10,8,6,0.38)';
     const roll = $('.roll', el);
-    roll.innerHTML = this.creditsHTML() + `<div class="cl" style="margin-top:60px"><b style="font-size:40px">${this.t('endingThanks')}</b></div>`;
+    roll.innerHTML = this.creditLines(kind);
+    roll.style.animation = 'none';
+    void roll.offsetWidth;
+    roll.style.animation = '';
     el.querySelectorAll('.tile').forEach((t) => t.classList.add('on'));
     el.querySelectorAll('.orn, .sub').forEach((t) => t.classList.add('on'));
+    if (kind === 'secret') {
+      // the tenth tile appears above the emblem
+      el.querySelectorAll('svg.emblem g').forEach((g) => {
+        g.insertAdjacentHTML('beforeend', '<rect class="tile on" x="36" y="-44" width="30" height="30" rx="6" fill="#ffffff" style="color:#ffffff"/>');
+      });
+    }
     this.show('ending', false);
-    this.fadeTo(0, 2500, true);
-    await sleep(46000);
-    const btn = h(`<button class="btn primary" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%)">${this.t('keepExploring')}</button>`);
-    el.append(btn);
-    btn.addEventListener('click', () => {
-      btn.remove();
-      this.hideAll();
-      g.state = 'play';
-      $('#crosshair', this.root).classList.remove('hidden');
-      g.input.lock();
-      audio.setMusic('hub', 4);
+    $('#crosshair', this.root).classList.add('hidden');
+    await this.fadeTo(0, 2500, true);
+    await sleep(47000);
+    return new Promise<void>((res) => {
+      const btn = h(`<button class="btn primary" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%)">${this.t('keepExploring')}</button>`);
+      el.append(btn);
+      btn.addEventListener('click', async () => {
+        btn.remove();
+        await this.fadeTo(1, 900);
+        this.hideAll();
+        el.style.background = '';
+        $('#crosshair', this.root).classList.remove('hidden');
+        res();
+        this.fadeTo(0, 1400);
+      });
     });
   }
 

@@ -11,7 +11,7 @@ const logs = [];
 page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`));
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));
 const t0 = Date.now();
-await page.goto(`http://localhost:5173/${query}`, { waitUntil: 'load', timeout: 120000 });
+await page.goto(`${process.env.BASE ?? 'http://localhost:5173/'}${query}`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 }).catch(() => logs.push('[timeout] __ready'));
 await page.waitForTimeout(Number(wait));
 await page.screenshot({ path: out });

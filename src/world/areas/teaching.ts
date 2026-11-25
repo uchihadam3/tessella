@@ -75,6 +75,14 @@ function gateway(a: AreaCtx, x: number, z: number, faceAng: number, w: number, h
   return a.stoneDoor(`${a.id}.gate`, x, y - 0.3, z, w - 0.1, h - w / 2 + 0.2, ry, doorMat, 0.45);
 }
 
+
+/** The 'mastery' station: a half ring of panels opening towards the hub side. */
+function masteryArc(a: AreaCtx, ax: ReturnType<typeof axes>, fw: number, side: number, y?: number): Panel[] {
+  const m = ax.at(fw, side);
+  const yy = y;
+  return arc(a, a.group('mastery'), 'mastery', m.x, m.z, 8, ax.ang + Math.PI * 0.5, ax.ang + Math.PI * 1.5, true, undefined, yy !== undefined ? () => yy : undefined);
+}
+
 function finishChain(a: AreaCtx, groups: Panel[][], gateAfterIntro?: { openNow: () => void }) {
   const all = groups.flat();
   a.chain(all);
@@ -144,7 +152,8 @@ export function buildKinship(world: World, pm: PanelManager): AreaCtx {
   a.exclude(hp.x, hp.z, 12);
   const heart = arc(a, a.group('heart'), 'heart', hp.x, hp.z, 5.2, ax.ang + Math.PI * 0.7, ax.ang + Math.PI * 1.3, true, undefined, () => hy, 6);
   a.addTotem(hp.x + ax.f.x * 2.5, hp.z + ax.f.z * 2.5, hy);
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, -10, 30);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   // lanterns along the path inside
   for (let i = 0; i < 6; i++) {
     const p = ax.at(-40 + i * 12, (i % 2 ? 1 : -1) * 4.5);
@@ -206,7 +215,8 @@ export function buildMeasure(world: World, pm: PanelManager): AreaCtx {
   b.batch.add(pagodaRoof(5.4, 2.0, 0.45), M.roofTeal(), mtx(hp.x, hy + 7.3, hp.z, ax.ang));
   const heart = arc(a, a.group('heart'), 'heart', hp.x, hp.z, 6.6, ax.ang + Math.PI * 0.65, ax.ang + Math.PI * 1.35, true, undefined, () => hy, 6);
   a.addTotem(hp.x, hp.z, hy);
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, 14, 28);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 50, 14, ['#ffffff', '#e8ffd0'], 'pollen');
   return a;
 }
@@ -278,7 +288,8 @@ export function buildMold(world: World, pm: PanelManager): AreaCtx {
   a.exclude(hp.x, hp.z, 12);
   const heart = arc(a, a.group('heart'), 'heart', hp.x, hp.z, 4.6, ax.ang + Math.PI * 0.6, ax.ang + Math.PI * 1.4, true, undefined, () => hy0 + H1, 6);
   a.addTotem(hp.x + ax.f.x * 2.2, hp.z + ax.f.z * 2.2, hy0 + H1);
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, -24, -16);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 40, 10, ['#fffaf0'], 'dust');
   return a;
 }
@@ -351,7 +362,8 @@ export function buildContour(world: World, pm: PanelManager): AreaCtx {
   a.exclude(hp.x, hp.z, 11);
   const heart = arc(a, a.group('heart'), 'heart', hp.x, hp.z, 4.4, ax.ang + Math.PI * 0.65, ax.ang + Math.PI * 1.35, true, undefined, () => hy, 6);
   a.addTotem(hp.x + ax.f.x * 1.6, hp.z + ax.f.z * 1.6, hy);
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, -22, -20);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 40, 12, ['#ffffff', '#ffd1dc'], 'pollen');
   return a;
 }
@@ -421,7 +433,8 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
     b.batch.add(G.cone(0.32, 1.0, 4), M.gold(), mtx(p.x, y + 9.5, p.z, Math.PI / 4));
     a.world.collision.addBlocker({ x: p.x, z: p.z, r: 1, y0: y, y1: y + 10 });
   }
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, 0, -30);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 60, 16, ['#f4dca8'], 'dust');
   return a;
 }
@@ -491,7 +504,8 @@ export function buildBeacon(world: World, pm: PanelManager): AreaCtx {
   a.exclude(hp.x, hp.z, 11);
   const heart = arc(a, a.group('heart'), 'heart', hp.x, hp.z, 5, ax.ang + Math.PI * 0.6, ax.ang + Math.PI * 1.4, true, undefined, () => hy, 6);
   a.addTotem(hp.x - ax.r.x * 4.5, hp.z - ax.r.z * 4.5, hy);
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, -28, 4);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   return a;
 }
 
@@ -573,7 +587,8 @@ export function buildWeave(world: World, pm: PanelManager): AreaCtx {
   a.exclude(hp.x, hp.z, 11);
   const heart = arc(a, a.group('heart'), 'heart', hp.x, hp.z, 5, ax.ang + Math.PI * 0.55, ax.ang + Math.PI * 1.45, true, undefined, () => hy, 6);
   a.addTotem(hp.x + ax.f.x * 1.5, hp.z + ax.f.z * 1.5, hy);
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, -26, -24);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 50, 14, ['#c9b6ff', '#ffffff'], 'pollen');
   return a;
 }
@@ -673,7 +688,8 @@ export function buildTwins(world: World, pm: PanelManager): AreaCtx {
     pavilion(a, p.x, p.z, deckY, bry, 0.55);
   }
   a.addTotem(L.x + ax.f.x * 2.5, L.z + ax.f.z * 2.5, deckY);
-  finishChain(a, [intro, practice, trial, heart], gate);
+  const mastery = masteryArc(a, ax, 64, 0);
+  finishChain(a, [intro, practice, trial, mastery, heart], gate);
   addParticles(a, L.x, L.z, 90, 22, ['#ffc0d8', '#ffffff', '#ffb0cc'], 'petals');
   return a;
 }

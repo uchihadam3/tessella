@@ -23,6 +23,9 @@ import { loadSettings, saveSettings, type Settings } from '../core/settings';
 import { Cutscene, type Shot } from './cutscene';
 import { ACHIEVEMENTS, type AchievementId } from './achievements';
 import type { UI } from '../ui/ui';
+import { ConstellationSystem, VAULT_THRESHOLD, type CItem } from '../secret/constellations';
+import { buildVault, type VaultRuntime } from '../world/areas/vault';
+import { playMainEnding, playSecretEnding } from './endings';
 
 export type GameState = 'boot' | 'menu' | 'play' | 'pause' | 'cutscene' | 'ending';
 
@@ -63,9 +66,15 @@ export class Game {
   private lastPos = new THREE.Vector3();
   menuOrbit = 0;
   built = false;
-  /** secret layer hooks (set by the constellations module) */
-  secretSummary?: () => { found: number; solved: number; total: number };
-  secretClick?: () => boolean;
+  /** secret layer */
+  stars!: ConstellationSystem;
+  vault!: VaultRuntime;
+  secretSummary = () => ({ found: this.stars?.solvedCount ?? 0, solved: this.stars?.solvedCount ?? 0, total: this.stars?.items.length ?? 0 });
+  secretClick = (): boolean => (this.state === 'play' && !this.pm.engaged ? this.stars.click() : false);
+  /** ending helpers */
+  endingTick: ((dt: number) => void) | null = null;
+  endingOrbit = false;
+  private crown = 0;
 
   constructor(container: HTMLElement) {
     this.engine = new Engine(container);
@@ -97,10 +106,20 @@ export class Game {
     reg(buildEcho(this.world, this.pm));
     this.spire = buildSpire(this.world, this.pm);
     reg(this.spire);
+    this.vault = buildVault(this.world, this.pm);
+    progress(0.62, 'areas');
+    await tick();
+    this.stars = new ConstellationSystem(this.world);
+    this.stars.place();
+    this.stars.onSolved = (it) => this.onStarSolved(it);
+    this.stars.onChanged = (it) => {
+      this.save.panels['c:' + it.def.id] = { s: this.stars.stateOf(it) };
+    };
     progress(0.7, 'vegetation');
     await tick();
     this.world.finalize();
     for (const a of this.areas.values()) a.finalize();
+    this.vault.finalize();
     progress(0.9, 'light');
     await tick();
     // gating that depends on flags
@@ -170,6 +189,13 @@ export class Game {
       for (const p of a.panels) if (p.solved) for (const f of p.onSolved) this.silently(() => f(p));
     }
     for (const a of this.areas.values()) for (const d of a.doors.values()) if (d.open) d.openNow(false);
+    for (const it of this.stars.items) {
+      const rec = data.panels['c:' + it.def.id];
+      it.solved = false;
+      it.state.fill(0);
+      this.stars.restore(it.def.id, rec?.s, !!rec?.done);
+    }
+    this.updateVault(true);
     if (data.flags.hollowOpen) this.hub.openHollow(true);
     if (data.flags.spireOpen) this.spire.setOpen(true, true);
     this.pm.refreshPower();
@@ -247,6 +273,14 @@ export class Game {
       setTimeout(() => this.completeArea(p.area), 1400);
     }
     if (p.area === 'prologue' && area?.complete) this.unlock('awakened');
+    if (p.id === 'hub.vault') {
+      this.unlock('vault');
+      this.save.flags.secretEnding = true;
+      this.saveNow();
+      setTimeout(() => playSecretEnding(this), 1800);
+      return;
+    }
+    if (this.solvedCount() >= this.pm.panels.length) this.unlock('every_panel');
     this.refreshHub();
     this.saveNow();
   }
@@ -318,7 +352,77 @@ export class Game {
     this.unlock('the_end');
     this.saveNow();
     this.state = 'ending';
-    this.ui?.playEnding();
+    void playMainEnding(this);
+  }
+
+  // ───────────────────────── secret layer ─────────────────────────
+
+  private onStarSolved(it: CItem) {
+    this.save.panels['c:' + it.def.id] = { s: this.stars.stateOf(it), done: 1 };
+    const n = this.stars.solvedCount;
+    const total = this.stars.items.length;
+    this.ui?.toast(`✦  ${n} / ${total}`, 'info');
+    if (n === 1) this.unlock('first_star');
+    if (n >= 30) this.unlock('stars_30');
+    if (n >= total) this.unlock('stars_all');
+    const wasOpen = !!this.save.flags.vaultOpen;
+    this.updateVault(false);
+    if (!wasOpen && this.save.flags.vaultOpen) {
+      this.unlock('stars_100');
+      const d = this.vault.door;
+      this.playCutscene([{ pos: d.clone().add(new THREE.Vector3(6, 4, 8)), look: d.clone().add(new THREE.Vector3(0, 2, 0)), dur: 5, at: 0.4, fn: () => {
+        this.vault.open();
+        audio.greatUnlock();
+        this.pm.refreshPower();
+      } }]);
+    }
+    this.saveNow();
+  }
+
+  private updateVault(instant: boolean) {
+    const n = this.stars.solvedCount;
+    this.vault.setStars(n, VAULT_THRESHOLD, n > 0);
+    if (n >= VAULT_THRESHOLD && !this.save.flags.vaultOpen) {
+      this.save.flags.vaultOpen = true;
+      if (instant) this.vault.open(true);
+    } else if (this.save.flags.vaultOpen && instant) this.vault.open(true);
+    this.pm.refreshPower();
+  }
+
+  vaultCenter(): THREE.Vector3 {
+    return this.vault.center.clone();
+  }
+
+  blazeConstellations() {
+    for (const it of this.stars.items) {
+      it.solved = true;
+      it.dirty = true;
+      it.group.visible = true;
+      it.threads.visible = true;
+    }
+  }
+
+  constellationPoints(): THREE.Vector3[] {
+    const out: THREE.Vector3[] = [];
+    for (const it of this.stars.items) for (const p of it.starPos) out.push(p.clone());
+    return out;
+  }
+
+  spireCrown(v: number) {
+    this.crown = v;
+    if (v > 0) this.spire.ignite();
+  }
+
+  afterEnding() {
+    this.state = 'play';
+    this.player.frozen = false;
+    this.world.sky.setTarget(skyForProgress(this.dayProgress()), 4);
+    this.teleport(HUB.x, HUB.z + 34, 0);
+    this.player.applyCamera(this.engine.camera);
+    this.ui?.setCrosshair('dot');
+    this.input.lock();
+    audio.setMusic('hub', 4);
+    this.saveNow();
   }
 
   solvedCount(): number {
@@ -436,7 +540,8 @@ export class Game {
         this.player.update(dt);
         this.player.applyCamera(this.engine.camera);
         const aimed = this.pm.updateAim();
-        this.ui?.setCrosshair(aimed ? 'ring' : 'dot');
+        const star = aimed ? null : this.stars.aim(this.engine.camera);
+        this.ui?.setCrosshair(aimed || star ? 'ring' : 'dot');
         this.updateArea(dt);
         this.save.playTime += dt;
         this.save.stats.distance += this.player.pos.distanceTo(this.lastPos) < 5 ? this.player.pos.distanceTo(this.lastPos) : 0;
@@ -456,7 +561,15 @@ export class Game {
       cam.position.set(Math.sin(this.menuOrbit) * r, 120 + Math.sin(this.menuOrbit * 0.7) * 15, Math.cos(this.menuOrbit) * r);
       cam.lookAt(0, 20, -40);
       this.input.consumeMouse();
-    } else if (this.state === 'pause' || this.state === 'ending') {
+    } else if (this.state === 'ending') {
+      this.input.consumeMouse();
+      if (this.endingOrbit) {
+        this.menuOrbit += dt * 0.02;
+        const cam = this.engine.camera;
+        cam.position.set(Math.sin(this.menuOrbit) * 430, 140, Math.cos(this.menuOrbit) * 430 - 40);
+        cam.lookAt(0, 30, -60);
+      } else this.endingTick?.(dt);
+    } else if (this.state === 'pause') {
       this.input.consumeMouse();
       if (this.cutscene) this.cutscene.update(dt);
     }
@@ -464,6 +577,8 @@ export class Game {
     this.engine.bloom.strength = 0.42 - 0.24 * this.pm.closeUp;
     w.update(dt, t, this.engine.camera.position);
     for (const a of this.areas.values()) a.update(dt, t);
+    this.vault?.update(dt, t);
+    this.stars?.update(dt, t, this.engine.camera.position);
     const cam = this.engine.camera;
     const f = new THREE.Vector3();
     cam.getWorldDirection(f);

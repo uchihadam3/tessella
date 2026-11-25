@@ -211,6 +211,7 @@ export function buildEcho(world: World, pm: PanelManager): AreaCtx {
 
 export interface SpireRuntime extends AreaCtx {
   setOpen(open: boolean, instant?: boolean): void;
+  ignite(): void;
   topY: number;
 }
 
@@ -296,10 +297,16 @@ export function buildSpire(world: World, pm: PanelManager): SpireRuntime {
   crownGlow.position.set(cx, baseY + H + 6, cz);
   crownGlow.scale.set(1, 1.6, 1);
   a.dynamic.add(crownGlow);
+  let ignited = 0;
+  a.ignite = () => {
+    ignited = 0.0001;
+  };
   a.onUpdate((dt, t) => {
-    crownGlow.rotation.y += dt * 0.3;
+    crownGlow.rotation.y += dt * (0.3 + ignited * 2);
     const mm = crownGlow.material as THREE.MeshStandardMaterial;
-    mm.emissiveIntensity = 0.6 + 0.2 * Math.sin(t);
+    if (ignited > 0 && ignited < 1) ignited = Math.min(1, ignited + dt * 0.4);
+    mm.emissiveIntensity = 0.6 + 0.2 * Math.sin(t) + ignited * 7;
+    crownGlow.scale.set(1 + ignited * 0.6, 1.6 + ignited, 1 + ignited * 0.6);
   });
   let open = false;
   a.setOpen = (o, instant = false) => {

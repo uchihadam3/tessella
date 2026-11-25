@@ -28,7 +28,7 @@ export const VAULT_THRESHOLD = 100;
 /** the player's eye height (see Player.eye) */
 const EYE_H = 1.62;
 /** half-width of a figure as seen from its spot (degrees, centre to the farthest object) */
-const SPAN_DEG = 15;
+const SPAN_DEG = 17;
 /** how close to the spot you must stand (metres) and how straight you must look (degrees) */
 const SPOT_TOL = 0.42;
 const LOOK_TOL = 4;

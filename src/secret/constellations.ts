@@ -1496,10 +1496,11 @@ export class ConstellationSystem {
     if (count.ground / total > (pass < 5 ? 0.35 : pass === 5 ? 0.55 : 0.65)) return this.no('flat');
     // up in the crowns: across several trees at different depths, never one crown carrying it all
     // (a picture on one crown would still be a picture on that crown from everywhere)
-    if (count.tree / total > 0.3) {
+    // (the same for a rock face: a picture on one face of a cliff is a drawing on it, from anywhere)
+    if ((count.tree + count.rock) / total > 0.3) {
       const trees = new Map<string, number>();
-      for (const runs of lines) for (const r of runs) if (r.kind === 'tree') {
-        const k = `${Math.round((r.tx ?? 0) * 10)},${Math.round((r.tz ?? 0) * 10)}`;
+      for (const runs of lines) for (const r of runs) if (r.kind === 'tree' || r.kind === 'rock') {
+        const k = r.tx === undefined ? 'terrain' : `${r.kind}${Math.round((r.tx ?? 0) * 10)},${Math.round((r.tz ?? 0) * 10)}`;
         trees.set(k, (trees.get(k) ?? 0) + r.samples.length);
       }
       if (trees.size < 2 || Math.max(...trees.values()) / total > (pass >= 6 ? 0.85 : 0.7)) {

@@ -29,7 +29,7 @@ async function sheet(browser, name, info) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.setDefaultTimeout(600000);
   // ONLY=id,id… computes just those pictures' places (a quick look while working on them)
-  const only = process.env.ONLY ? `&starsCompute&starsOnly=${process.env.ONLY}` : '';
+  const only = process.env.ONLY ? `&starsCompute&starsOnly=${process.env.ONLY}` + (process.env.HOME_ONLY ? '&starsHome' : '') : '';
   await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&at=8,52,180,0&p=0.45' + only, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true && window.__game?.state === 'play');
   await page.evaluate(() => window.__game.stars.placeAll());

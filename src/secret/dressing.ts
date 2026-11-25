@@ -532,7 +532,8 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
   }
 
   // a crack in a wall, the paving or a rock: a darker shade of the stone itself, uneven
-  const base = CRACK_COLOR.clone();
+  // (a darker shade of that very stone: on pale quarry rock a pale crack, on dark walls a dark one)
+  const base = hitCol.clone().multiplyScalar(0.62).lerp(CRACK_COLOR, 0.25);
   const c = midC;
   const lift = (d: number) => (0.012 + d * 0.0012) / Math.max(0.2, c);
   const half = (d: number) => THREE.MathUtils.clamp((d * 0.0024) / Math.max(0.35, c) / 2, 0.005, 0.016);

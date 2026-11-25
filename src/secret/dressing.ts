@@ -487,7 +487,8 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
     if (bl) {
       // a tree in flower: some of its blossoms, of the rarer colour it already has
       const petal = C(bl.colors[bl.colors.length - 1]);
-      walk(pc, ctx, b, () => 0.19, 0.9, (dir0, dist, s0, across) => {
+      // (a loose trail of them: from anywhere else just a few blossoms of that colour among the rest)
+      walk(pc, ctx, b, (d) => THREE.MathUtils.clamp(d * 0.009, 0.19, 0.32), 1.1, (dir0, dist, s0, across) => {
         const n = rnd() < 0.3 ? 2 : 1;
         for (let k = 0; k < n; k++) {
           const sz = 0.15 + rnd() * 0.07;
@@ -504,11 +505,12 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
     // (some of its young or turning leaves: the shade a few of every such tree's leaves have)
     const lc = LEAF_COLORS[pc.species ?? ''];
     const col = lc ? C(lc.colors[lc.colors.length - 1]) : hitCol.clone().lerp(otherShade(pal && pal.length ? pal : PALETTE.oak.leaves, hitCol), 0.3).multiplyScalar(1.07);
-    walk(pc, ctx, b, () => 0.3, 0.95, (dir0, dist, s0, across) => {
+    // (a loose trail of small clusters, like the ones every crown has here and there)
+    walk(pc, ctx, b, (d) => THREE.MathUtils.clamp(d * 0.014, 0.3, 0.5), 1.15, (dir0, dist, s0, across) => {
       const dir = spread(dir0, across, (rnd() - 0.5) * 0.9 * (s0 / dist));
       const c = eye.clone().addScaledVector(dir, Math.max(dist * 0.5, dist - 0.06));
       const face = pc.n.clone().add(eye.clone().sub(c).normalize()).normalize();
-      const n = 3 + Math.floor(rnd() * 3);
+      const n = 3 + Math.floor(rnd() * 2);
       for (let k = 0; k < n; k++) {
         const ax = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).cross(face).normalize();
         const off = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(0.16);

@@ -1,7 +1,7 @@
 /** Where things grow: scatter rules for trees, rocks, grass and flowers per biome. */
 import * as THREE from 'three';
 import { ANCHORS, CALDERA, CITADEL, HUB } from './layout';
-import { smoothstep } from './noise';
+import { simplex, smoothstep } from './noise';
 import type { Forest, GrassRules } from './vegetation';
 import type { AreaId } from '../data/areas';
 
@@ -60,6 +60,25 @@ export function scatterVegetation(f: Forest) {
     return 0.35 * smoothstep(30, 40, r) * smoothstep(95, 70, r) * offPath(p) * flatOk(s, 0.4);
   }, [0.85, 1.2], 19);
   f.scatter('palm', 16, (x, z, h, s, p) => 0.2 * w('prologue', x, z, 25, 70) * (h > 2 && h < 9 ? 1 : 0) * offPath(p), [0.9, 1.2], 20);
+  // groves: patches of woodland over the meadow places (oaks; poplars in the windmill vale; oaks
+  // on the terraced hills), with open meadow between them — the island's woods, where some of the
+  // constellations are drawn in the crowns (as in the autumn wood)
+  const grove = (x: number, z: number, k: number) => smoothstep(0.12, 0.42, simplex.noise(x / 46 + k * 17.3, z / 46 - k * 9.1));
+  const inPlace = (id: AreaId, x: number, z: number, r0: number, r1: number) => w(id, x, z, r0, r1) * (1 - w(id, x, z, 26, 40));
+  f.scatter('oak', 8.5, (x, z, h, s, p) => 0.62 * inPlace('measure', x, z, 80, 120) * grove(x, z, 1) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.35], 41);
+  f.scatter('oak', 8.5, (x, z, h, s, p) => 0.55 * w('hub', x, z, 70, 115) * (1 - w('hub', x, z, 42, 55)) * grove(x, z, 2) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.35], 42);
+  f.scatter('oak', 8, (x, z, h, s, p) => 0.68 * inPlace('contour', x, z, 70, 118) * grove(x, z, 3) * flatOk(s, 0.35) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.3], 43);
+  // the cherry garden spills out around the mirror lake in loose orchards
+  f.scatter('blossom', 8.5, (x, z, h, s, p) => {
+    const a = ANCHORS.twins;
+    const r = Math.hypot(x - a.x, z - a.z);
+    return 0.62 * smoothstep(104, 114, r) * smoothstep(150, 132, r) * grove(x, z, 7) * flatOk(s, 0.35) * offPath(p) * (h > 8.2 ? 1 : 0);
+  }, [0.85, 1.25], 47);
+  // stands of pines on the lighthouse cliffs
+  f.scatter('pine', 7.5, (x, z, h, s, p) => 0.55 * inPlace('beacon', x, z, 55, 95) * grove(x, z, 8) * smoothstep(0.7, 0.4, s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.4], 48);
+  f.scatter('poplar', 7.5, (x, z, h, s, p) => 0.6 * inPlace('weave', x, z, 70, 112) * grove(x, z, 4) * flatOk(s) * offPath(p) * (h > 3 ? 1 : 0), [0.95, 1.35], 44);
+  f.scatter('oak', 9, (x, z, h, s, p) => 0.4 * inPlace('weave', x, z, 70, 112) * grove(x, z, 5) * flatOk(s) * offPath(p) * (h > 3 ? 1 : 0), [0.85, 1.25], 45);
+  f.scatter('oak', 9, (x, z, h, s, p) => 0.45 * inPlace('prologue', x, z, 45, 80) * grove(x, z, 6) * flatOk(s) * offPath(p) * (h > 4 ? 1 : 0), [0.85, 1.25], 46);
   // poplars in the windmill vale
   f.scatter('poplar', 12, (x, z, h, s, p) => 0.28 * w('weave', x, z, 60, 100) * offPath(p) * flatOk(s), [0.9, 1.3], 21);
   // dead trees in the quarry and desert

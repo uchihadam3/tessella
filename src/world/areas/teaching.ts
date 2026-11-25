@@ -443,7 +443,57 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const mastery = masteryArc(a, ax, 0, -30);
   finishChain(a, [intro, practice, trial, mastery, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 60, 16, ['#f4dca8'], 'dust');
+  desertRuins(a, sand);
   return a;
+}
+
+/**
+ * What is left of the old town around the temple, half buried in the dunes: broken walls of
+ * sandstone (stepped where they crumbled), fallen blocks and column drums — weathered and cracked
+ * like every old wall on the island.
+ */
+function desertRuins(a: AreaCtx, sand: THREE.Material) {
+  const b = a.build, w = a.world;
+  const A = ANCHORS.mosaic;
+  const rnd = rng(7311);
+  const placed: { x: number; z: number; r: number }[] = [];
+  for (let attempt = 0, made = 0; attempt < 400 && made < 26; attempt++) {
+    const ang = rnd() * Math.PI * 2, r = 34 + Math.sqrt(rnd()) * 62;
+    const x = A.x + Math.cos(ang) * r, z = A.z + Math.sin(ang) * r;
+    const len = 3 + rnd() * 6;
+    const reach = len / 2 + 2.5;
+    if (w.terrain.pathAt(x, z) > 0.12 || w.forest.isExcluded(x, z, reach) || w.waterAt(x, z) > 0) continue;
+    if (placed.some((q) => Math.hypot(q.x - x, q.z - z) < q.r + reach + 4)) continue;
+    // level enough for a wall to stand
+    const ry = rnd() * Math.PI;
+    const ca = Math.cos(ry), sa = Math.sin(ry);
+    const ends = [-len / 2, len / 2].map((t) => w.terrain.heightAt(x + ca * t, z - sa * t));
+    if (Math.abs(ends[0] - ends[1]) > 1.2) continue;
+    const y = Math.min(...ends) - 0.4;
+    // the wall, broken into steps where it crumbled
+    const steps = 2 + Math.floor(rnd() * 3);
+    let h = 2.2 + rnd() * 2.4;
+    for (let k = 0; k < steps; k++) {
+      const seg = len / steps, t = -len / 2 + seg * (k + 0.5);
+      solidBox(b, sand, x + ca * t, y, z - sa * t, seg + 0.02, h + 0.4, 0.9, ry, { walk: false });
+      h = Math.max(0.9, h * (0.55 + rnd() * 0.4));
+    }
+    // a few blocks fallen from it, a column drum lying in the sand
+    for (let k = 0; k < 2 + Math.floor(rnd() * 3); k++) {
+      const t = (rnd() - 0.5) * len, off = (rnd() < 0.5 ? -1 : 1) * (1.2 + rnd() * 2);
+      const bx = x + ca * t + sa * off, bz = z - sa * t + ca * off;
+      const by = w.terrain.heightAt(bx, bz) - 0.25;
+      b.batch.add(G.box(0.9 + rnd() * 0.5, 0.55 + rnd() * 0.3, 0.7 + rnd() * 0.4, 0.04), sand, mtx(bx, by + 0.3, bz, rnd() * Math.PI, 1, 1, 1, (rnd() - 0.5) * 0.4));
+    }
+    if (rnd() < 0.45) {
+      const t = (rnd() - 0.5) * len, off = (rnd() < 0.5 ? -1 : 1) * (2.4 + rnd() * 1.5);
+      const cx = x + ca * t + sa * off, cz = z - sa * t + ca * off;
+      b.batch.add(G.cyl(0.55, 0.55, 1.6 + rnd(), 12), sand, mtx(cx, w.terrain.heightAt(cx, cz) + 0.3, cz, rnd() * Math.PI, 1, 1, 1, Math.PI / 2));
+    }
+    a.exclude(x, z, reach);
+    placed.push({ x, z, r: reach });
+    made++;
+  }
 }
 
 // ───────────────────────── 6. Beacon — the Lighthouse Cliffs ─────────────────────────

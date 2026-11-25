@@ -45,6 +45,17 @@ async function sheet(browser, name, info) {
     // ids (e.g. "hub.c10") or names (e.g. "Owl,Whale") pick those figures; area ids pick a big one from each area;
     // "auto" picks a varied set: drawn mostly on walls, on trees, with a cloud, on rocks, on paving
     if (areas[0] === 'all') return items.map((_, i) => i);
+    // "best": per place, the figure drawn most in crowns, walls or rocks (the rest of the list: which places)
+    if (areas[0] === 'best') {
+      const want = areas.slice(1);
+      const ids = [...new Set(items.map((it) => it.area))].filter((a) => !want.length || want.includes(a));
+      return ids.map((a) => {
+        const cands = items.map((it, i) => ({ it, i })).filter(({ it }) => it.area === a);
+        const off = ({ it }) => { const t = Object.values(it.drawnOn).reduce((x, y) => x + y, 0) || 1; return 1 - (it.drawnOn.ground || 0) / t; };
+        cands.sort((x, y) => off(y) - off(x) || y.it.def.stars.length - x.it.def.stars.length);
+        return cands.length ? cands[0].i : -1;
+      }).filter((i) => i >= 0);
+    }
     if (areas[0] === 'auto') {
       const used = new Set(), areasUsed = new Set(), out = [];
       const share = (it, k) => { const tot = Object.values(it.drawnOn).reduce((a, b) => a + b, 0) || 1; return (it.drawnOn[k] || 0) / tot; };

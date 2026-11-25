@@ -89,7 +89,7 @@ export class World {
     // a picture being placed again grows its own)
     const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
     const again = q?.has('starsCompute') ? new Set((q.get('starsOnly') ?? '').split(',').filter(Boolean)) : null;
-    const places = (SAVED_PLACES as { places?: Record<string, { t?: [string, number, number, number][] }> }).places ?? {};
+    const places = (SAVED_PLACES as unknown as { places?: Record<string, { t?: [string, number, number, number][] }> }).places ?? {};
     for (const [id, pl] of Object.entries(places)) {
       if (again && (again.size === 0 || again.has(id))) continue;
       for (const [kind, x, z, s] of pl.t ?? []) this.forest.plant(kind, x, z, s);

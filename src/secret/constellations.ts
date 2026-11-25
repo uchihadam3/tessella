@@ -559,10 +559,10 @@ export class ConstellationSystem {
     //   meadows: their flowers; the autumn wood: its fallen leaves (and flowers)
     //   ruins and rocks: cracks in the stone
     // a picture is drawn within its own place's grounds, with its own things (the last, relaxed
-    // passes take what the island has wherever it is)
+    // passes look a little beyond its grounds, still with its own things)
     const at = territory(p.x, p.z);
     if (this.ownOnly && this.curArea && at !== territoryOf(this.curArea)) return this.gapAt(eye, dir, h.t, h.n);
-    const dr = DRAWS[this.ownOnly && this.curArea ? this.curArea : at] ?? DRAWS.hub;
+    const dr = DRAWS[this.curArea ?? at] ?? DRAWS.hub;
     const seen = Math.abs(h.n.dot(dir));
     if (h.cls === 'tree') {
       // a crown of the place's own trees, near enough to see its leaves (not its trunk)
@@ -907,8 +907,10 @@ export class ConstellationSystem {
     // (tools: ?starsOnly=id,id… places just those, for a quick look)
     const only = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('starsOnly') : null;
     const pick = only ? new Set(only.split(',')) : null;
-    for (const [area, defs] of byArea) {
+    for (const [area, defs0] of byArea) {
       const rnd = rng(area.length * 977 + 13);
+      // the biggest pictures first: they need the roomiest spots
+      const defs = [...defs0].sort((a, b) => b.stars.length + b.threads.length - (a.stars.length + a.threads.length));
       const { center, rMin, rMax } = this.region(area);
 
       for (const def of defs) {
@@ -917,7 +919,7 @@ export class ConstellationSystem {
         // first: a grove grown for it, in its own place (the scenery made with the picture in mind)
         if (GROW[area]) {
           const quickG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsQuick');
-          const triesG = quickG ? 120 : 450;
+          const triesG = quickG ? 60 : 150;
           let realG = 0;
           for (let attempt = 0; realG < triesG && attempt < triesG * 30 && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
@@ -955,9 +957,9 @@ export class ConstellationSystem {
               r = 70 + rnd() * (pass === 3 ? 90 : 45);
             }
             if (pass >= 4) {
-              // last: anywhere on the island where the scenery is rich enough
-              base = { x: 0, z: 20 };
-              r = Math.sqrt(rnd()) * 480;
+              // last: farther around its place (with its own kind of things)
+              base = center;
+              r = Math.sqrt(rnd()) * (rMax * (pass === 5 ? 2.8 : 2.2));
             }
             const vx = base.x + Math.cos(ang) * r, vz = base.z + Math.sin(ang) * r;
             if (Math.hypot(vx, vz - 20) > 520) continue; // stay on the island
@@ -983,7 +985,7 @@ export class ConstellationSystem {
     if (gy === null) return this.no('ground') || null;
     if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return this.no('spire') || null; // the Spire's island and landings
     if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return this.no('crater') || null;
-    const spacing = SPOT_SPACING * (pass === 5 ? 0.6 : pass >= 3 ? 0.7 : 1);
+    const spacing = SPOT_SPACING * (pass === 5 ? 0.55 : pass >= 3 ? 0.65 : pass === 2 ? 0.8 : 1);
     if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return this.no('spacing') || null;
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
     if (this.world.forest.crownNear(eye, 2.2)) return this.no('crown') || null;
@@ -1006,7 +1008,7 @@ export class ConstellationSystem {
     for (const d of dirs) {
       const h = this.castRay(eye, d, 1.5, 48);
       // (on the ground a picture spreads over the meadow: never right at your feet)
-      const near = h && h.kind === 'ground' ? (pass >= 4 ? 3.2 : 4.5) : 3;
+      const near = h && h.kind === 'ground' ? 6 : 3;
       if (!h || h.kind === 'sky' || h.kind === 'gap' || h.dist < near) {
         this.lastWhy = 'corner:' + (h ? (h.dist < near ? 'near' : h.kind) : 'null');
         return null;
@@ -1155,20 +1157,23 @@ export class ConstellationSystem {
       const kd = kinds.find((k) => (pickW -= k.w) <= 0) ?? kinds[0];
       // how far such a crown must be to carry it: between the heights its crowns reach (the
       // smallest tree seen through its crown's bottom, the tallest through its top)
-      const sh0 = forest.shape(forest.keyAt(kd.kind, eye.x + d.x * 15, eye.z + d.z * 15));
-      const hLo = (sh0.c.y - 0.4 * sh0.e.y) * kd.s[0] - 0.15 - EYE_H, hHi = (sh0.c.y + 0.4 * sh0.e.y) * kd.s[1] - 0.15 - EYE_H;
-      const sinEl = Math.max(0.02, d.y);
-      let dLo = Math.max(16, hLo / sinEl), dHi = Math.min(38, hHi / sinEl);
-      if (dLo >= dHi) {
+      // (along the line of sight, metre by metre, over the real ground there)
+      const sh0 = forest.shape(forest.keyAt(kd.kind, eye.x + d.x * 25, eye.z + d.z * 25));
+      const tol = (0.4 * sh0.e.y) / sh0.c.y;
+      const fit: number[] = [], inBand: number[] = [];
+      for (let t = 16; t <= 38; t += 1) {
+        const want = (eye.y + d.y * t - (terrain.heightAt(eye.x + d.x * t, eye.z + d.z * t) - 0.15)) / sh0.c.y;
+        if (want < kd.s[0] * (1 - tol) || want > kd.s[1] * (1 + tol)) continue;
+        fit.push(t);
+        if (t >= band[0] && t <= band[1]) inBand.push(t);
+      }
+      if (!fit.length) {
         this.no('g:depth');
-        return null;
+        continue;
       }
       // (in its band, if it can be)
-      if (Math.max(dLo, band[0]) < Math.min(dHi, band[1])) {
-        dLo = Math.max(dLo, band[0]);
-        dHi = Math.min(dHi, band[1]);
-      }
-      const D = dLo + rnd() * (dHi - dLo);
+      const pickFrom = inBand.length ? inBand : fit;
+      const D = pickFrom[Math.floor(rnd() * pickFrom.length)] + (rnd() - 0.5);
       const C = eye.clone().addScaledVector(d, D);
       // where the tree must stand for its crown's middle to be there (its turn and model come from that spot)
       let bx = C.x, bz = C.z, sc = 1, key = '', r = 0;
@@ -1341,7 +1346,7 @@ export class ConstellationSystem {
     if (Math.hypot(x - eye.x, z - eye.z) < 6) return this.no('g:close');
     if (this.world.forest.isExcluded(x, z, s * 1.4)) return this.no('g:excluded');
     if (this.world.forest.standsNear(x, z, 2.3 * s)) return this.no('g:trunk');
-    if (plan.some((g) => Math.hypot(g.x - x, g.z - z) < 2.0 * Math.max(s, g.s))) return this.no('g:grove');
+    if (plan.some((g) => Math.hypot(g.x - x, g.z - z) < 1.7 * Math.max(s, g.s))) return this.no('g:grove');
     // not inside or under anything built, not by a panel
     const col = this.world.collision;
     if (col.solidAt(x, h + 1, z) !== 0 || col.groundAt(x, z, h + 30)[0] > h + 0.2) return this.no('g:built');
@@ -1397,7 +1402,9 @@ export class ConstellationSystem {
         const f = new THREE.Vector3(Math.sin(yw) * Math.cos(pt), Math.sin(pt), Math.cos(yw) * Math.cos(pt));
         const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
         const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
-        const ds = this.figureDirs(def, f, rt, upv);
+        // (smaller now and then: crowns seldom cover a whole big picture)
+        const sizes = pass >= 3 ? [1, 0.8, 0.65, 0.52] : [1, 0.8, 0.65];
+        const ds = this.figureDirs(def, f, rt, upv, SPAN_DEG * sizes[Math.floor(rnd() * sizes.length)]);
         const hs = this.starHits(eye, ds, pass);
         if (!hs) {
           lastWhy = this.lastWhy;
@@ -1464,8 +1471,9 @@ export class ConstellationSystem {
     // (a meadow draws on the ground, a ruin on its walls: one material per picture is natural)
     // where there are crowns, mostly up in them: a picture spread flat on the ground reads as one
     // drawn there (it stays a drawing from everywhere), one across crowns at many depths does not
-    const home = placeDraws(vx, vz);
-    if (pass < 4 && home.crowns.size && count.ground / total > 0.45) return this.no('flat');
+    // never mostly on the ground: a picture spread on the ground is either lost in it or, near
+    // you, a bright patch of flowers — the crowns, walls and rocks carry pictures far better
+    if (count.ground / total > (pass < 5 ? 0.35 : 0.55)) return this.no('flat');
     // up in the crowns: across several trees at different depths, never one crown carrying it all
     // (a picture on one crown would still be a picture on that crown from everywhere)
     if (count.tree / total > 0.3) {
@@ -1505,7 +1513,9 @@ export class ConstellationSystem {
     const needSplit = onWalls > 0.4 || inCrowns > 0.3 ? 0.45 : [0.3, 0.2, 0.12, 0, 0, 0][pass];
     if (split < Math.floor(def.threads.length * needSplit)) return this.no('breaks');
     const shift = this.shapeShift(eye, fwd, right, up, lines);
-    if (shift < SHIFT_MIN) return this.no('shift');
+    // (a picture lying on the ground keeps its shape from aside unless the ground rolls under it:
+    // only over dunes and hummocks, where from two steps away it is just ripples and flowers)
+    if (shift < (count.ground / total > 0.6 ? 0.24 : SHIFT_MIN)) return this.no('shift');
     // last (the slowest check): the spot must be walkable-to from the rest of the island
     if (!this.connected(vx, vz, gy)) return this.no('connected');
     this.spots.push({ x: vx, z: vz });

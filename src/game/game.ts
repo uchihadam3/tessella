@@ -98,6 +98,7 @@ export class Game {
     await tick();
     this.world = new World(this.engine);
     this.pm = new PanelManager(this.engine.camera, this.engine.renderer.domElement);
+    this.pm.group.userData.castAs = 'bad'; // panels and cables: never part of a constellation
     this.engine.scene.add(this.pm.group);
     progress(0.25, 'areas');
     await tick();
@@ -125,7 +126,6 @@ export class Game {
       const r = p.view.root.position;
       return { x: r.x, z: r.z, y: this.world.collision.groundAt(r.x, r.z, r.y + 0.5)[0] };
     }));
-    this.stars.startPlacing();
     this.stars.onSolved = (it) => this.onStarSolved(it);
     this.stars.onRevealed = (it) => {
       this.save.flags['r:' + it.def.id] = true;
@@ -139,6 +139,8 @@ export class Game {
     this.world.finalize();
     for (const a of this.areas.values()) a.finalize();
     this.vault.finalize();
+    // the constellations lie on the island as it is drawn, so they come once everything is there
+    this.stars.startPlacing();
     progress(0.9, 'light');
     await tick();
     // gating that depends on flags

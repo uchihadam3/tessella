@@ -669,6 +669,11 @@ export class GrassField {
     this.flowers.setColorAt(0, new THREE.Color());
   }
 
+  /** rebuild on the next update (something changed where grass may grow) */
+  invalidate() {
+    this.cx = this.cz = Infinity;
+  }
+
   update(px: number, pz: number, force = false) {
     if (!this.enabled) {
       this.grass.count = this.flowers.count = 0;

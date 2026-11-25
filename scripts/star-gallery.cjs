@@ -33,6 +33,9 @@ async function sheet(browser, name, info) {
   await page.evaluate(() => window.__game.stars.placeAll());
   await page.evaluate(() => {
     document.getElementById('crosshair')?.classList.add('hidden');
+    const st = document.createElement('style');
+    st.textContent = '#crosshair{display:none!important}';
+    document.head.appendChild(st);
     for (const id of ['area-title', 'toasts']) { const e = document.getElementById(id); if (e) e.style.display = 'none'; }
   });
   const picks = await page.evaluate((areas) => {

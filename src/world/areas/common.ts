@@ -203,6 +203,8 @@ export class AreaCtx implements AreaRuntime {
     this.spec = AREA_BY_ID[id];
     this.puzzles = PUZZLES[id];
     this.build = { batch: new Batcher(), col: world.collision };
+    // doors, water wheels, lamps, crystals…: they move, so no constellation line is ever drawn on them
+    this.dynamic.userData.castAs = 'bad';
     world.root.add(this.dynamic);
   }
 

@@ -348,25 +348,29 @@ Ao resolver o último: todos os totens disparam juntos, a aurora toma o céu, o 
 
 O jogo nunca ensina isto. Pela ilha existem **150 constelações**, e nenhuma está "na cara". Cada uma é
 um **desenho de verdade** (uma baleia, uma coruja, um moinho, um cisne, uma âncora…, cada um diferente) e
-é **o próprio cenário que o desenha**: cada traço da figura é uma raiz que corre pelo chão, um galho caído,
-um cipó que atravessa a copa de uma árvore, uma rachadura ou uma hera numa parede ou numa rocha, um
-pedaço de calçada — e, no máximo, uma pequena nuvem que parece nuvem de verdade. Não existe ponto falso
-nem linha falsa: com a figura apagada, o que se vê é só paisagem. Raízes, cipós e rachaduras iguais
-aparecem pela ilha inteira sem desenhar nada, então nada denuncia quais são especiais.
+é **o próprio cenário que o desenha**: cada traço da figura é um galho caído ou uma madeira trazida pelo
+mar no chão, um galho seco preso na copa de uma árvore (balançando junto com ela no vento), hera subindo
+uma parede, uma rachadura numa ruína, na calçada ou numa rocha, um cipó num tronco — e, no máximo, uma
+pequena nuvem que parece nuvem de verdade. Não existe ponto falso nem linha falsa: com a figura apagada,
+o que se vê é só paisagem. Galhos, heras e rachaduras iguais aparecem pela ilha inteira sem desenhar
+nada, então nada denuncia quais são especiais.
 
-**Os pedaços estão a distâncias muito diferentes (de 3 a 60 metros) e só se juntam no desenho de um único
-lugar, olhando numa única direção** — como uma anamorfose. De qualquer outro ponto são pedaços soltos de
-cenário. Quem para exatamente ali (meio passo de tolerância) e olha do jeito certo vê a figura, ainda
-apagada; é preciso **ficar parado olhando por uns seis segundos**, sem virar a cabeça, para ela acender:
-uma luz percorre os traços um depois do outro, o mundo em volta escurece um pouco, os nós (os pontos do
-puzzle) aparecem onde os traços se encontram e surge uma pequena esfera de luz, que serve para confirmar
-a resposta. A figura só faz sentido daquele ponto, e é de lá que ela é resolvida.
+**Cada traço é cortado no meio por saltos de profundidade**: começa num galho a 5 metros, continua numa
+copa a 20, termina numa parede a 40. Os pedaços só se juntam no desenho de **um único lugar, olhando numa
+única direção** — uma anamorfose. Dois passos para o lado e cada traço se desmancha em pedaços soltos
+(a busca descarta qualquer lugar em que a figura ainda se reconheça de lado, ou que esteja numa parede só,
+numa árvore só, ou só no chão). Quem para exatamente ali (meio passo de tolerância) e olha do jeito certo
+vê a figura, ainda apagada; é preciso **ficar parado olhando por uns seis segundos**, sem virar a cabeça,
+para ela acender: uma luz percorre os traços um depois do outro, o mundo em volta escurece um pouco, os
+nós (os pontos do puzzle) aparecem onde os traços se encontram e surge uma pequena esfera de luz, que
+serve para confirmar a resposta. A figura só faz sentido daquele ponto, e é de lá que ela é resolvida.
 
-Os 150 lugares de observação ficam espalhados pela ilha inteira (pelo menos ~12 m um do outro, nunca
-grudados), sempre num lugar onde dá para andar, longe de portas e de qualquer coisa que se mexa. Eles são
-calculados uma vez por uma ferramenta (`scripts/place-constellations.cjs`) e guardados junto com o jogo
-(`src/data/constellation-places.json`, com uma assinatura da ilha); se a ilha mudar, o jogo percebe e
-recalcula sozinho em segundo plano.
+Os traços ficam exatamente sobre o que aparece na tela (a busca lança raios contra a geometria desenhada,
+triângulo por triângulo), nunca sobre água, painéis, portas ou qualquer coisa que se mexa. Os 150 lugares
+de observação ficam espalhados pela ilha inteira, longe uns dos outros, sempre num lugar onde dá para
+andar. Eles são calculados uma vez por uma ferramenta (`scripts/place-constellations.cjs`) e guardados
+junto com o jogo (`src/data/constellation-places.json`, com uma assinatura da ilha); se a ilha mudar, o
+jogo percebe e recalcula sozinho em segundo plano.
 
 São puzzles em **rede**, não em grade: os vizinhos são quem está ligado por um fio. As linguagens dos
 painéis (Afinidade, Medida, Contorno, Mosaico, Eco) ganham comportamentos novos nessa geometria (ciclos

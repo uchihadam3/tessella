@@ -2,11 +2,11 @@
  * THE CONSTELLATIONS — the secret layer, drawn by the island itself.
  *
  * Every constellation is a picture (a whale, an owl, a windmill…) whose lines are made of real
- * things in the scenery: a root or a fallen branch on the ground, a vine across a tree crown, a
- * crack or a strand of ivy on a ruined wall, a thin wisp of cloud in the sky. A single line of the
- * picture is often several of these at very different distances — it starts as a branch at your
- * feet, carries on as a crack in a wall forty metres away and ends in a cloud. From everywhere
- * else they are just roots, vines, cracks and clouds (and the island is full of those anyway).
+ * things in the scenery: a fallen branch or driftwood on the ground, ivy climbing a wall, a crack
+ * in a ruin, the paving or a rock, a vine around a trunk, now and then one small cloud. A single
+ * line of the picture is several of these at very different distances — it starts as a branch at
+ * your feet, carries on as a crack in a wall forty metres away and ends as ivy on a tower. From
+ * everywhere else they are just branches, cracks and ivy (and the island is full of those anyway).
  *
  * From ONE spot, looking in ONE direction, the pieces join and the picture is there, unlit, made
  * of the scenery. Stand exactly there and keep looking: after several seconds the picture lights
@@ -25,7 +25,10 @@ import type { AreaId } from '../data/areas';
 import { ANCHORS, AREA_RADIUS, CALDERA, CITADEL, NORTH_LANDING, SPIRE } from '../world/layout';
 import { drawGlyph } from '../puzzle/glyphs';
 import { rng } from '../world/noise';
+import { windUniforms } from '../world/vegetation';
 import { audio } from '../audio';
+import { SceneCaster } from './scenecast';
+import { StrokeBuilder, dressPiece, type DressCtx, type Piece } from './dressing';
 
 export const VAULT_THRESHOLD = 100;
 /** the player's eye height (see Player.eye) */
@@ -49,6 +52,11 @@ interface Hit {
   kind: HitKind;
   p: THREE.Vector3;
   dist: number;
+  /** surface normal, facing the spot */
+  n: THREE.Vector3;
+  /** which object (trees: to tell one from the next) and, on a tree, its wind */
+  id?: number;
+  wind?: [number, number, number] | null;
 }
 interface Sample {
   t: number;
@@ -59,41 +67,70 @@ interface Sample {
 interface Run {
   kind: HitKind;
   samples: Sample[];
+  /** the surface's (mean) normal */
+  n: THREE.Vector3;
+  /** on a tree: how the wind moves it (phase, reach, turn) */
+  wind?: [number, number, number] | null;
 }
 
-type Look = { color: string; w: number; off: number; kind: 'solid' | 'cloud' };
-/** colour and thickness (radians, as seen from the spot) of a line on each kind of surface */
-function lookFor(kind: HitKind, area: AreaId): Look {
-  const stony = area === 'citadel' || area === 'echo' || area === 'mold';
-  const sandy = area === 'mosaic' || area === 'prologue';
-  switch (kind) {
-    case 'sky':
-      return { color: '#ffffff', w: 0.03, off: 0, kind: 'cloud' }; // one soft little cloud
-    case 'tree':
-      return { color: '#3a3322', w: 0.0036, off: 0.16, kind: 'solid' }; // a vine over the crown
-    case 'wall':
-      return stony || sandy ? { color: '#2a2622', w: 0.0028, off: 0.03, kind: 'solid' } // a crack
-        : { color: '#3d5a2e', w: 0.0034, off: 0.04, kind: 'solid' }; // a strand of ivy
-    case 'rock':
-      return { color: '#45473a', w: 0.003, off: 0.03, kind: 'solid' }; // a crack with moss
-    case 'floor':
-      return { color: '#302c28', w: 0.0028, off: 0.02, kind: 'solid' }; // a crack in the paving
-    default:
-      if (sandy) return { color: '#8a7d66', w: 0.0042, off: 0.05, kind: 'solid' }; // driftwood / a dry stick
-      if (stony) return { color: '#36312c', w: 0.003, off: 0.03, kind: 'solid' }; // a crack in the rock
-      return { color: '#56412f', w: 0.0042, off: 0.05, kind: 'solid' }; // a root, a fallen branch
+/** how far the drawing must fall apart when seen from a couple of steps aside (shape difference) */
+const SHIFT_MIN = 0.16;
+
+/** difference of two 2D point sets after the best shift, scale and turn (0 = same shape) */
+function shapeDifference(A: number[][], B: number[][]): number {
+  const norm = (P: number[][]) => {
+    let cx = 0, cy = 0;
+    for (const q of P) {
+      cx += q[0];
+      cy += q[1];
+    }
+    cx /= P.length;
+    cy /= P.length;
+    let ss = 0;
+    const out = P.map((q) => [q[0] - cx, q[1] - cy]);
+    for (const q of out) ss += q[0] * q[0] + q[1] * q[1];
+    const k = 1 / Math.sqrt(Math.max(1e-12, ss / P.length));
+    return out.map((q) => [q[0] * k, q[1] * k]);
+  };
+  const a = norm(A), b = norm(B);
+  let sxx = 0, sxy = 0;
+  for (let i = 0; i < a.length; i++) {
+    sxx += a[i][0] * b[i][0] + a[i][1] * b[i][1];
+    sxy += a[i][0] * b[i][1] - a[i][1] * b[i][0];
   }
+  const th = Math.atan2(sxy, sxx), c = Math.cos(th), sn = Math.sin(th);
+  let err = 0;
+  for (let i = 0; i < a.length; i++) {
+    const rx = b[i][0] * c + b[i][1] * sn, ry = -b[i][0] * sn + b[i][1] * c;
+    err += (a[i][0] - rx) ** 2 + (a[i][1] - ry) ** 2;
+  }
+  return Math.sqrt(err / a.length);
 }
 
 /** Lit like everything else; glows (line by line) once the picture lights up. */
 function strokeMaterial(u: { uLit: { value: number }; uReveal: { value: number } }): THREE.MeshStandardMaterial {
-  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0 });
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uLit = u.uLit;
     sh.uniforms.uReveal = u.uReveal;
+    sh.uniforms.uTime = windUniforms.uTime;
+    sh.uniforms.uWind = windUniforms.uWind;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec3 aGlow;\nattribute float aT;\nattribute float aCut;\nvarying vec3 vGlow;\nvarying float vT;\nvarying float vCut;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = aGlow; vT = aT; vCut = aCut;');
+      .replace('#include <common>', '#include <common>\nattribute vec3 aGlow;\nattribute float aT;\nattribute float aCut;\nattribute vec3 aWind;\nuniform float uTime;\nuniform float uWind;\nvarying vec3 vGlow;\nvarying float vT;\nvarying float vCut;')
+      .replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+vGlow = aGlow; vT = aT; vCut = aCut;
+{
+  // a vine on a tree crown sways exactly like the crown (same wind as the trees' shader)
+  float ph = aWind.x;
+  float w = sin(uTime * 1.2 + ph) * 0.6 + sin(uTime * 2.3 + ph * 1.7) * 0.25 + sin(uTime * 0.5 + ph * 0.3) * 0.4;
+  vec2 d = vec2(w * aWind.y * uWind * 0.22, cos(uTime * 1.05 + ph) * aWind.y * uWind * 0.14);
+  float c = cos(aWind.z), s = sin(aWind.z);
+  transformed.x += d.x * c + d.y * s;
+  transformed.z += -d.x * s + d.y * c;
+}`,
+      );
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uLit;\nuniform float uReveal;\nvarying vec3 vGlow;\nvarying float vT;\nvarying float vCut;')
       .replace(
@@ -126,31 +163,24 @@ function puffTexture(): THREE.Texture {
   return puffTex;
 }
 
-const cloudVert = /* glsl */ `
-attribute vec3 aGlow; attribute float aT; attribute float aV;
-varying vec3 vGlow; varying float vT; varying float vV;
-void main(){ vGlow = aGlow; vT = aT; vV = aV; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-const cloudFrag = /* glsl */ `
-uniform float uLit; uniform float uReveal;
-varying vec3 vGlow; varying float vT; varying float vV;
-void main(){
-  float soft = smoothstep(0.0, 0.5, vV) * smoothstep(1.0, 0.5, vV);
-  float on = step(vT, uReveal) * uLit;
-  vec3 c = vec3(1.0, 0.985, 0.96) + vGlow * on * 0.8;
-  gl_FragColor = vec4(c, soft * soft * (0.34 + 0.5 * on));
-}`;
-
 // ───────────────────────── saved placement ─────────────────────────
 
 const KINDS: HitKind[] = ['ground', 'floor', 'wall', 'tree', 'rock', 'sky'];
 const r2 = (v: number) => Math.round(v * 100) / 100;
 const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
+/** a run as numbers: kind, normal, wind (phase, reach, turn), then t and distance of each sample */
+function packRun(r: Run): number[] {
+  const w = r.wind ?? [0, 0, 0];
+  return [KINDS.indexOf(r.kind), r2(r.n.x), r2(r.n.y), r2(r.n.z), r2(w[0]), r2(w[1]), r2(w[2]), ...r.samples.flatMap((sm) => [r5(sm.t), r2(sm.hit.dist)])];
+}
 /** where every picture was placed (computed once by scripts/place-constellations.cjs) */
 export interface PlaceRecord {
   /** fingerprint of the world the places were computed for (terrain, solids, trees, pictures) */
   signature: string;
+  /** per picture: eye, ground, facing, corner hits [kind, dist], and per line its runs as
+   *  [kind, normal x,y,z, then t,dist for every sample] */
   places: Record<string, { e: number[]; g: number; f: number[]; h: number[][]; l: number[][][] }>;
-  /** decoy lines per area: [eye x,y,z, dirA x,y,z, dirB x,y,z, ...runs] */
+  /** decoy lines per area: eye, the two directions, runs (as above) */
   decoys: Record<string, { e: number[]; a: number[]; b: number[]; l: number[][] }[]>;
 }
 
@@ -174,83 +204,6 @@ function glyphTexture(g: NonNullable<ConstellationDef['stars'][number]['glyph']>
   t.colorSpace = THREE.SRGBColorSpace;
   glyphTexCache.set(key, t);
   return t;
-}
-
-// ───────────────────────── geometry of a line piece ─────────────────────────
-
-/** a tube along `pts` with radius r[i] (seen from far it reads as a root, a vine or a crack) */
-function tube(pts: THREE.Vector3[], r: number[], col: THREE.Color, t0: number[], cut: number[]): THREE.BufferGeometry {
-  const SIDES = 5;
-  const pos: number[] = [], nrm: number[] = [], colr: number[] = [], tt: number[] = [], cc: number[] = [];
-  const up = new THREE.Vector3(0, 1, 0);
-  const rings: { c: THREE.Vector3; n: THREE.Vector3[] }[] = [];
-  for (let i = 0; i < pts.length; i++) {
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
-    const tan = b.clone().sub(a).normalize();
-    let s = new THREE.Vector3().crossVectors(tan, up);
-    if (s.lengthSq() < 1e-6) s = new THREE.Vector3(1, 0, 0);
-    s.normalize();
-    const u2 = new THREE.Vector3().crossVectors(s, tan).normalize();
-    const ns: THREE.Vector3[] = [];
-    for (let k = 0; k < SIDES; k++) {
-      const ang = (k / SIDES) * Math.PI * 2;
-      ns.push(s.clone().multiplyScalar(Math.cos(ang)).addScaledVector(u2, Math.sin(ang)));
-    }
-    rings.push({ c: pts[i], n: ns });
-  }
-  for (let i = 0; i < pts.length - 1; i++) {
-    for (let k = 0; k < SIDES; k++) {
-      const k2 = (k + 1) % SIDES;
-      // counter-clockwise seen from outside, so the outside is what gets lit (not the inner wall)
-      const quad: [number, number][] = [[i, k], [i + 1, k], [i + 1, k2], [i, k2]];
-      for (const qi of [0, 1, 2, 0, 2, 3]) {
-        const [ii, kk] = quad[qi];
-        const n = rings[ii].n[kk];
-        const p = rings[ii].c.clone().addScaledVector(n, r[ii]);
-        pos.push(p.x, p.y, p.z);
-        nrm.push(n.x, n.y, n.z);
-        // a little variation along the line, like bark or moss
-        const v = 0.85 + 0.3 * (((ii * 7 + kk * 3) % 5) / 4);
-        colr.push(col.r * v, col.g * v, col.b * v);
-        tt.push(t0[ii]);
-        cc.push(cut[ii]);
-      }
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
-  g.setAttribute('color', new THREE.Float32BufferAttribute(colr, 3));
-  g.setAttribute('aGlow', new THREE.Float32BufferAttribute(new Float32Array(pos.length), 3));
-  g.setAttribute('aT', new THREE.Float32BufferAttribute(tt, 1));
-  g.setAttribute('aCut', new THREE.Float32BufferAttribute(cc, 1));
-  return g;
-}
-
-/** a soft ribbon facing the spot (for wisps of cloud) */
-function ribbon(pts: THREE.Vector3[], halfW: number[], eye: THREE.Vector3, t0: number[]): THREE.BufferGeometry {
-  const pos: number[] = [], tt: number[] = [], vv: number[] = [];
-  const side: THREE.Vector3[] = pts.map((p, i) => {
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
-    const tan = b.clone().sub(a).normalize();
-    return new THREE.Vector3().crossVectors(tan, p.clone().sub(eye).normalize()).normalize().multiplyScalar(halfW[i]);
-  });
-  for (let i = 0; i < pts.length - 1; i++) {
-    const q = [pts[i].clone().sub(side[i]), pts[i].clone().add(side[i]), pts[i + 1].clone().add(side[i + 1]), pts[i + 1].clone().sub(side[i + 1])];
-    const v = [0, 1, 1, 0];
-    const ti = [t0[i], t0[i], t0[i + 1], t0[i + 1]];
-    for (const qi of [0, 1, 2, 0, 2, 3]) {
-      pos.push(q[qi].x, q[qi].y, q[qi].z);
-      vv.push(v[qi]);
-      tt.push(ti[qi]);
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('aGlow', new THREE.Float32BufferAttribute(new Float32Array(pos.length), 3));
-  g.setAttribute('aT', new THREE.Float32BufferAttribute(tt, 1));
-  g.setAttribute('aV', new THREE.Float32BufferAttribute(vv, 1));
-  return g;
 }
 
 // ───────────────────────── the system ─────────────────────────
@@ -315,11 +268,11 @@ export class ConstellationSystem {
   private lastFwd = new THREE.Vector3();
   private raycaster = new THREE.Raycaster();
   private knotGeo = new THREE.IcosahedronGeometry(1, 1);
-  private decoyMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88 });
-  private decoyCloudMat = new THREE.ShaderMaterial({
-    uniforms: { uLit: { value: 0 }, uReveal: { value: 1 } },
-    vertexShader: cloudVert, fragmentShader: cloudFrag, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false,
-  });
+  private decoyMat = strokeMaterial({ uLit: { value: 0 }, uReveal: { value: 1 } });
+  /** exact lines of sight through the island as drawn (built only when places are searched for) */
+  private caster: SceneCaster | null = null;
+  /** ground under branches: no grass grows over them (cells of 4 m: x0,z0,x1,z1,r…) */
+  private bare = new Map<number, number[]>();
   /** a veil over the world (drawn just before the knots and glyphs) that dims it while a picture is lit */
   private veil = new THREE.Mesh(
     new THREE.PlaneGeometry(2, 2),
@@ -424,72 +377,129 @@ export class ConstellationSystem {
     return false;
   }
 
-  /** where a line of sight from the spot first meets the scenery (null: into water) */
-  private castRay(eye: THREE.Vector3, dir: THREE.Vector3, tMin: number, tMax: number): Hit | null {
-    const col = this.world.collision;
-    const terrain = this.world.terrain;
-    const veg = this.world.forest.raycast(eye, dir, tMax);
-    const vegT = veg && veg.t > tMin ? veg.t : Infinity;
-    let t = tMin;
-    let x = eye.x + dir.x * t, y = eye.y + dir.y * t, z = eye.z + dir.z * t;
-    if (y <= terrain.heightAt(x, z) || col.solidAt(x, y, z)) return null;
-    let prevFloor = col.floorBelow(x, y, z);
-    while (t < tMax) {
-      const step = t < 14 ? 0.3 : 0.6;
-      t += step;
-      if (t >= vegT) return { kind: veg!.kind, p: eye.clone().addScaledVector(dir, vegT), dist: vegT };
-      x = eye.x + dir.x * t;
-      y = eye.y + dir.y * t;
-      z = eye.z + dir.z * t;
-      if (y <= terrain.heightAt(x, z)) {
-        // refine where the line of sight meets the ground
-        let lo = t - step, hi = t;
-        for (let k = 0; k < 6; k++) {
-          const mid = (lo + hi) / 2;
-          if (eye.y + dir.y * mid <= terrain.heightAt(eye.x + dir.x * mid, eye.z + dir.z * mid)) hi = mid;
-          else lo = mid;
-        }
-        const q = eye.clone().addScaledVector(dir, hi);
-        if (terrain.heightAt(q.x, q.z) < this.world.waterAt(q.x, q.z) + 0.05) return null;
-        return { kind: 'ground', p: q, dist: hi };
-      }
-      // crossing down through a floor's top (a deck, a terrace, paving)
-      const fl = col.floorBelow(x, y + step * Math.abs(dir.y) + 0.05, z);
-      if (fl > prevFloor && y <= fl + 0.02) return { kind: 'floor', p: new THREE.Vector3(x, fl, z), dist: t };
-      prevFloor = col.floorBelow(x, y, z);
-      const solid = col.solidAt(x, y, z);
-      if (solid === 2) return null; // a door or something else that moves: never draw on it or behind it
-      if (solid === 1) return { kind: 'wall', p: eye.clone().addScaledVector(dir, t - 0.1), dist: t - 0.1 };
+  /** how each part of the scene counts for lines of sight */
+  private markScene() {
+    const w = this.world;
+    w.terrain.group.userData.castAs = 'terrain';
+    w.water.group.userData.castAs = 'bad';
+    w.grass.group.userData.castAs = 'skip';
+    w.sky.mesh.userData.castAs = 'skip';
+    this.group.userData.castAs = 'skip';
+  }
+
+  private ensureCaster(): SceneCaster {
+    if (!this.caster) {
+      this.markScene();
+      this.caster = new SceneCaster(this.world.engine.scene);
     }
-    return { kind: 'sky', p: eye.clone().addScaledVector(dir, SKY_DIST), dist: SKY_DIST };
+    return this.caster;
+  }
+
+  /**
+   * Where a line of sight from the spot first meets what is drawn on screen. null: water, a panel,
+   * a door or anything else that moves, a swaying tree crown, or something right in front of you.
+   */
+  private castRay(eye: THREE.Vector3, dir: THREE.Vector3, tMin: number, tMax: number): Hit | null {
+    const h = this.ensureCaster().cast(eye, dir, 0.05, tMax);
+    if (!h) return { kind: 'sky', p: eye.clone().addScaledVector(dir, SKY_DIST), dist: SKY_DIST, n: dir.clone().negate() };
+    if (h.t < tMin) {
+      this.lastWhy = 'close';
+      return null;
+    }
+    let kind: HitKind;
+    if (h.cls === 'bad') {
+      this.lastWhy = 'bad';
+      return null;
+    }
+    if (h.cls === 'tree') kind = 'tree'; // trunk or crown (a vine there sways with it)
+    else if (h.cls === 'rock') kind = 'rock';
+    else if (h.cls === 'terrain') kind = 'ground';
+    else kind = h.n.y > 0.6 ? 'floor' : 'wall';
+    const p = eye.clone().addScaledVector(dir, h.t);
+    if (kind === 'ground' && this.world.terrain.heightAt(p.x, p.z) < this.world.waterAt(p.x, p.z) + 0.05) {
+      this.lastWhy = 'water';
+      return null;
+    }
+    return { kind, p, dist: h.t, n: h.n, id: h.id, wind: h.wind };
   }
 
   /**
    * Follow one line of the picture through the scenery: sample the directions between its two
    * ends (all of them project onto that line) and see what each one meets. The result is a few
-   * runs, each lying on one surface; dressed as scenery, they join into the line from the spot.
+   * runs, each lying continuously on one surface; dressed as scenery, they join into the line
+   * from the spot (and only from there, when they lie at different depths).
    */
   private traceLine(eye: THREE.Vector3, dA: THREE.Vector3, dB: THREE.Vector3): Run[] | null {
     const ang = THREE.MathUtils.radToDeg(dA.angleTo(dB));
-    const n = Math.max(4, Math.ceil(ang / 1.4));
+    const n = Math.max(5, Math.ceil(ang / 1.1));
+    const at = (t: number): Sample | null => {
+      const dir = dA.clone().lerp(dB, t).normalize();
+      const hit = this.castRay(eye, dir, 1.5, 70);
+      if (!hit) {
+        this.lastMiss = this.lastWhy;
+        return null;
+      }
+      if (hit.kind !== 'sky' && hit.dist < 3) {
+        this.lastMiss = 'near';
+        return null;
+      }
+      return { t, dir, hit };
+    };
+    let samples: Sample[] = [];
+    for (let i = 0; i <= n; i++) {
+      const sm = at(i / n);
+      if (!sm) return null;
+      samples.push(sm);
+    }
+    // look between neighbours: something small in front, a corner, a bend — keep the middle where it differs
+    const out: Sample[] = [samples[0]];
+    for (let i = 1; i < samples.length; i++) {
+      const a = samples[i - 1], b = samples[i];
+      if (a.hit.kind !== 'sky' || b.hit.kind !== 'sky') {
+        const m = at((a.t + b.t) / 2);
+        if (!m) return null;
+        const exp = (a.hit.dist + b.hit.dist) / 2;
+        if (m.hit.kind !== a.hit.kind || m.hit.kind !== b.hit.kind || Math.abs(m.hit.dist - exp) > 0.03 * exp + 0.04) out.push(m);
+      }
+      out.push(b);
+    }
+    samples = out;
+    // neighbours on one surface, far apart in space: still one surface (grazing ground, a slanted
+    // wall) or a jump to something farther/nearer? The middle of a continuous surface lies between.
+    const continuous = (a: Sample, b: Sample): boolean => {
+      if (a.hit.kind !== b.hit.kind) return false;
+      if (a.hit.kind === 'sky') return true;
+      const gap = a.hit.p.distanceTo(b.hit.p);
+      if (gap < 0.25 + 0.04 * Math.min(a.hit.dist, b.hit.dist)) return true;
+      if (gap > 0.5 * Math.min(a.hit.dist, b.hit.dist)) return false;
+      const m = at((a.t + b.t) / 2);
+      if (!m || m.hit.kind !== a.hit.kind) return false;
+      const seg = b.hit.p.clone().sub(a.hit.p);
+      const w = m.hit.p.clone().sub(a.hit.p);
+      const f = w.dot(seg) / seg.lengthSq();
+      if (f < 0.1 || f > 0.9) return false;
+      return w.sub(seg.multiplyScalar(f)).length() < 0.04 * m.hit.dist + 0.1;
+    };
     const runs: Run[] = [];
     let cur: Run | null = null;
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      const dir = dA.clone().lerp(dB, t).normalize();
-      const hit = this.castRay(eye, dir, 1.5, 60);
-      if (!hit) return null;
-      if (hit.kind !== 'sky' && hit.dist < 3) return null;
-      const s: Sample = { t, dir, hit };
-      const prev: Sample | undefined = cur ? cur.samples[cur.samples.length - 1] : undefined;
-      const jump = prev ? Math.abs(hit.dist - prev.hit.dist) > 0.6 + 0.12 * Math.min(hit.dist, prev.hit.dist) : true;
-      const sameKind = !!cur && (cur.kind === hit.kind || ((cur.kind === 'wall' || cur.kind === 'rock') && (hit.kind === 'wall' || hit.kind === 'rock')));
-      if (!cur || !sameKind || jump) {
-        cur = { kind: hit.kind, samples: [s] };
+    for (const sm of samples) {
+      const prev = cur ? cur.samples[cur.samples.length - 1] : undefined;
+      // walls and paving are cut at corners (each piece lies on one face)
+      const corner = !!prev && (sm.hit.kind === 'wall' || sm.hit.kind === 'floor') && prev.hit.n.dot(sm.hit.n) < 0.9;
+      const otherTree = !!prev && sm.hit.kind === 'tree' && prev.hit.id !== sm.hit.id;
+      if (!cur || !prev || corner || otherTree || !continuous(prev, sm)) {
+        cur = { kind: sm.hit.kind, samples: [sm], n: sm.hit.n.clone(), wind: sm.hit.wind ?? null };
         runs.push(cur);
-      } else cur.samples.push(s);
+      } else {
+        cur.samples.push(sm);
+        cur.n.add(sm.hit.n);
+      }
     }
-    if (runs.length > 5) return null;
+    for (const r of runs) r.n.normalize();
+    if (runs.length > 7) {
+      this.lastMiss = 'runs';
+      return null;
+    }
     return runs;
   }
 
@@ -517,6 +527,9 @@ export class ConstellationSystem {
    */
   startPlacing() {
     if (this.placer || this.ready) return;
+    const grass = this.world.grass;
+    const covered = grass.covered;
+    grass.covered = (x, z, h) => covered(x, z, h) || this.bareAt(x, z);
     this.record.signature = this.worldSignature();
     const saved = SAVED_PLACES as unknown as PlaceRecord;
     const force = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsCompute');
@@ -524,6 +537,7 @@ export class ConstellationSystem {
       // the island has not changed since the places were computed: just build them (fast)
       this.buildFromRecord(saved);
       this.ready = true;
+      grass.invalidate();
       return;
     }
     if (!force && saved.signature) console.warn('constellation places are out of date: searching again in the background');
@@ -538,6 +552,8 @@ export class ConstellationSystem {
         if (this.placer.next().done) {
           this.placer = null;
           this.ready = true;
+          this.caster = null; // (its memory is not needed any more)
+          grass.invalidate();
           return;
         }
       } while (budget());
@@ -556,6 +572,8 @@ export class ConstellationSystem {
     while (!this.placer.next().done) { /* keep going */ }
     this.placer = null;
     this.ready = true;
+    this.caster = null;
+    this.world.grass.invalidate();
   }
 
   /** fingerprint of everything the placement depends on: terrain, solids, trees and the pictures */
@@ -566,7 +584,36 @@ export class ConstellationSystem {
     };
     for (let x = -540; x <= 540; x += 30) for (let z = -540; z <= 540; z += 30) mix(this.world.terrain.heightAt(x, z));
     mix(this.world.collision.fingerprint());
-    mix(this.world.forest.fingerprint());
+    // everything drawn that lines of sight can meet (positions and sizes; moving things only count)
+    this.markScene();
+    const scene = this.world.engine.scene;
+    scene.updateMatrixWorld(true);
+    const walk = (o: THREE.Object3D, cls: string | null) => {
+      const tag = (o.userData?.castAs as string | undefined) ?? cls;
+      if (tag === 'skip') return;
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        mix(m.geometry.attributes.position?.count ?? 0);
+        if (tag !== 'bad') {
+          const el = m.matrixWorld.elements;
+          mix(el[12]);
+          mix(el[13]);
+          mix(el[14]);
+          const im = m as THREE.InstancedMesh;
+          if (im.isInstancedMesh) {
+            mix(im.count);
+            const a = im.instanceMatrix.array;
+            for (let i = 0; i < im.count; i++) {
+              mix(a[i * 16 + 12]);
+              mix(a[i * 16 + 13]);
+              mix(a[i * 16 + 14]);
+            }
+          }
+        }
+      }
+      for (const c of o.children) walk(c, tag);
+    };
+    walk(scene, null);
     for (const d of CONSTELLATIONS) {
       mix(d.stars.length);
       for (const st of d.stars) {
@@ -577,7 +624,7 @@ export class ConstellationSystem {
       mix(d.bell.x);
       mix(d.bell.z);
     }
-    return h.toString(16) + '-' + SPAN_DEG + '-' + SPOT_SPACING;
+    return h.toString(16) + '-v3-' + SPAN_DEG + '-' + SPOT_SPACING + '-' + SHIFT_MIN;
   }
 
   /** the decided places as JSON (written to src/data/constellation-places.json by the tool) */
@@ -605,13 +652,15 @@ export class ConstellationSystem {
   private runsFrom(eye: THREE.Vector3, dA: THREE.Vector3, dB: THREE.Vector3, stored: number[][]): Run[] {
     return stored.map((r) => {
       const kind = KINDS[r[0]];
+      const n = new THREE.Vector3(r[1], r[2], r[3]).normalize();
+      const wind: [number, number, number] | null = r[5] > 0 ? [r[4], r[5], r[6]] : null;
       const samples: Sample[] = [];
-      for (let i = 1; i < r.length; i += 2) {
+      for (let i = 7; i < r.length; i += 2) {
         const t = r[i], dist = r[i + 1];
         const dir = dA.clone().lerp(dB, t).normalize();
-        samples.push({ t, dir, hit: { kind, p: eye.clone().addScaledVector(dir, dist), dist } });
+        samples.push({ t, dir, hit: { kind, p: eye.clone().addScaledVector(dir, dist), dist, n, wind } });
       }
-      return { kind, samples };
+      return { kind, samples, n, wind };
     });
   }
 
@@ -623,7 +672,7 @@ export class ConstellationSystem {
       const eye = new THREE.Vector3(e.e[0], e.e[1], e.e[2]);
       const fwd = new THREE.Vector3(e.f[0], e.f[1], e.f[2]).normalize();
       const dirs = this.directions(def, fwd);
-      const hits: Hit[] = e.h.map(([k, d], i) => ({ kind: KINDS[k], p: eye.clone().addScaledVector(dirs[i], d), dist: d }));
+      const hits: Hit[] = e.h.map(([k, d], i) => ({ kind: KINDS[k], p: eye.clone().addScaledVector(dirs[i], d), dist: d, n: dirs[i].clone().negate() }));
       const lines = def.threads.map((th, li) => this.runsFrom(eye, dirs[th.a], dirs[th.b], e.l[li]));
       this.spots.push({ x: eye.x, z: eye.z });
       this.build(def, def.area, eye, e.g, fwd, dirs, hits, lines);
@@ -644,10 +693,10 @@ export class ConstellationSystem {
 
   private addDecoyMesh(area: AreaId, lines: { eye: THREE.Vector3; runs: Run[] }[]) {
     const solids: THREE.BufferGeometry[] = [];
-    for (const { eye, runs } of lines) {
-      const res = this.dress([runs], area, eye, () => 0, () => 0);
+    lines.forEach(({ eye, runs }, i) => {
+      const res = this.dress([runs], area, eye, () => 1, () => 0, 7919 * (i + 1) + area.length, 0.035);
       if (res.solid) solids.push(res.solid);
-    }
+    });
     if (!solids.length) return;
     const m = new THREE.Mesh(mergeGeometries(solids, false)!, this.decoyMat);
     m.castShadow = true;
@@ -667,10 +716,13 @@ export class ConstellationSystem {
       for (const def of defs) {
         let done = false;
         // strict first (a picture across several kinds of scenery), then relaxed, then wider
-        for (let pass = 0; pass < 4 && !done; pass++) {
-          for (let attempt = 0; attempt < (pass === 3 ? 1200 : 400) && !done; attempt++) {
+        for (let pass = 0; pass < 6 && !done; pass++) {
+          // (only places with standing room count as attempts: most random points are slopes or water)
+          const tries = [900, 900, 1500, 6000, 8000, 14000][pass];
+          let real = 0;
+          for (let attempt = 0; real < tries && attempt < tries * 30 && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
-            const wide = pass >= 2 ? 1.5 : 1;
+            const wide = pass === 3 ? 2.1 : pass === 2 ? 1.5 : 1;
             let r = rMin + Math.sqrt(rnd()) * (rMax - rMin) * wide;
             let base = center;
             if (pass >= 2 && area === 'citadel' && attempt % 2) base = { x: NORTH_LANDING.x, z: NORTH_LANDING.z + 20 };
@@ -683,28 +735,38 @@ export class ConstellationSystem {
               base = { x: CALDERA.x, z: CALDERA.z };
               r = 70 + rnd() * (pass === 3 ? 90 : 45);
             }
+            if (pass >= 4) {
+              // last: anywhere on the island where the scenery is rich enough
+              base = { x: 0, z: 20 };
+              r = Math.sqrt(rnd()) * 480;
+            }
             const vx = base.x + Math.cos(ang) * r, vz = base.z + Math.sin(ang) * r;
             if (Math.hypot(vx, vz - 20) > 520) continue; // stay on the island
+            if (this.okPoint(vx, vz) === null) {
+              if (attempt % 25 === 0) yield;
+              continue;
+            }
+            real++;
             done = this.tryPlace(def, area, vx, vz, rnd, pass);
             yield;
           }
         }
         if (!done) console.warn('constellation not placed', def.id);
       }
-      this.scatterDecoys(area, center, rMin, rMax, defs.length * 5, rnd);
+      this.scatterDecoys(area, center, rMin, rMax, defs.length * 4, rnd);
       yield;
     }
   }
 
   private tryPlace(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number, pass: number): boolean {
     const gy = this.okPoint(vx, vz);
-    if (gy === null) return false;
-    if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return false; // the Spire's island and landings
-    if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return false;
-    const spacing = pass === 3 ? SPOT_SPACING * 0.7 : SPOT_SPACING;
-    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return false;
+    if (gy === null) return this.no('ground');
+    if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return this.no('spire'); // the Spire's island and landings
+    if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return this.no('crater');
+    const spacing = SPOT_SPACING * (pass === 5 ? 0.6 : pass >= 3 ? 0.7 : 1);
+    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return this.no('spacing');
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
-    if (this.world.forest.crownNear(eye, 2.2)) return false;
+    if (this.world.forest.crownNear(eye, 2.2)) return this.no('crown');
     // look around from here and face the richest view: trees, walls, ruins and rocks rather than
     // bare ground, and no open sky (a quick 3×3 probe across the picture's extent per direction)
     let bestScore = -Infinity, yaw = 0, pitch = 0;
@@ -712,19 +774,28 @@ export class ConstellationSystem {
     const tSpan = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG * 0.8));
     for (let yi = 0; yi < 8; yi++) {
       const yw = yaw0 + (yi / 8) * Math.PI * 2;
-      for (const pd of pass === 3 ? [-24, -14] : [-14, -4, 6]) {
+      for (const pd of pass >= 3 ? [-26, -18, -10, -2] : [-18, -10, -2, 6]) {
         const pt = THREE.MathUtils.degToRad(pd + (rnd() - 0.5) * 6);
         const f = new THREE.Vector3(Math.sin(yw) * Math.cos(pt), Math.sin(pt), Math.cos(yw) * Math.cos(pt));
         const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
         const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
         let score = 0;
-        for (const [ax, ay] of [[0, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        const depths: number[] = [];
+        for (const [ax, ay] of [[0, 0], [-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1], [0, 1], [-1, 0], [1, 0]]) {
           const d = f.clone().addScaledVector(rt, ax * tSpan).addScaledVector(upv, ay * tSpan).normalize();
           const h = this.castRay(eye, d, 1.5, 50);
           if (!h || (h.kind !== 'sky' && h.dist < 3)) score -= 20;
           else if (h.kind === 'sky') score -= 6;
-          else if (h.kind === 'tree' || h.kind === 'wall' || h.kind === 'rock') score += 3;
-          else if (h.kind === 'floor') score += 1;
+          else {
+            depths.push(Math.log(h.dist));
+            if (h.kind === 'tree' || h.kind === 'wall' || h.kind === 'rock') score += 3;
+            else if (h.kind === 'floor') score += 1;
+          }
+        }
+        // things at many different depths (near, middle, far): what lets the lines join from here only
+        if (depths.length > 2) {
+          const m = depths.reduce((a, b) => a + b, 0) / depths.length;
+          score += 14 * Math.sqrt(depths.reduce((a, b) => a + (b - m) ** 2, 0) / depths.length);
         }
         score += rnd() * 2; // a little variety among equally good views
         if (score > bestScore) {
@@ -734,7 +805,7 @@ export class ConstellationSystem {
         }
       }
     }
-    if (bestScore < -6) return false;
+    if (bestScore < -10) return this.no('view');
     const fwd = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
     const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
     const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
@@ -749,7 +820,7 @@ export class ConstellationSystem {
     const hits: Hit[] = [];
     for (const d of dirs) {
       const h = this.castRay(eye, d, 1.5, 60);
-      if (!h || h.kind === 'sky' || h.dist < 3) return false;
+      if (!h || h.kind === 'sky' || h.dist < 3) return this.no('corner');
       hits.push(h);
     }
     // a good frame: nothing big right in your face around the picture
@@ -757,24 +828,24 @@ export class ConstellationSystem {
       const a = (kk / 12) * Math.PI * 2;
       const t = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG * 1.3));
       const dir = fwd.clone().addScaledVector(right, Math.cos(a) * t).addScaledVector(up, Math.sin(a) * t).normalize();
-      const h = this.castRay(eye, dir, 0.4, 4.5);
-      if (h && (h.kind === 'wall' || h.kind === 'tree' || h.kind === 'rock')) return false;
+      const h = this.ensureCaster().cast(eye, dir, 0.05, 4.5);
+      if (h && h.cls !== 'terrain' && !(h.cls === 'static' && h.n.y > 0.6)) return this.no('frame');
     }
-    if (!this.enterable(vx, vz, gy)) return false;
+    if (!this.enterable(vx, vz, gy)) return this.no('enterable');
     // never on a panel: a crack across a panel would read as part of its puzzle
-    for (const h of hits) if (h.kind === 'wall' && this.nearAnchor(h.p.x, h.p.z, h.p.y - 1.2)) return false;
-    if (this.taken.some((q) => hits.some((h) => h.kind !== 'sky' && q.distanceTo(h.p) < 1.2))) return false;
+    for (const h of hits) if (h.kind === 'wall' && this.nearAnchor(h.p.x, h.p.z, h.p.y - 1.2)) return this.no('panel');
+    if (this.taken.some((q) => hits.some((h) => h.kind !== 'sky' && q.distanceTo(h.p) < 1.2))) return this.no('taken');
     // now every line, through the scenery
     const lines: Run[][] = [];
     const count: Record<HitKind, number> = { ground: 0, floor: 0, wall: 0, tree: 0, rock: 0, sky: 0 };
     let total = 0;
     for (const th of def.threads) {
       const runs = this.traceLine(eye, dirs[th.a], dirs[th.b]);
-      if (!runs) return false;
+      if (!runs) return this.no('trace:' + this.lastMiss);
       for (const r of runs) for (const s of r.samples) {
         count[s.hit.kind]++;
         total++;
-        if (s.hit.kind === 'wall' && this.nearAnchor(s.hit.p.x, s.hit.p.z, s.hit.p.y - 1.2)) return false;
+        if (s.hit.kind === 'wall' && this.nearAnchor(s.hit.p.x, s.hit.p.z, s.hit.p.y - 1.2)) return this.no('panel2');
       }
       lines.push(runs);
     }
@@ -782,62 +853,150 @@ export class ConstellationSystem {
     // (one real-looking cloud carrying a short piece of one line — more than that gives it away)
     const onGround = (count.ground + count.floor) / total;
     const skyRuns = lines.flat().filter((r) => r.kind === 'sky');
-    if (skyRuns.length > 1 || (skyRuns.length === 1 && skyRuns[0].samples.length > 5)) return false;
+    if (skyRuns.length > 1 || (skyRuns.length === 1 && skyRuns[0].samples.length > 5)) return this.no('sky');
     const kinds = (Object.keys(count) as HitKind[]).filter((kk) => kk !== 'sky' && count[kk] / total > 0.06).length;
-    if (pass === 0 && (onGround > 0.6 || kinds < 3)) return false;
-    if (pass === 1 && (onGround > 0.75 || kinds < 2)) return false;
-    if (pass === 2 && onGround > 0.88) return false;
+    if (pass === 0 && (onGround > 0.55 || kinds < 3)) return this.no('mix0');
+    if (pass >= 1 && (onGround > (pass >= 4 ? 0.72 : 0.65) || kinds < 2)) return this.no('mix' + Math.min(pass, 2));
+    // anamorphic: the line pieces lie at very different depths, so they join only from here —
+    // a couple of steps aside, the drawing must fall apart (not a picture painted on one wall)
+    // (almost) every line is cut by jumps in depth, well inside it (not just at a tip): seen from
+    // aside every line falls apart — never a picture painted on one wall, one tree or one field
+    let split = 0;
+    for (const runs of lines) {
+      let from = 0, longest = 0;
+      for (let i = 1; i < runs.length; i++) {
+        const a = runs[i - 1].samples[runs[i - 1].samples.length - 1], b = runs[i].samples[0];
+        if (Math.abs(a.hit.dist - b.hit.dist) > 0.15 * Math.min(a.hit.dist, b.hit.dist)) {
+          const at = (a.t + b.t) / 2;
+          longest = Math.max(longest, at - from);
+          from = at;
+        }
+      }
+      longest = Math.max(longest, 1 - from);
+      if (longest <= 0.72) split++;
+    }
+    if (split < Math.ceil(def.threads.length * [0.75, 0.68, 0.6, 0.55, 0.5, 0.45][pass])) return this.no('breaks');
+    const shift = this.shapeShift(eye, fwd, right, up, lines);
+    if (shift < SHIFT_MIN) return this.no('shift');
     // last (the slowest check): the spot must be walkable-to from the rest of the island
-    if (!this.connected(vx, vz, gy)) return false;
+    if (!this.connected(vx, vz, gy)) return this.no('connected');
     this.spots.push({ x: vx, z: vz });
     this.build(def, area, eye, gy, fwd, dirs, hits, lines);
     this.items[this.items.length - 1].drawnOn = { ...count };
+    this.shifts.push(shift);
     this.record.places[def.id] = {
       e: [r2(eye.x), r2(eye.y), r2(eye.z)], g: r2(gy), f: [r5(fwd.x), r5(fwd.y), r5(fwd.z)],
       h: hits.map((h) => [KINDS.indexOf(h.kind), r2(h.dist)]),
-      l: lines.map((runs) => runs.map((r) => [KINDS.indexOf(r.kind), ...r.samples.flatMap((sm) => [r5(sm.t), r2(sm.hit.dist)])])),
+      l: lines.map((runs) => runs.map(packRun)),
     };
     return true;
   }
 
-  /** Turn traced lines into scenery: tubes for the solid pieces, soft ribbons for cloud. */
+  private lastWhy = '';
+  private lastMiss = '';
+  /** why places were turned down (tools) */
+  readonly why: Record<string, number> = {};
+  private no(reason: string): false {
+    this.why[reason] = (this.why[reason] ?? 0) + 1;
+    return false;
+  }
+
+  /** how much the drawing changes when seen from two steps to either side (0: not at all) */
+  readonly shifts: number[] = [];
+  private shapeShift(eye: THREE.Vector3, fwd: THREE.Vector3, right: THREE.Vector3, up: THREE.Vector3, lines: Run[][]): number {
+    const pts: THREE.Vector3[] = [];
+    for (const runs of lines) for (const r of runs) for (const sm of r.samples) pts.push(sm.hit.p);
+    const proj = (e: THREE.Vector3) => pts.map((q) => {
+      const v = q.clone().sub(e);
+      const z = Math.max(0.3, v.dot(fwd));
+      return [v.dot(right) / z, v.dot(up) / z];
+    });
+    const A = proj(eye);
+    let least = Infinity;
+    for (const side of [-2.2, 2.2]) least = Math.min(least, shapeDifference(A, proj(eye.clone().addScaledVector(right, side))));
+    return least;
+  }
+
+  /**
+   * Turn traced lines into scenery: each run becomes a branch, ivy, a crack or a vine lying on its
+   * surface (see dressing.ts); a piece in the sky becomes one small cloud.
+   */
   private dress(
-    lines: Run[][], area: AreaId, eye: THREE.Vector3, tOf: (line: number, t: number) => number, cutOf: (line: number, t: number) => number,
+    lines: Run[][], area: AreaId, eye: THREE.Vector3, tOf: (line: number, t: number) => number, cutOf: (line: number, t: number) => number, seed: number, maxR = 0.1,
   ): { solid: THREE.BufferGeometry | null; puffs: { p: THREE.Vector3; size: number }[]; ranges: { solid: [number, number][]; cloud: [number, number][] }[] } {
-    const solids: THREE.BufferGeometry[] = [];
+    const b = new StrokeBuilder();
     const puffs: { p: THREE.Vector3; size: number }[] = [];
-    let solidN = 0;
     const ranges = lines.map(() => ({ solid: [] as [number, number][], cloud: [] as [number, number][] }));
+    const terrain = this.world.terrain;
+    const ctx: DressCtx = {
+      eye, heightAt: (x, z) => terrain.heightAt(x, z), rnd: rng(seed), maxR,
+      stony: area === 'citadel' || area === 'echo' || area === 'mold', sandy: area === 'mosaic' || area === 'prologue',
+    };
     lines.forEach((runs, li) => {
+      const start = b.count;
       runs.forEach((run, ri) => {
-        const look = lookFor(run.kind, area);
         // the run's own samples, stretched half a step into its neighbours at its own depth, so
         // the pieces meet exactly as seen from the spot
-        const ss: { t: number; dir: THREE.Vector3; dist: number }[] = run.samples.map((s) => ({ t: s.t, dir: s.dir, dist: s.hit.dist }));
+        const ss = run.samples.map((sm) => ({ t: sm.t, dir: sm.dir, dist: sm.hit.dist }));
         const prevRun = runs[ri - 1], nextRun = runs[ri + 1];
         if (prevRun) {
-          const a = prevRun.samples[prevRun.samples.length - 1], b = run.samples[0];
-          ss.unshift({ t: (a.t + b.t) / 2, dir: a.dir.clone().lerp(b.dir, 0.5).normalize(), dist: b.hit.dist });
+          const a = prevRun.samples[prevRun.samples.length - 1], c0 = run.samples[0];
+          ss.unshift({ t: (a.t + c0.t) / 2, dir: a.dir.clone().lerp(c0.dir, 0.5).normalize(), dist: c0.hit.dist });
         }
         if (nextRun) {
-          const a = run.samples[run.samples.length - 1], b = nextRun.samples[0];
-          ss.push({ t: (a.t + b.t) / 2, dir: a.dir.clone().lerp(b.dir, 0.5).normalize(), dist: a.hit.dist });
+          const a = run.samples[run.samples.length - 1], c0 = nextRun.samples[0];
+          ss.push({ t: (a.t + c0.t) / 2, dir: a.dir.clone().lerp(c0.dir, 0.5).normalize(), dist: a.hit.dist });
         }
-        if (ss.length < 2) ss.push({ t: ss[0].t + 0.001, dir: ss[0].dir, dist: ss[0].dist });
-        const pts = ss.map((s) => eye.clone().addScaledVector(s.dir, Math.max(0.5, s.dist - look.off - s.dist * 0.003)));
-        const w = ss.map((s) => s.dist * look.w);
-        const tt = ss.map((s) => tOf(li, s.t));
-        if (look.kind === 'cloud') {
-          puffs.push(...pts.map((p, i) => ({ p, size: w[i] })));
-        } else {
-          const g = tube(pts, w, new THREE.Color(look.color), tt, ss.map((s) => cutOf(li, s.t)));
-          ranges[li].solid.push([solidN, solidN + g.attributes.position.count]);
-          solidN += g.attributes.position.count;
-          solids.push(g);
+        if (ss.length < 2) return;
+        if (run.kind === 'sky') {
+          for (const sm of ss) puffs.push({ p: eye.clone().addScaledVector(sm.dir, SKY_DIST), size: SKY_DIST * 0.03 });
+          return;
         }
+        const pts = ss.map((sm) => eye.clone().addScaledVector(sm.dir, sm.dist));
+        const mid = pts[Math.floor(pts.length / 2)];
+        const piece: Piece = {
+          kind: run.kind, pts, dirs: ss.map((sm) => sm.dir), dists: ss.map((sm) => sm.dist),
+          ts: ss.map((sm) => tOf(li, sm.t)), cuts: ss.map((sm) => cutOf(li, sm.t)), n: run.n,
+          normals: run.kind === 'ground' ? pts.map((q) => terrain.normalAt(q.x, q.z, new THREE.Vector3())) : undefined,
+          ground: run.kind === 'ground' ? terrain.surfaceAt(mid.x, mid.z) : undefined,
+          wind: run.wind,
+        };
+        const lying = dressPiece(b, piece, ctx, [!!prevRun, !!nextRun]);
+        if (lying && run.kind === 'ground') this.addBare(lying.pts, lying.r);
       });
+      ranges[li].solid.push([start, b.count]);
     });
-    return { solid: solids.length ? mergeGeometries(solids, false) : null, puffs, ranges };
+    return { solid: b.geometry(), puffs, ranges };
+  }
+
+  /** no grass over branches lying on the ground (it would hide them, and it looks right) */
+  private addBare(pts: THREE.Vector3[], r: number[]) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1], rad = Math.max(r[i], r[i + 1]) + 0.3;
+      const i0 = Math.floor((Math.min(a.x, b.x) - rad) / 4), i1 = Math.floor((Math.max(a.x, b.x) + rad) / 4);
+      const j0 = Math.floor((Math.min(a.z, b.z) - rad) / 4), j1 = Math.floor((Math.max(a.z, b.z) + rad) / 4);
+      if ((i1 - i0 + 1) * (j1 - j0 + 1) > 400) continue;
+      for (let ii = i0; ii <= i1; ii++) for (let jj = j0; jj <= j1; jj++) {
+        const k = (ii + 4096) * 8192 + (jj + 4096);
+        let cell = this.bare.get(k);
+        if (!cell) this.bare.set(k, (cell = []));
+        cell.push(a.x, a.z, b.x, b.z, rad);
+      }
+    }
+  }
+
+  bareAt(x: number, z: number): boolean {
+    const cell = this.bare.get((Math.floor(x / 4) + 4096) * 8192 + (Math.floor(z / 4) + 4096));
+    if (!cell) return false;
+    for (let i = 0; i < cell.length; i += 5) {
+      const ax = cell[i], az = cell[i + 1], bx = cell[i + 2], bz = cell[i + 3], rad = cell[i + 4];
+      const dx = bx - ax, dz = bz - az;
+      const l2 = dx * dx + dz * dz || 1e-9;
+      const f = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+      const ex = ax + dx * f - x, ez = az + dz * f - z;
+      if (ex * ex + ez * ez < rad * rad) return true;
+    }
+    return false;
   }
 
   private build(def: ConstellationDef, area: AreaId, eye: THREE.Vector3, gy: number, fwd: THREE.Vector3, dirs: THREE.Vector3[], hits: Hit[], lines: Run[][]) {
@@ -849,7 +1008,7 @@ export class ConstellationSystem {
     const tOf = (li: number, t: number) => (li + t) / nT;
     // a cut line (its two ends must differ) stays dark in its middle when lit
     const cutOf = (li: number, t: number) => (def.threads[li].mark === 'diff' && t > 0.42 && t < 0.58 ? 1 : 0);
-    const dressed = this.dress(lines, area, eye, tOf, cutOf);
+    const dressed = this.dress(lines, area, eye, tOf, cutOf, Math.round(eye.x * 13 + eye.z * 7));
     let strokes: THREE.Mesh | null = null;
     if (dressed.solid) {
       strokes = new THREE.Mesh(dressed.solid, strokeMaterial(u));
@@ -946,7 +1105,7 @@ export class ConstellationSystem {
       const d = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
       const side = new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0)).normalize();
       const tilt = (rnd() - 0.5) * 1.2;
-      const half = THREE.MathUtils.degToRad(3 + rnd() * 8);
+      const half = THREE.MathUtils.degToRad(1.5 + rnd() * 4.5);
       const dA = d.clone().addScaledVector(side, -Math.tan(half)).add(new THREE.Vector3(0, tilt * Math.tan(half), 0)).normalize();
       const dB = d.clone().addScaledVector(side, Math.tan(half)).add(new THREE.Vector3(0, -tilt * Math.tan(half), 0)).normalize();
       const runs = this.traceLine(eye, dA, dB);
@@ -956,7 +1115,7 @@ export class ConstellationSystem {
       lines.push({ eye, runs: ground });
       rec.push({
         e: [r2(eye.x), r2(eye.y), r2(eye.z)], a: [r5(dA.x), r5(dA.y), r5(dA.z)], b: [r5(dB.x), r5(dB.y), r5(dB.z)],
-        l: ground.map((rr) => [KINDS.indexOf(rr.kind), ...rr.samples.flatMap((sm) => [r5(sm.t), r2(sm.hit.dist)])]),
+        l: ground.map(packRun),
       });
     }
     this.record.decoys[area] = rec;

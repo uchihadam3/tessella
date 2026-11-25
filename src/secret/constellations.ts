@@ -570,6 +570,14 @@ export class ConstellationSystem {
       if (!h) return false;
       hits.push(h);
     }
+    // a good frame: nothing big right in your face around the figure (a wall, a trunk, a rock)
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2;
+      const t = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG * 1.35));
+      const dir = fwd.clone().addScaledVector(right, Math.cos(a) * t).addScaledVector(up, Math.sin(a) * t).normalize();
+      const h = this.castRay(eye, dir, 0.4, 4.5);
+      if (h && (h.kind === 'wall' || h.kind === 'tree' || h.kind === 'rock')) return false;
+    }
     const stars = hits.slice(0, -1);
     const offGround = stars.filter((h) => h.kind !== 'ground').length;
     const near = stars.filter((h) => h.kind !== 'sky').map((h) => h.dist);

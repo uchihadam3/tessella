@@ -1,13 +1,16 @@
 /**
  * THE CONSTELLATIONS — the secret layer, hidden in plain sight.
  *
- * Every constellation is made of ordinary things that belong to its place (mushrooms in the
- * grove, shells on the beach, clay jars at the temple, roses in the garden, crystals in the
- * hollow…). Nothing gives them away: no threads, no glyphs, no bell.
- * The island reveals them only to someone who STOPS and LOOKS: stand still with a group in view
- * and, after a few seconds, threads of light draw themselves between the objects, the glyphs
- * appear and a small orb of light rises (ring it to check). Move, and the vision fades.
- * Once revealed, a constellation stays revealed. Never taught anywhere.
+ * Each constellation is a handful of ordinary things scattered through the scenery: a shell on
+ * the sand, a stone boss on a ruined wall, a jar on a terrace, a speck in the sky… They sit at
+ * very different distances, so from almost everywhere they are just things that belong to the
+ * place (and the same things lie around everywhere else for no reason at all).
+ *
+ * From ONE spot, looking in ONE direction, they line up into a figure. Stand exactly there and
+ * keep looking: threads of light begin to draw themselves between them, faintly at first; hold
+ * still for several seconds and the vision completes — the glyphs light up and a small orb
+ * appears (ring it to check). The figure only makes sense from that spot, so that is where it is
+ * solved. Never taught anywhere.
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -22,7 +25,17 @@ import { rng, simplex } from '../world/noise';
 import { audio } from '../audio';
 
 export const VAULT_THRESHOLD = 100;
-const REVEAL_SECONDS = 3.4;
+/** the player's eye height (see Player.eye) */
+const EYE_H = 1.62;
+/** half-width of a figure as seen from its spot (degrees, centre to the farthest object) */
+const SPAN_DEG = 11;
+/** how close to the spot you must stand (metres) and how straight you must look (degrees) */
+const SPOT_TOL = 0.6;
+const LOOK_TOL = 4.5;
+/** seconds of steady looking for the vision to complete */
+const REVEAL_SECONDS = 5;
+/** threads are this thin (radians) seen from the spot, whatever their distance */
+const THREAD_W = 0.0021;
 
 // ───────────────────────── per-place objects ─────────────────────────
 
@@ -163,6 +176,20 @@ function makeProp(area: AreaId, seed: number): Prop {
   }
 }
 
+/** Lit like everything else while unlit (so the objects blend in); glows once lit. */
+function glowMaterial(): THREE.MeshStandardMaterial {
+  const m = new THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0 });
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aGlow;\nvarying float vGlow;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = aGlow;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vGlow;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vGlow;');
+  };
+  return m;
+}
+
 // ───────────────────────── glyph sprites ─────────────────────────
 
 const glyphTexCache = new Map<string, THREE.Texture>();
@@ -185,27 +212,55 @@ function glyphTexture(g: NonNullable<ConstellationDef['stars'][number]['glyph']>
   return t;
 }
 
-// ───────────────────────── threads (revealed progressively) ─────────────────────────
+// a soft round speck for objects that sit in the sky
+let dotTex: THREE.Texture | null = null;
+function dotTexture(): THREE.Texture {
+  if (dotTex) return dotTex;
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d')!;
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 31);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.35, 'rgba(255,255,255,0.55)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  dotTex = new THREE.CanvasTexture(c);
+  return dotTex;
+}
+
+// ───────────────────────── threads ─────────────────────────
 
 const threadVert = /* glsl */ `
 attribute float aT; attribute vec3 color;
 varying float vT; varying vec3 vC;
 void main(){ vT = aT; vC = color; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const threadFrag = /* glsl */ `
-uniform float uReveal; varying float vT; varying vec3 vC;
+uniform float uReveal; uniform float uAlpha; varying float vT; varying vec3 vC;
 void main(){
-  if (vT > uReveal) discard;
+  if (vT > uReveal || uAlpha <= 0.001) discard;
   float head = smoothstep(uReveal - 0.08, uReveal, vT) * step(uReveal, 0.999);
-  gl_FragColor = vec4(vC * (1.0 + head * 3.0), 1.0);
+  gl_FragColor = vec4(vC * (1.0 + head * 3.0), uAlpha);
 }`;
+
+type HitKind = 'ground' | 'floor' | 'wall' | 'sky';
+interface Hit {
+  kind: HitKind;
+  p: THREE.Vector3;
+  dist: number;
+}
 
 export interface CItem {
   def: ConstellationDef;
   area: AreaId;
   group: THREE.Group;
-  glows: THREE.InstancedMesh;
+  /** how each object glows: an instance of the area's prop, a boss on a wall, or a speck in the sky */
+  vis: { kind: 'prop' | 'disc' | 'sky'; idx: number }[];
+  props: THREE.InstancedMesh | null;
+  discs: THREE.InstancedMesh | null;
+  specks: THREE.Sprite[];
   threads: THREE.Mesh;
-  threadU: { uReveal: { value: number } };
+  threadU: { uReveal: { value: number }; uAlpha: { value: number } };
   threadRanges: [number, number][];
   sprites: THREE.Sprite[];
   orb: THREE.Mesh;
@@ -213,7 +268,12 @@ export interface CItem {
   state: Uint8Array;
   solved: boolean;
   revealed: boolean;
+  /** 0..1: the threads drawing themselves out after the vision completes */
   reveal: number;
+  /** 0..1: how far the vision has come while looking from the spot */
+  hold: number;
+  /** where to stand (feet), the eye there, and the way to look */
+  view: { spot: THREE.Vector3; eye: THREE.Vector3; dir: THREE.Vector3 };
   center: THREE.Vector3;
   radius: number;
   starPos: THREE.Vector3[];
@@ -231,14 +291,19 @@ export type CTarget = { item: CItem; star: number } | { item: CItem; bell: true 
 export class ConstellationSystem {
   readonly items: CItem[] = [];
   readonly group = new THREE.Group();
-  private raycaster = new THREE.Raycaster();
   private cullTimer = 0;
-  private stillTime = 0;
   aimed: CTarget | null = null;
   onSolved: (item: CItem) => void = () => {};
   onChanged: (item: CItem) => void = () => {};
   onRevealed: (item: CItem) => void = () => {};
+  /** the secret ending: everything blazes, seen from anywhere */
+  blaze = false;
   private bodyMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
+  private glowMat = glowMaterial();
+  private discGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.05, 14).rotateX(Math.PI / 2);
+  private spots: { x: number; z: number }[] = [];
+  private taken: THREE.Vector3[] = [];
+  private lastFwd = new THREE.Vector3();
 
   constructor(private world: World) {
     world.root.add(this.group);
@@ -251,6 +316,7 @@ export class ConstellationSystem {
     return this.world.collision.groundAt(x, z, t + 30)[0];
   }
 
+  /** flat, free, dry ground off the paths (for standing spots and props) */
   private okPoint(x: number, z: number): number | null {
     const g = this.groundAt(x, z);
     if (!isFinite(g)) return null;
@@ -264,289 +330,414 @@ export class ConstellationSystem {
     return g;
   }
 
+  /** where a line of sight from the spot first meets the scenery */
+  private castRay(eye: THREE.Vector3, dir: THREE.Vector3, tMin: number, tMax: number): Hit | null {
+    const col = this.world.collision;
+    const p = new THREE.Vector3();
+    let t = tMin;
+    p.copy(eye).addScaledVector(dir, t);
+    if (p.y <= this.world.terrain.heightAt(p.x, p.z) || col.blockedAt(p.x, p.z, 0.04, p.y - 0.04, p.y + 0.04)) return null;
+    while (t < tMax) {
+      const step = t < 14 ? 0.22 : 0.45;
+      t += step;
+      p.copy(eye).addScaledVector(dir, t);
+      const terr = this.world.terrain.heightAt(p.x, p.z);
+      if (p.y <= terr) {
+        if (terr < this.world.waterAt(p.x, p.z) + 0.05) return null; // into the water
+        return { kind: 'ground', p: new THREE.Vector3(p.x, terr, p.z), dist: t };
+      }
+      const [g, surf] = col.groundAt(p.x, p.z, p.y + 0.01);
+      if (surf !== null && p.y - g < step * Math.abs(dir.y) + 0.04) return { kind: 'floor', p: new THREE.Vector3(p.x, g, p.z), dist: t };
+      if (col.blockedAt(p.x, p.z, 0.04, p.y - 0.04, p.y + 0.04)) {
+        const q = eye.clone().addScaledVector(dir, t - 0.12);
+        return { kind: 'wall', p: q, dist: t - 0.12 };
+      }
+    }
+    return { kind: 'sky', p: eye.clone().addScaledVector(dir, 420), dist: 420 };
+  }
+
+  private region(area: AreaId): { center: { x: number; z: number }; rMin: number; rMax: number } {
+    if (area === 'prologue') return { center: { x: 0, z: 316 }, rMin: 0, rMax: 28 };
+    if (area === 'echo') return { center: { x: CALDERA.x, z: CALDERA.z }, rMin: 14, rMax: 48 };
+    if (area === 'citadel') return { center: { x: CITADEL.x, z: CITADEL.z }, rMin: 4, rMax: 40 };
+    if (area === 'hub') return { center: ANCHORS.hub, rMin: 30, rMax: 72 };
+    return { center: ANCHORS[area], rMin: 10, rMax: (AREA_RADIUS[area] ?? 80) + 18 };
+  }
+
   place() {
     const byArea = new Map<AreaId, ConstellationDef[]>();
     for (const d of CONSTELLATIONS) {
       if (!byArea.has(d.area)) byArea.set(d.area, []);
       byArea.get(d.area)!.push(d);
     }
-    const placed: { x: number; z: number; r: number }[] = [];
     for (const [area, defs] of byArea) {
       const rnd = rng(area.length * 977 + 13);
-      let center = ANCHORS[area];
-      let rMin = 14, rMax = (AREA_RADIUS[area] ?? 80) + 18;
-      if (area === 'prologue') {
-        center = { x: 0, z: 316 };
-        rMin = 0;
-        rMax = 28;
-      } else if (area === 'echo') {
-        center = { x: CALDERA.x, z: CALDERA.z };
-        rMin = 16;
-        rMax = 47;
-      } else if (area === 'citadel') {
-        center = { x: CITADEL.x, z: CITADEL.z };
-        rMin = 4;
-        rMax = 35;
-      } else if (area === 'hub') {
-        rMin = 34;
-        rMax = 70;
-      }
+      const { center, rMin, rMax } = this.region(area);
       for (const def of defs) {
         let done = false;
-        const foot = Math.max(...def.stars.map((s) => Math.hypot(s.x, s.z)), Math.hypot(def.bell.x, def.bell.z)) + 1.2;
-        for (let attempt = 0; attempt < 1500 && !done; attempt++) {
-          const ang = rnd() * Math.PI * 2;
-          const r = rMin + Math.sqrt(rnd()) * (rMax - rMin);
-          const cx = center.x + Math.cos(ang) * r, cz = center.z + Math.sin(ang) * r;
-          if (placed.some((p) => Math.hypot(p.x - cx, p.z - cz) < p.r + foot + 3)) continue;
-          if (area === 'prologue' && (Math.abs(cx) > 30 || cz < 300 || cz > 336)) continue;
-          const yaw = rnd() * Math.PI * 2;
-          const c = Math.cos(yaw), s = Math.sin(yaw);
-          const pts = [...def.stars.map((st) => [st.x, st.z]), [def.bell.x, def.bell.z]].map(([lx, lz]) => [cx + lx * c + lz * s, cz - lx * s + lz * c]);
-          const ys: number[] = [];
-          let ok = true;
-          for (const [px, pz] of pts) {
-            const g = this.okPoint(px, pz);
-            if (g === null) {
-              ok = false;
-              break;
-            }
-            ys.push(g);
-          }
-          if (!ok) continue;
-          if (Math.max(...ys) - Math.min(...ys) > 3.2) continue;
-          placed.push({ x: cx, z: cz, r: foot });
-          this.build(def, area, cx, cz, pts, ys, foot);
-          done = true;
-        }
-        // crowded places spill over to a nearby fallback spot (e.g. the citadel's landing headland)
-        if (!done && area === 'citadel') {
-          for (let attempt = 0; attempt < 1500 && !done; attempt++) {
+        // strict first (objects at very different depths, some off the ground), then relaxed, then wider
+        for (let pass = 0; pass < 3 && !done; pass++) {
+          for (let attempt = 0; attempt < 260 && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
-            const r = Math.sqrt(rnd()) * 34;
-            const cx = NORTH_LANDING.x + Math.cos(ang) * r, cz = NORTH_LANDING.z + 10 + Math.sin(ang) * r;
-            if (placed.some((p) => Math.hypot(p.x - cx, p.z - cz) < p.r + foot + 3)) continue;
-            const yaw = rnd() * Math.PI * 2;
-            const c = Math.cos(yaw), s = Math.sin(yaw);
-            const pts = [...def.stars.map((st) => [st.x, st.z]), [def.bell.x, def.bell.z]].map(([lx, lz]) => [cx + lx * c + lz * s, cz - lx * s + lz * c]);
-            const ys: number[] = [];
-            let ok = true;
-            for (const [px, pz] of pts) {
-              const g = this.okPoint(px, pz);
-              if (g === null) { ok = false; break; }
-              ys.push(g);
+            const wide = pass === 2 ? 1.6 : 1;
+            let r = rMin + Math.sqrt(rnd()) * (rMax - rMin) * wide;
+            let base = center;
+            if (pass === 2 && area === 'citadel' && attempt % 2) base = { x: NORTH_LANDING.x, z: NORTH_LANDING.z + 20 };
+            if (pass === 2 && area === 'echo' && attempt % 2) {
+              base = { x: CALDERA.x, z: CALDERA.z + 70 };
+              r = rnd() * 22;
             }
-            if (!ok || Math.max(...ys) - Math.min(...ys) > 3.2) continue;
-            placed.push({ x: cx, z: cz, r: foot });
-            this.build(def, area, cx, cz, pts, ys, foot);
-            done = true;
+            const vx = base.x + Math.cos(ang) * r, vz = base.z + Math.sin(ang) * r;
+            if (area === 'prologue' && (Math.abs(vx) > 30 || vz < 296 || vz > 336)) continue;
+            done = this.tryPlace(def, area, vx, vz, rnd, pass);
           }
-        }
-        // last resort: search a wider ring around the area
-        for (let attempt = 0; attempt < 3000 && !done && area !== 'prologue'; attempt++) {
-          const ang = rnd() * Math.PI * 2;
-          const onIsle = area === 'echo' && attempt % 2 === 1;
-          const r = area === 'echo' ? (onIsle ? 7.5 + rnd() * 5 : rnd() * 14) : rMax * 0.5 + rnd() * (rMax + 30);
-          const base = area === 'citadel' ? { x: NORTH_LANDING.x, z: NORTH_LANDING.z + 30 } : area === 'echo' ? (onIsle ? { x: CALDERA.x, z: CALDERA.z } : { x: CALDERA.x, z: CALDERA.z + 70 }) : center;
-          const cx = base.x + Math.cos(ang) * r, cz = base.z + Math.sin(ang) * r;
-          if (placed.some((p) => Math.hypot(p.x - cx, p.z - cz) < p.r + foot + 3)) continue;
-          const yaw = rnd() * Math.PI * 2;
-          const c = Math.cos(yaw), s = Math.sin(yaw);
-          const pts = [...def.stars.map((st) => [st.x, st.z]), [def.bell.x, def.bell.z]].map(([lx, lz]) => [cx + lx * c + lz * s, cz - lx * s + lz * c]);
-          const ys: number[] = [];
-          let ok = true;
-          for (const [px, pz] of pts) {
-            const g = this.okPoint(px, pz);
-            if (g === null) { ok = false; break; }
-            ys.push(g);
-          }
-          if (!ok || Math.max(...ys) - Math.min(...ys) > 3.2) continue;
-          placed.push({ x: cx, z: cz, r: foot });
-          this.build(def, area, cx, cz, pts, ys, foot);
-          done = true;
         }
         if (!done) console.warn('constellation not placed', def.id);
       }
+      const nStars = defs.reduce((a, d) => a + d.stars.length, 0);
+      this.scatterDecoys(area, center, rMin, rMax, Math.round(nStars * 0.8), rnd);
     }
   }
 
-  private build(def: ConstellationDef, area: AreaId, cx: number, cz: number, pts: number[][], ys: number[], foot: number) {
+  private tryPlace(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number, pass: number): boolean {
+    const gy = this.okPoint(vx, vz);
+    if (gy === null) return false;
+    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < 7)) return false;
+    const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
+    const yaw = rnd() * Math.PI * 2;
+    const pitch = THREE.MathUtils.degToRad(-11 + rnd() * 25);
+    const fwd = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+    const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
+    // the figure's layout, centred and scaled to the angle it covers from the spot
+    const pts2 = [...def.stars.map((st) => [st.x, st.z]), [def.bell.x, def.bell.z]];
+    const mx = pts2.reduce((a, q) => a + q[0], 0) / pts2.length, mz = pts2.reduce((a, q) => a + q[1], 0) / pts2.length;
+    const maxR = Math.max(0.3, ...pts2.map((q) => Math.hypot(q[0] - mx, q[1] - mz)));
+    const k = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG)) / maxR;
+    const hits: Hit[] = [];
+    for (const [x, z] of pts2) {
+      const dir = fwd.clone().addScaledVector(right, (x - mx) * k).addScaledVector(up, -(z - mz) * k).normalize();
+      const h = this.castRay(eye, dir, 3.2, 46);
+      if (!h) return false;
+      hits.push(h);
+    }
+    const stars = hits.slice(0, -1);
+    const offGround = stars.filter((h) => h.kind !== 'ground').length;
+    const near = stars.filter((h) => h.kind !== 'sky').map((h) => h.dist);
+    const spread = near.length ? Math.max(...near) / Math.max(0.5, Math.min(...near)) : 1;
+    const skies = stars.filter((h) => h.kind === 'sky').length;
+    if (skies > Math.max(1, stars.length / 3)) return false; // mostly in the scenery, not the sky
+    if (pass === 0 && (offGround < 2 || spread < 2.2)) return false;
+    if (pass === 1 && offGround < 1 && spread < 1.8) return false;
+    for (let i = 0; i < hits.length; i++) {
+      const h = hits[i];
+      if (h.kind === 'sky') continue;
+      if (h.p.distanceTo(eye) < 3) return false;
+      if (this.taken.some((q) => q.distanceTo(h.p) < 1.1)) return false;
+      if (h.kind === 'ground' && this.world.terrain.pathAt(h.p.x, h.p.z) > 0.35) return false;
+      for (let j = 0; j < i; j++) if (hits[j].kind !== 'sky' && hits[j].p.distanceTo(h.p) < 0.45) return false;
+    }
+    this.spots.push({ x: vx, z: vz });
+    this.build(def, area, eye, gy, fwd, hits);
+    return true;
+  }
+
+  private build(def: ConstellationDef, area: AreaId, eye: THREE.Vector3, gy: number, fwd: THREE.Vector3, hits: Hit[]) {
     const g = new THREE.Group();
     const n = def.stars.length;
     const starPos: THREE.Vector3[] = [];
     const bodies: THREE.BufferGeometry[] = [];
-    const glowGeo = makeProp(area, 1).glow;
-    const glows = new THREE.InstancedMesh(glowGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), n);
-    let rest = '#888', lit = '#fff';
+    const vis: CItem['vis'] = [];
+    const propMats: THREE.Matrix4[] = [];
+    const discMats: THREE.Matrix4[] = [];
+    const specks: THREE.Sprite[] = [];
+    const sample = makeProp(area, 1);
+    let rest = new THREE.Color(sample.rest), lit = new THREE.Color(sample.lit);
     for (let i = 0; i < n; i++) {
-      const [x, z] = pts[i];
-      const y = ys[i];
-      const prop = makeProp(area, Math.round(x * 13 + z * 7) + i);
-      rest = prop.rest;
-      lit = prop.lit;
-      const rot = (x * 1.7 + z) % (Math.PI * 2);
-      const body = prop.body.clone().rotateY(rot).translate(x, y, z);
-      bodies.push(body);
-      const m = new THREE.Matrix4().makeRotationY(rot).setPosition(x, y + prop.glowAt, z);
-      glows.setMatrixAt(i, m);
-      glows.setColorAt(i, new THREE.Color(prop.rest));
-      starPos.push(new THREE.Vector3(x, y + prop.glowAt, z));
-      if (def.stars[i].lock !== undefined) {
-        // a small iron stake driven into the ground beside it
-        bodies.push(colored(new THREE.ConeGeometry(0.035, 0.42, 6).translate(x + 0.24, y + 0.2, z), '#2c2a2a'));
+      const h = hits[i];
+      if (h.kind === 'ground' || h.kind === 'floor') {
+        const { x, z } = h.p;
+        const y = h.p.y;
+        const prop = makeProp(area, Math.round(x * 13 + z * 7) + i);
+        rest = new THREE.Color(prop.rest);
+        lit = new THREE.Color(prop.lit);
+        const rot = (x * 1.7 + z) % (Math.PI * 2);
+        bodies.push(prop.body.clone().rotateY(rot).translate(x, y, z));
+        propMats.push(new THREE.Matrix4().makeRotationY(rot).setPosition(x, y + prop.glowAt, z));
+        vis.push({ kind: 'prop', idx: propMats.length - 1 });
+        starPos.push(new THREE.Vector3(x, y + prop.glowAt, z));
+        this.world.collision.addBlocker({ x, z, r: 0.14, y0: y - 1, y1: y + prop.glowAt + 0.2 });
+        this.world.forest.exclude(x, z, 0.7);
+      } else if (h.kind === 'wall') {
+        // a round boss set into the wall, facing the spot
+        const m = new THREE.Matrix4().lookAt(h.p, eye, new THREE.Vector3(0, 1, 0)).setPosition(h.p);
+        // three's lookAt(eye, target) points -Z at the target; the disc faces +Z: flip it
+        m.multiply(new THREE.Matrix4().makeRotationY(Math.PI));
+        const rim = new THREE.TorusGeometry(0.12, 0.035, 6, 16).applyMatrix4(m);
+        bodies.push(colored(rim, '#8d8578', false));
+        discMats.push(m);
+        vis.push({ kind: 'disc', idx: discMats.length - 1 });
+        starPos.push(h.p.clone());
+      } else {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false, fog: false }));
+        sp.position.copy(h.p);
+        sp.scale.setScalar(h.dist * 0.006);
+        g.add(sp);
+        specks.push(sp);
+        vis.push({ kind: 'sky', idx: specks.length - 1 });
+        starPos.push(h.p.clone());
       }
-      this.world.collision.addBlocker({ x, z, r: 0.14, y0: y - 1, y1: y + prop.glowAt + 0.2 });
+      if (def.stars[i].lock !== undefined && h.kind !== 'sky') {
+        // a small iron nail beside it marks the ones that never change
+        bodies.push(colored(new THREE.ConeGeometry(0.03, 0.3, 6).translate(starPos[i].x + 0.2, starPos[i].y - 0.05, starPos[i].z), '#2c2a2a'));
+      }
+      if (h.kind !== 'sky') this.taken.push(h.p.clone());
     }
-    const merged = mergeGeometries(bodies, false);
+    const merged = bodies.length ? mergeGeometries(bodies.map((b) => (b.index ? b.toNonIndexed() : b)), false) : null;
     if (merged) {
       const bm = new THREE.Mesh(merged, this.bodyMat);
       bm.castShadow = true;
       bm.receiveShadow = true;
       g.add(bm);
     }
-    glows.instanceMatrix.needsUpdate = true;
-    if (glows.instanceColor) glows.instanceColor.needsUpdate = true;
-    glows.computeBoundingSphere();
-    g.add(glows);
-    // threads: ribbons of light with a 0..1 parameter across the whole constellation (for the reveal)
+    const mkInst = (geo: THREE.BufferGeometry, mats: THREE.Matrix4[]) => {
+      if (!mats.length) return null;
+      const gg = geo.clone();
+      gg.setAttribute('aGlow', new THREE.InstancedBufferAttribute(new Float32Array(mats.length), 1));
+      const im = new THREE.InstancedMesh(gg, this.glowMat, mats.length);
+      mats.forEach((m, i) => {
+        im.setMatrixAt(i, m);
+        im.setColorAt(i, rest);
+      });
+      im.instanceMatrix.needsUpdate = true;
+      im.computeBoundingSphere();
+      im.castShadow = true;
+      g.add(im);
+      return im;
+    };
+    const props = mkInst(sample.glow, propMats);
+    const discs = mkInst(this.discGeo, discMats);
+    // threads: straight between the objects; widened with distance so from the spot they all look thin
     const tPos: number[] = [];
     const tCol: number[] = [];
     const tT: number[] = [];
     const ranges: [number, number][] = [];
-    const beads: THREE.Vector3[] = [];
-    const seg = 10;
     const nT = def.threads.length;
+    const side = new THREE.Vector3();
+    const toEye = new THREE.Vector3();
     def.threads.forEach((t, ti) => {
       const a = starPos[t.a], b = starPos[t.b];
       const start = tPos.length / 3;
-      const pt = (u: number) => new THREE.Vector3().lerpVectors(a, b, u).add(new THREE.Vector3(0, -0.12 * Math.sin(Math.PI * u), 0));
-      const pieces: [number, number][] = t.mark === 'diff' ? [[0.05, 0.42], [0.58, 0.95]] : [[0.05, 0.95]];
+      const seg = 14;
+      const pieces: [number, number][] = t.mark === 'diff' ? [[0.04, 0.42], [0.58, 0.96]] : [[0.04, 0.96]];
       for (const [u0, u1] of pieces) {
-        for (let k = 0; k < seg; k++) {
-          const ua = u0 + ((u1 - u0) * k) / seg, ub = u0 + ((u1 - u0) * (k + 1)) / seg;
-          const p0 = pt(ua), p1 = pt(ub);
+        for (let kk = 0; kk < seg; kk++) {
+          const ua = u0 + ((u1 - u0) * kk) / seg, ub = u0 + ((u1 - u0) * (kk + 1)) / seg;
+          const p0 = new THREE.Vector3().lerpVectors(a, b, ua), p1 = new THREE.Vector3().lerpVectors(a, b, ub);
           const dir = p1.clone().sub(p0).normalize();
-          const side = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(0.011);
-          const up = new THREE.Vector3(0, 0.011, 0);
-          for (const off of [side, up]) {
-            const q = [p0.clone().sub(off), p0.clone().add(off), p1.clone().add(off), p1.clone().sub(off)];
-            const qu = [ua, ua, ub, ub];
-            for (const idx of [0, 1, 2, 0, 2, 3]) {
-              tPos.push(q[idx].x, q[idx].y, q[idx].z);
-              // threads appear one after another during the reveal
-              tT.push((ti + qu[idx]) / nT);
-            }
+          const w0 = p0.distanceTo(eye) * THREAD_W, w1 = p1.distanceTo(eye) * THREAD_W;
+          side.crossVectors(dir, toEye.copy(p0).sub(eye).normalize()).normalize();
+          const q = [p0.clone().addScaledVector(side, -w0), p0.clone().addScaledVector(side, w0), p1.clone().addScaledVector(side, w1), p1.clone().addScaledVector(side, -w1)];
+          const qu = [ua, ua, ub, ub];
+          for (const idx of [0, 1, 2, 0, 2, 3]) {
+            tPos.push(q[idx].x, q[idx].y, q[idx].z);
+            tT.push((ti + qu[idx]) / nT);
           }
         }
       }
-      if (t.mark === 'same') beads.push(pt(0.5));
+      if (t.mark === 'same') {
+        // a knot: a small diamond in the middle of the thread
+        const m = new THREE.Vector3().lerpVectors(a, b, 0.5);
+        const r = m.distanceTo(eye) * THREAD_W * 3.2;
+        const dir = b.clone().sub(a).normalize();
+        side.crossVectors(dir, toEye.copy(m).sub(eye).normalize()).normalize();
+        const q = [m.clone().addScaledVector(dir, -r), m.clone().addScaledVector(side, r), m.clone().addScaledVector(dir, r), m.clone().addScaledVector(side, -r)];
+        for (const idx of [0, 1, 2, 0, 2, 3]) {
+          tPos.push(q[idx].x, q[idx].y, q[idx].z);
+          tT.push((ti + 0.5) / nT);
+        }
+      }
       const end = tPos.length / 3;
       ranges.push([start, end]);
-      for (let v = start; v < end; v++) tCol.push(0.55, 0.52, 0.62);
+      for (let v = start; v < end; v++) tCol.push(0.6, 0.57, 0.7);
     });
     const tg = new THREE.BufferGeometry();
     tg.setAttribute('position', new THREE.Float32BufferAttribute(tPos, 3));
     tg.setAttribute('color', new THREE.Float32BufferAttribute(tCol, 3));
     tg.setAttribute('aT', new THREE.Float32BufferAttribute(tT, 1));
-    const threadU = { uReveal: { value: 0 } };
-    const threads = new THREE.Mesh(tg, new THREE.ShaderMaterial({ uniforms: threadU, vertexShader: threadVert, fragmentShader: threadFrag, side: THREE.DoubleSide, toneMapped: false }));
+    const threadU = { uReveal: { value: 1 }, uAlpha: { value: 0 } };
+    const threads = new THREE.Mesh(tg, new THREE.ShaderMaterial({
+      uniforms: threadU, vertexShader: threadVert, fragmentShader: threadFrag, side: THREE.DoubleSide, toneMapped: false,
+      transparent: true, depthTest: false, depthWrite: false,
+    }));
     threads.frustumCulled = false;
+    threads.renderOrder = 20;
+    threads.visible = false;
     g.add(threads);
-    for (const p of beads) {
-      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, 1.2, 0.8), toneMapped: false }));
-      bead.position.copy(p);
-      bead.userData.revealPart = true;
-      g.add(bead);
-    }
-    // glyph sprites
+    // glyphs: sized by distance so they all look the same from the spot
     const sprites: THREE.Sprite[] = [];
     def.stars.forEach((st, i) => {
       if (!st.glyph) return;
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glyphTexture(st.glyph), depthWrite: false, transparent: true, opacity: 0 }));
-      sp.position.copy(starPos[i]).add(new THREE.Vector3(0, 0.42, 0));
-      sp.scale.setScalar(0.44);
+      const d = starPos[i].distanceTo(eye);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glyphTexture(st.glyph), depthWrite: false, depthTest: false, transparent: true, opacity: 0, fog: false }));
+      const toE = eye.clone().sub(starPos[i]).normalize();
+      sp.position.copy(starPos[i]).addScaledVector(toE, 0.05).add(new THREE.Vector3(0, d * 0.022, 0));
+      sp.scale.setScalar(d * 0.028);
+      sp.renderOrder = 21;
       sp.visible = false;
       g.add(sp);
       sprites.push(sp);
     });
-    // the orb (rung to check) rises where the bell would be
-    const [bx, bz] = pts[n];
-    const orbBase = new THREE.Vector3(bx, ys[n] + 1.15, bz);
-    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.8, 1.65, 1.3), toneMapped: false, transparent: true, opacity: 0.95 }));
+    // the orb (rung to check) appears where the figure says
+    const orbHit = hits[n];
+    const orbBase = orbHit.kind === 'sky' ? eye.clone().addScaledVector(orbHit.p.clone().sub(eye).normalize(), 18) : orbHit.p.clone().add(new THREE.Vector3(0, 0.35, 0));
+    const od = orbBase.distanceTo(eye);
+    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(Math.max(0.12, od * 0.012), 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.8, 1.65, 1.3), toneMapped: false, transparent: true, opacity: 0.95, depthTest: false, fog: false }));
+    orb.renderOrder = 22;
     orb.position.copy(orbBase);
     orb.visible = false;
     orb.userData.bell = true;
     g.add(orb);
-    this.world.forest.exclude(cx, cz, foot);
     this.group.add(g);
-    const centroid = starPos.reduce((s, p) => s.add(p), new THREE.Vector3()).multiplyScalar(1 / n);
+    const centroid = starPos.filter((_, i) => hits[i].kind !== 'sky').reduce((acc, q) => acc.add(q), new THREE.Vector3());
+    const nonSky = starPos.filter((_, i) => hits[i].kind !== 'sky').length;
+    if (nonSky) centroid.multiplyScalar(1 / nonSky);
+    else centroid.copy(eye);
     this.items.push({
-      def, area, group: g, glows, threads, threadU, threadRanges: ranges, sprites, orb, orbBase, state: initialState(def), solved: false,
-      revealed: false, reveal: 0, center: centroid, radius: foot, starPos, rest: new THREE.Color(rest), lit: new THREE.Color(lit),
-      blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false,
+      def, area, group: g, vis, props, discs, specks, threads, threadU, threadRanges: ranges, sprites, orb, orbBase,
+      state: initialState(def), solved: false, revealed: false, reveal: 1, hold: 0,
+      view: { spot: new THREE.Vector3(eye.x, gy, eye.z), eye: eye.clone(), dir: fwd.clone() },
+      center: centroid, radius: 3, starPos, rest, lit, blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false,
     });
+  }
+
+  /** The same objects (and stone bosses on walls), scattered for no reason at all. */
+  private scatterDecoys(area: AreaId, center: { x: number; z: number }, rMin: number, rMax: number, count: number, rnd: () => number) {
+    const parts: THREE.BufferGeometry[] = [];
+    let made = 0;
+    for (let attempt = 0; attempt < count * 40 && made < count; attempt++) {
+      const ang = rnd() * Math.PI * 2;
+      const r = rMin + Math.sqrt(rnd()) * (rMax - rMin);
+      const cx = center.x + Math.cos(ang) * r, cz = center.z + Math.sin(ang) * r;
+      if (area === 'prologue' && (Math.abs(cx) > 30 || cz < 300 || cz > 336)) continue;
+      if (rnd() < 0.3) {
+        // a boss on whatever wall a random glance meets
+        const y0 = this.groundAt(cx, cz);
+        if (!isFinite(y0)) continue;
+        const eye = new THREE.Vector3(cx, y0 + EYE_H, cz);
+        const a2 = rnd() * Math.PI * 2;
+        const dir = new THREE.Vector3(Math.sin(a2), -0.1 + rnd() * 0.4, Math.cos(a2)).normalize();
+        const h = this.castRay(eye, dir, 2, 20);
+        if (!h || h.kind !== 'wall' || this.taken.some((q) => q.distanceTo(h.p) < 1.5)) continue;
+        const m = new THREE.Matrix4().lookAt(h.p, eye, new THREE.Vector3(0, 1, 0)).setPosition(h.p).multiply(new THREE.Matrix4().makeRotationY(Math.PI));
+        parts.push(colored(new THREE.TorusGeometry(0.12, 0.035, 6, 16).applyMatrix4(m), '#8d8578', false));
+        parts.push(colored(this.discGeo.clone().applyMatrix4(m), makeProp(area, 3).rest, false));
+        made++;
+        continue;
+      }
+      const k = 1 + Math.floor(rnd() * 3);
+      for (let i = 0; i < k && made < count; i++) {
+        const x = cx + (rnd() - 0.5) * 4, z = cz + (rnd() - 0.5) * 4;
+        const y = this.okPoint(x, z);
+        if (y === null || this.taken.some((q) => Math.hypot(q.x - x, q.z - z) < 1.2)) continue;
+        const prop = makeProp(area, Math.round(x * 31 + z * 17) + i * 7);
+        const rot = rnd() * Math.PI * 2;
+        parts.push(prop.body.clone().rotateY(rot).translate(x, y, z));
+        parts.push(colored(prop.glow.clone(), prop.rest, false).rotateY(rot).translate(x, y + prop.glowAt, z));
+        this.world.collision.addBlocker({ x, z, r: 0.14, y0: y - 1, y1: y + prop.glowAt + 0.2 });
+        this.world.forest.exclude(x, z, 0.6);
+        made++;
+      }
+    }
+    if (!parts.length) return;
+    const merged = mergeGeometries(parts.map((q) => (q.index ? q.toNonIndexed() : q)), false);
+    if (!merged) return;
+    const m = new THREE.Mesh(merged, this.bodyMat);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    this.group.add(m);
   }
 
   // ───────────────────────── seeing ─────────────────────────
 
-  /** Called every frame while walking: standing still and looking at a hidden group reveals it. */
-  watch(dt: number, camera: THREE.PerspectiveCamera, playerSpeed: number) {
-    if (playerSpeed < 0.12) this.stillTime += dt;
-    else this.stillTime = 0;
-    const still = this.stillTime > 0.9;
-    const v = new THREE.Vector3();
+  /**
+   * Called every frame while walking. Standing on a figure's spot and looking its way, steadily,
+   * draws it out of the scenery: faint at first, complete after REVEAL_SECONDS.
+   */
+  watch(dt: number, camera: THREE.PerspectiveCamera, _playerSpeed = 0) {
+    const fwd = new THREE.Vector3();
+    camera.getWorldDirection(fwd);
+    // turning the head quickly breaks the spell
+    const turn = this.lastFwd.lengthSq() > 0 ? this.lastFwd.angleTo(fwd) / Math.max(dt, 1e-3) : 0;
+    this.lastFwd.copy(fwd);
+    const steady = turn < 0.35;
+    const cam = camera.position;
     for (const it of this.items) {
-      if (it.revealed || !it.near) {
-        if (!it.revealed && it.reveal > 0) {
-          it.reveal = Math.max(0, it.reveal - dt * 0.9);
+      if (!it.near) {
+        if (it.hold > 0 && !it.revealed) {
+          it.hold = Math.max(0, it.hold - dt * 0.5);
           it.dirty = true;
         }
         continue;
       }
-      let looking = false;
-      if (still) {
-        const d = it.center.distanceTo(camera.position);
-        if (d < 11 && d > 0.8) {
-          v.copy(it.center).project(camera);
-          looking = v.z < 1 && Math.abs(v.x) < 0.24 && Math.abs(v.y) < 0.32;
+      const dh = Math.hypot(cam.x - it.view.eye.x, cam.z - it.view.eye.z);
+      const dv = Math.abs(cam.y - it.view.eye.y);
+      const ang = THREE.MathUtils.radToDeg(fwd.angleTo(it.view.dir));
+      const aligned = dh < SPOT_TOL && dv < 0.45 && ang < LOOK_TOL;
+      // how close to the right way of looking (for the faint first glimpse)
+      const close = THREE.MathUtils.clamp(1 - dh / 1.3, 0, 1) * THREE.MathUtils.clamp(1 - ang / 10, 0, 1) * (dv < 0.6 ? 1 : 0);
+      let alpha: number;
+      if (it.revealed || this.blaze) {
+        alpha = this.blaze ? 0.9 : THREE.MathUtils.clamp(1 - (dh - 1.2) / 2.2, 0, 1) * THREE.MathUtils.clamp(1 - (ang - 25) / 25, 0, 1);
+      } else {
+        const before = it.hold;
+        if (aligned && steady) it.hold = Math.min(1, it.hold + dt / REVEAL_SECONDS);
+        else it.hold = Math.max(0, it.hold - dt * (aligned ? 0.15 : 0.5));
+        if (it.hold !== before) it.dirty = true;
+        // a ghost of the figure only right at the spot, then slowly stronger while you keep looking
+        alpha = 0.05 * close * close + 0.85 * it.hold * it.hold;
+        if (it.hold >= 1) {
+          it.revealed = true;
+          it.reveal = 0;
+          it.dirty = true;
+          audio.panelPowered();
+          this.onRevealed(it);
         }
       }
-      const before = it.reveal;
-      if (looking) it.reveal = Math.min(1, it.reveal + dt / REVEAL_SECONDS);
-      else it.reveal = Math.max(0, it.reveal - dt * 0.9);
-      if (it.reveal !== before) it.dirty = true;
-      if (it.reveal >= 1) {
-        it.revealed = true;
-        audio.panelPowered();
-        this.onRevealed(it);
+      if (Math.abs(alpha - it.threadU.uAlpha.value) > 1e-3) {
+        it.threadU.uAlpha.value = alpha;
+        it.threads.visible = alpha > 0.002;
       }
     }
   }
 
   // ───────────────────────── interaction ─────────────────────────
 
-  /** what the crosshair (or, on touch, the finger at `ndc`) points at */
+  /** what the crosshair (or, on touch, the finger at `ndc`) points at — from the figure's spot */
+  private raycaster = new THREE.Raycaster();
   aim(camera: THREE.Camera, ndc = new THREE.Vector2(0, 0)): CTarget | null {
-    this.raycaster.setFromCamera(ndc, camera);
-    const ray = this.raycaster.ray;
+    const ray = this.raycaster;
+    ray.setFromCamera(ndc, camera);
+    const o = ray.ray.origin, d = ray.ray.direction;
     let best: CTarget | null = null;
-    let bd = 4.2;
+    let bestA = THREE.MathUtils.degToRad(1.7);
+    const v = new THREE.Vector3();
     for (const it of this.items) {
       if (!it.near || !it.revealed) continue;
+      if (Math.hypot(o.x - it.view.eye.x, o.z - it.view.eye.z) > 2.2) continue;
       for (let i = 0; i < it.starPos.length; i++) {
-        const p = it.starPos[i];
-        const along = p.clone().sub(ray.origin).dot(ray.direction);
-        if (along <= 0 || along >= bd) continue;
-        if (ray.distanceToPoint(p) < 0.28) {
+        const a = v.copy(it.starPos[i]).sub(o).normalize().angleTo(d);
+        if (a < bestA) {
+          bestA = a;
           best = { item: it, star: i };
-          bd = along;
         }
       }
-      const o = it.orb.position;
-      const along = o.clone().sub(ray.origin).dot(ray.direction);
-      if (along > 0 && along < bd && ray.distanceToPoint(o) < 0.3) {
-        best = { item: it, bell: true };
-        bd = along;
+      if (it.orb.visible) {
+        const a = v.copy(it.orb.position).sub(o).normalize().angleTo(d);
+        if (a < bestA * 1.3) {
+          bestA = a;
+          best = { item: it, bell: true };
+        }
       }
     }
     this.aimed = best;
@@ -598,7 +789,8 @@ export class ConstellationSystem {
     if (s && s.length === it.state.length) for (let i = 0; i < s.length; i++) if (it.def.stars[i].lock === undefined) it.state[i] = s[i] === '1' ? 1 : 0;
     it.solved = solved;
     it.revealed = revealed || solved;
-    it.reveal = it.revealed ? 1 : 0;
+    it.reveal = 1;
+    it.hold = it.revealed ? 1 : 0;
     it.dirty = true;
   }
 
@@ -614,55 +806,79 @@ export class ConstellationSystem {
     return this.items.filter((i) => i.revealed).length;
   }
 
+  private setGlow(it: CItem, i: number, c: THREE.Color, glow: number) {
+    const v = it.vis[i];
+    if (v.kind === 'sky') {
+      const m = it.specks[v.idx].material as THREE.SpriteMaterial;
+      m.color.copy(c).multiplyScalar(glow > 0 ? 1 : 0.9);
+      m.opacity = glow > 0 ? 1 : 0.55;
+      return;
+    }
+    const im = v.kind === 'prop' ? it.props! : it.discs!;
+    im.setColorAt(v.idx, c);
+    (im.geometry.attributes.aGlow as THREE.InstancedBufferAttribute).setX(v.idx, glow);
+  }
+
   update(dt: number, t: number, cam: THREE.Vector3) {
     this.cullTimer -= dt;
     if (this.cullTimer <= 0) {
       this.cullTimer = 0.4;
       for (const it of this.items) {
-        const d = it.center.distanceTo(cam);
-        it.near = d < 18;
-        it.group.visible = d < 150;
-        const close = d < 45;
-        for (const s of it.sprites) s.visible = close && it.reveal > 0.05;
-        it.threads.visible = d < 110 && it.reveal > 0.001;
+        const d = Math.hypot(it.view.eye.x - cam.x, it.view.eye.z - cam.z);
+        it.near = d < 14 || this.blaze;
+        it.group.visible = d < 170 || this.blaze;
       }
     }
     const c = new THREE.Color();
     for (const it of this.items) {
       if (!it.group.visible) continue;
-      // the orb bobs gently once revealed
-      if (it.reveal > 0) {
-        it.orb.visible = true;
-        it.orb.position.set(it.orbBase.x, it.orbBase.y - 0.6 * (1 - it.reveal) + Math.sin(t * 1.6 + it.orbBase.x) * 0.06, it.orbBase.z);
+      if (this.blaze && it.threadU.uAlpha.value < 0.9) {
+        it.threadU.uAlpha.value = 0.9;
+        it.threads.visible = true;
+      }
+      if (it.revealed && it.reveal < 1) {
+        // the threads draw themselves out once the vision completes
+        it.reveal = Math.min(1, it.reveal + dt / 1.6);
+        it.dirty = true;
+      }
+      const show = (it.revealed || this.blaze) && it.threadU.uAlpha.value > 0.02;
+      it.orb.visible = show && !it.solved;
+      if (it.orb.visible) {
+        const bob = Math.sin(t * 1.6 + it.orbBase.x) * 0.04 * Math.max(1, it.orbBase.distanceTo(it.view.eye) / 6);
+        it.orb.position.set(it.orbBase.x, it.orbBase.y + bob, it.orbBase.z);
         it.orb.scale.setScalar(Math.max(0.01, it.reveal));
-      } else it.orb.visible = false;
+        (it.orb.material as THREE.MeshBasicMaterial).opacity = 0.95 * it.threadU.uAlpha.value;
+      }
+      for (const s of it.sprites) {
+        s.visible = show;
+        (s.material as THREE.SpriteMaterial).opacity = Math.min(1, it.reveal * 1.4) * it.threadU.uAlpha.value;
+      }
       if (it.blink > 0) {
         it.blink = Math.max(0, it.blink - dt);
         it.dirty = true;
       }
       if (!it.dirty && !it.solved) continue;
-      it.threadU.uReveal.value = it.reveal;
-      for (const s of it.sprites) (s.material as THREE.SpriteMaterial).opacity = Math.min(1, it.reveal * 1.4);
-      it.group.children.forEach((ch) => {
-        if (ch.userData.revealPart) ch.visible = it.reveal > 0.6;
-      });
+      it.threadU.uReveal.value = it.revealed ? it.reveal : 1;
       const blinkOn = it.blink > 0 && Math.floor(it.blink * 4) % 2 === 0;
       for (let i = 0; i < it.state.length; i++) {
-        if (blinkOn && it.bad.has(i)) c.setRGB(2.2, 0.15, 0.1);
-        else if (it.solved) c.set('#fff2cf').multiplyScalar(2.1 + 0.4 * Math.sin(t * 2 + i));
-        else if (it.state[i]) c.copy(it.lit).multiplyScalar(2.4);
-        else c.copy(it.rest);
-        it.glows.setColorAt(i, c);
+        if (blinkOn && it.bad.has(i)) this.setGlow(it, i, c.setRGB(1, 0.08, 0.05), 2.2);
+        else if (it.solved || this.blaze) this.setGlow(it, i, c.set('#fff2cf'), 1.6 + 0.4 * Math.sin(t * 2 + i));
+        else if (it.revealed && it.state[i]) this.setGlow(it, i, c.copy(it.lit), 2.4);
+        else this.setGlow(it, i, c.copy(it.rest), 0);
       }
-      if (it.glows.instanceColor) it.glows.instanceColor.needsUpdate = true;
+      for (const im of [it.props, it.discs]) {
+        if (!im) continue;
+        if (im.instanceColor) im.instanceColor.needsUpdate = true;
+        (im.geometry.attributes.aGlow as THREE.InstancedBufferAttribute).needsUpdate = true;
+      }
       const col = it.threads.geometry.attributes.color as THREE.BufferAttribute;
       it.threadRanges.forEach(([a, b], k) => {
-        let r = 0.55, gg = 0.52, bl = 0.66;
+        let r = 0.6, gg = 0.57, bl = 0.72;
         if (blinkOn && it.badThreads.has(k)) [r, gg, bl] = [2, 0.15, 0.1];
-        else if (it.solved) [r, gg, bl] = [1.7, 1.45, 1.0];
+        else if (it.solved || this.blaze) [r, gg, bl] = [1.7, 1.45, 1.0];
         else {
           const th = it.def.threads[k];
-          if (it.state[th.a] && it.state[th.b]) [r, gg, bl] = [1.1, 1.0, 0.8];
+          if (it.state[th.a] && it.state[th.b]) [r, gg, bl] = [1.2, 1.1, 0.85];
         }
         for (let v = a; v < b; v++) col.setXYZ(v, r, gg, bl);
       });

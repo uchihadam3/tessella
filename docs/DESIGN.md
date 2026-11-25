@@ -346,23 +346,27 @@ Ao resolver o último: todos os totens disparam juntos, a aurora toma o céu, o 
 
 ## 6. As Constelações (a camada secreta)
 
-O jogo nunca ensina isto. Pela ilha existem **150 constelações** escondidas em coisas comuns de cada lugar:
-conchas na praia, cogumelos no bosque, estacas de bambu nos terraços, sobras de mármore na pedreira,
-roseiras no jardim, potes de barro no templo, poças nas rochas dos penhascos, carretéis no vale, vasos de
-lótus no lago, braseiros na cidadela, cristais na caverna.
+O jogo nunca ensina isto. Pela ilha existem **150 constelações**, e nenhuma está "na cara". Cada uma é
+um punhado de coisas comuns do cenário (uma concha na areia, um botão de pedra numa ruína, um vaso num
+terraço, um cogumelo no bosque, um ponto pálido no céu) espalhadas a distâncias muito diferentes, de 3 a 45
+metros, no chão, em paredes, em plataformas e no céu. As mesmas coisas aparecem também por toda a ilha sem
+motivo nenhum, então nada denuncia quais são especiais.
 
-**A ilha só se revela para quem para e observa.** Fique parado olhando um grupo desses objetos por alguns
-segundos: fios de luz se desenham entre eles, os glifos aparecem e uma pequena esfera de luz sobe (é ela que
-confirma a resposta). Mexeu, a visão se apaga. Quem passa correndo nunca vê.
+**De um único lugar, olhando numa única direção, elas se alinham numa figura.** De qualquer outro ponto
+são só objetos soltos. Quem para exatamente ali (meio passo de tolerância) e olha do jeito certo começa a
+ver fios de luz muito fracos se desenhando entre eles; é preciso **ficar parado olhando por uns cinco
+segundos**, sem virar a cabeça, para a visão se completar. Aí os fios se firmam, os glifos aparecem e
+surge uma pequena esfera de luz, que serve para confirmar a resposta. A figura só faz sentido daquele
+ponto, e é de lá que ela é resolvida.
 
-São puzzles em **rede**, não em grade: os vizinhos são quem está ligado por um fio. As linguagens dos painéis
-(Afinidade, Medida, Contorno, Mosaico, Eco) ganham comportamentos novos nessa geometria (ciclos ímpares,
-pontes, estrelas com muitos fios), e existe uma linguagem que só aparece aqui: **um nó no fio** quer as duas
-pontas iguais, **um fio cortado** quer as pontas diferentes.
+São puzzles em **rede**, não em grade: os vizinhos são quem está ligado por um fio. As linguagens dos
+painéis (Afinidade, Medida, Contorno, Mosaico, Eco) ganham comportamentos novos nessa geometria (ciclos
+ímpares, pontes, estrelas com muitos fios), e existe uma linguagem que só aparece aqui: **um nó no fio**
+quer as duas pontas iguais, **um fio cortado** quer as pontas diferentes.
 
-A porta redonda do **Observatório** ao lado do Pátio tem um anel de 150 luzes, uma por constelação
+A porta redonda do **Observatório**, ao lado do Pátio, tem um anel de 150 luzes, uma por constelação
 resolvida. Com **100**, ela se abre: lá dentro está **a Tessela Oculta**, o puzzle mais difícil do jogo
-(9×9, oito linguagens), e resolvê-la leva ao **final secreto**.
+(9×9, oito linguagens). Resolvê-la leva ao **final secreto**.
 
 ## 6b. Os dois finais
 

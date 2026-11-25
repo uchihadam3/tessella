@@ -408,17 +408,18 @@ export class Game {
   }
 
   blazeConstellations() {
+    this.stars.blaze = true;
     for (const it of this.stars.items) {
       it.solved = true;
       it.dirty = true;
       it.group.visible = true;
-      it.threads.visible = true;
     }
   }
 
   constellationPoints(): THREE.Vector3[] {
     const out: THREE.Vector3[] = [];
-    for (const it of this.stars.items) for (const p of it.starPos) out.push(p.clone());
+    // the objects in the scenery (not the specks far off in the sky)
+    for (const it of this.stars.items) for (const p of it.starPos) if (p.distanceTo(it.view.eye) < 80) out.push(p.clone());
     return out;
   }
 

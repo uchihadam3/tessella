@@ -1,5 +1,6 @@
 // Reachability audit: flood-fills every place the player can walk (same movement rule as the
-// player, all doors open) and checks every panel and constellation can be reached and used.
+// player, all doors open) and checks every panel can be reached and used, and that every
+// constellation's viewing spot is a place the player can stand on.
 const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -112,14 +113,14 @@ const { chromium } = require('playwright');
       }
       if (!ok) bad.push(`${p.id} @ ${c.x.toFixed(1)},${c.y.toFixed(1)},${c.z.toFixed(1)}`);
     }
+    // every constellation is seen and solved from its spot: the spot must be a reachable place
     const badStars = [];
     for (const it of g.stars.items) {
-      const pts = [...it.starPos, it.orbBase];
-      for (let i = 0; i < pts.length; i++) {
-        const c = pts[i];
-        const ok = near(c.x, c.z).some((st) => Math.hypot(st.x - c.x, st.y + 1.62 - c.y, st.z - c.z) < 3.8);
-        if (!ok) console.log('star', it.def.id, i, c.x.toFixed(1), c.y.toFixed(1), c.z.toFixed(1));
-        if (!ok) { badStars.push(`${it.def.id}#${i === pts.length - 1 ? 'bell' : i}`); break; }
+      const c = it.view.spot;
+      const ok = near(c.x, c.z).some((st) => Math.hypot(st.x - c.x, st.z - c.z) < 0.9 && Math.abs(st.y - c.y) < 0.6);
+      if (!ok) {
+        console.log('spot', it.def.id, c.x.toFixed(1), c.y.toFixed(1), c.z.toFixed(1));
+        badStars.push(`${it.def.id}@spot`);
       }
     }
     void ray;

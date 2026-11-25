@@ -525,8 +525,9 @@ export class ConstellationSystem {
 
   // ───────────────────────── interaction ─────────────────────────
 
-  aim(camera: THREE.Camera): CTarget | null {
-    this.raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  /** what the crosshair (or, on touch, the finger at `ndc`) points at */
+  aim(camera: THREE.Camera, ndc = new THREE.Vector2(0, 0)): CTarget | null {
+    this.raycaster.setFromCamera(ndc, camera);
     const ray = this.raycaster.ray;
     let best: CTarget | null = null;
     let bd = 4.2;

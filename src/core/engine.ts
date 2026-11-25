@@ -123,9 +123,14 @@ export class Engine {
     this.resize();
   }
 
+  /** vertical field of view from the settings; widened when the screen is taller than wide */
+  baseFov = 72;
+
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
     this.camera.aspect = w / h;
+    // a phone held upright would otherwise see a narrow slice of the world
+    this.camera.fov = w < h ? Math.min(100, this.baseFov * 1.3) : this.baseFov;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
     this.composer.setPixelRatio(this.renderer.getPixelRatio());

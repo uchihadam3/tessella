@@ -11,12 +11,19 @@ tentando e errando. Quando erra, o glifo que quebrou a regra pisca em vermelho.
 
 ## Jogar
 
+**Instalar (computador, Android e iPhone):** abra **https://uchihadam3.github.io/tessella/** e escolha
+**Instalar o jogo** no menu. No Chrome e no Edge (computador ou Android) aparece o pedido de instalação; no
+iPhone e no iPad, pelo Safari, toque em Compartilhar e depois em *Adicionar à Tela de Início*. Instalado, o
+TESSELLA abre em tela cheia como um app, funciona sem internet e **se atualiza sozinho**: cada envio para
+`main` publica uma versão nova e o jogo instalado a baixa na próxima vez que for aberto com internet. O
+progresso nunca se perde numa atualização.
+
 **Offline, sem instalar nada:** baixe o arquivo [`jogar/TESSELLA.html`](jogar/TESSELLA.html) e abra com
 dois cliques (Chrome, Edge ou Firefox recentes). O jogo inteiro está nesse único arquivo: código,
-música, sons, fontes e imagens. Não precisa de internet.
+música, sons, fontes e imagens.
 
-**No navegador, pelo GitHub Pages:** depois de ativar o Pages no repositório (Settings → Pages →
-Source: GitHub Actions), cada envio para `main` publica o jogo automaticamente.
+**Publicação:** o GitHub Pages precisa estar ligado uma vez (Settings → Pages → Source: *GitHub Actions*).
+Depois disso, cada envio para `main` testa, gera e publica o jogo automaticamente.
 
 Para jogar a partir do código:
 
@@ -32,19 +39,24 @@ Depois abra o endereço que aparecer (normalmente `http://localhost:5173`).
 
 ### Controles
 
-| Ação | Teclado e mouse | Toque |
-|------|-----------------|-------|
-| Andar | WASD ou setas (Shift corre) | arrastar no lado esquerdo |
+| Ação | Teclado e mouse | Celular e tablet |
+|------|-----------------|------------------|
+| Andar | WASD ou setas (Shift corre) | arrastar no lado esquerdo (até o fim corre) |
 | Olhar | mouse | arrastar no lado direito |
-| Usar um painel | clique quando o ponto vira um anel | tocar |
-| Acender/apagar ladrilhos | clique (arraste para pintar vários) | tocar |
+| Usar um painel | clique quando o ponto vira um anel | tocar no painel |
+| Acender/apagar ladrilhos | clique (arraste para pintar vários) | tocar ou arrastar |
 | Confirmar | Espaço, Enter ou clicar no Selo | tocar no Selo |
-| Desfazer / limpar | Z / R | — |
-| Sair do painel | clique direito, Esc ou Q | — |
-| Diário / mapa / pausa | Tab / M / Esc | — |
+| Desfazer / limpar | Z / R | ↺ / ⟲ (aparecem só dentro do painel) |
+| Sair do painel | clique direito, Esc ou Q | ✕ ou tocar fora do painel |
+| Diário / mapa / pausa | Tab / M / Esc | emblema no canto da tela |
 
-O jogo salva sozinho a cada painel resolvido e a cada meio minuto. Há 3 espaços de save, salvamento
-manual no menu de pausa e opção de **exportar/importar** o save como arquivo (backup).
+No celular a tela fica limpa: não há botões enquanto você explora, só um emblema discreto no canto para o
+menu. A qualidade gráfica e a resolução se ajustam sozinhas ao aparelho.
+
+O jogo salva sozinho a cada painel resolvido e a cada meio minuto. Há 3 espaços de save e salvamento
+manual no menu de pausa. Em **Carregar → Exportar save**, o progresso vira um código de texto (para copiar
+e guardar) ou um arquivo `.json`. Em **Importar save**, basta colar o código ou escolher o arquivo. Assim dá
+para levar o progresso de um navegador para outro, ou da versão online para o arquivo offline.
 
 ## A ilha
 

@@ -71,6 +71,14 @@ export class Game {
   vault!: VaultRuntime;
   secretSummary = () => ({ found: this.stars?.solvedCount ?? 0, solved: this.stars?.solvedCount ?? 0, total: this.stars?.items.length ?? 0 });
   secretClick = (): boolean => (this.state === 'play' && !this.pm.engaged ? this.stars.click() : false);
+  /** touch: use the constellation star / orb under the finger */
+  secretTap = (clientX: number, clientY: number): boolean => {
+    if (this.state !== 'play' || this.pm.engaged) return false;
+    const r = this.engine.renderer.domElement.getBoundingClientRect();
+    const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    this.stars.aim(this.engine.camera, ndc);
+    return this.stars.click();
+  };
   /** ending helpers */
   endingTick: ((dt: number) => void) | null = null;
   endingOrbit = false;
@@ -162,7 +170,8 @@ export class Game {
       this.player.settings.invertY = s.invertY;
       this.player.settings.headBob = s.headBob;
     }
-    this.engine.camera.fov = s.fov;
+    this.engine.baseFov = s.fov;
+    this.engine.camera.fov = window.innerWidth < window.innerHeight ? Math.min(100, s.fov * 1.3) : s.fov;
     this.engine.camera.updateProjectionMatrix();
     if (this.engine.quality !== s.quality) this.engine.setQuality(s.quality);
     if (this.world) {
@@ -539,6 +548,8 @@ export class Game {
     const w = this.world;
     if (!w) return;
     this.engine.autoActive = this.state === 'play';
+    // touch: while a panel is engaged, fingers paint on it instead of walking and looking
+    this.input.setPointerMode(this.state === 'play' && !!this.pm.engaged);
     if (this.state === 'play' || this.state === 'cutscene') {
       const [mx, my] = this.input.consumeMouse();
       if (this.state === 'play' && !this.pm.controllingCamera) {

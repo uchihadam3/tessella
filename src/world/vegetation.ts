@@ -287,7 +287,11 @@ export function makeWindMaterial(opts: { flutter?: number; roughness?: number } 
   float s = aSway * aSway;
   transformed.x += w * s * uWind * 0.22;
   transformed.z += cos(uTime * 1.05 + ph) * s * uWind * 0.14;
-  transformed += objectNormal * sin(uTime * 5.5 + position.y * 2.7 + ph * 9.0) * 0.035 * aSway * ${flutter};
+  // leaf flutter: the offset depends only on the vertex position, so the copies of a vertex shared by
+  // neighbouring flat-shaded faces move together (moving along the per-face normal opened hairline
+  // cracks the sky showed through)
+  vec3 fl = vec3(sin(uTime * 5.5 + position.y * 2.7 + ph * 9.0), sin(uTime * 4.7 + position.x * 2.3 + ph * 7.0) * 0.6, sin(uTime * 5.1 + position.z * 2.5 + ph * 8.0));
+  transformed += fl * 0.03 * aSway * ${flutter};
 }`,
       );
   };

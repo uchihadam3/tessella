@@ -287,6 +287,42 @@ export class PanelManager {
     return this.aimed;
   }
 
+  private ndcOf(clientX: number, clientY: number): THREE.Vector2 {
+    const rect = this.dom.getBoundingClientRect();
+    return new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+  }
+
+  /** Touch: the powered panel under a screen point, within reach (tap a panel to use it). */
+  pickAt(clientX: number, clientY: number): Panel | null {
+    if (this.engaged) return null;
+    this.raycaster.setFromCamera(this.ndcOf(clientX, clientY), this.camera);
+    this.raycaster.far = this.reach + 3;
+    const objs: THREE.Object3D[] = [];
+    const camPos = this.camera.position;
+    for (const p of this.panels) {
+      if (p.view.root.position.distanceToSquared(camPos) > 100) continue;
+      objs.push(...p.view.pickables);
+    }
+    for (const h of this.raycaster.intersectObjects(objs, false)) {
+      const pv = h.object.userData.panel as PanelView | undefined;
+      if (!pv) continue;
+      // a finger is less precise than a crosshair: allow a little more distance
+      if (h.distance > this.reach + 1 + (pv.faceH > 1 ? 1 : 0)) return null;
+      const p = this.panels.find((q) => q.view === pv) ?? null;
+      return p && p.powered ? p : null;
+    }
+    return null;
+  }
+
+  /** Touch: does a screen point land on the engaged panel at all (face or seal)? */
+  faceAt(clientX: number, clientY: number): boolean {
+    const p = this.engaged;
+    if (!p) return false;
+    this.raycaster.setFromCamera(this.ndcOf(clientX, clientY), this.camera);
+    this.raycaster.far = 20;
+    return this.raycaster.intersectObjects(p.view.pickables, false).length > 0;
+  }
+
   engage(p: Panel) {
     if (!p.powered) return;
     this.engaged = p;
@@ -331,6 +367,11 @@ export class PanelManager {
     return this.leaving ? 1 - e : e;
   }
 
+  /** true while the camera glides to or from a panel */
+  get tweening(): boolean {
+    return this.camT < 1;
+  }
+
   /** true while the camera is controlled by the panel system */
   get controllingCamera(): boolean {
     return !!this.engaged || this.camT < 1;
@@ -341,9 +382,7 @@ export class PanelManager {
   private pick(clientX: number, clientY: number) {
     const p = this.engaged;
     if (!p) return null;
-    const rect = this.dom.getBoundingClientRect();
-    const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
-    this.raycaster.setFromCamera(ndc, this.camera);
+    this.raycaster.setFromCamera(this.ndcOf(clientX, clientY), this.camera);
     this.raycaster.far = 20;
     const hits = this.raycaster.intersectObjects(p.view.pickables, false);
     for (const h of hits) {

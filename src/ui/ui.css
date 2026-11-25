@@ -187,3 +187,34 @@
 
 .save-io .io-help { color: var(--dim); line-height: 1.5; margin: 0 0 12px; max-width: 560px; }
 .save-io .io-code { width: 100%; box-sizing: border-box; height: 110px; resize: vertical; background: rgba(0,0,0,.35); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; padding: 10px; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
+
+/* ── touch layout ── */
+#tpause { position: fixed; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 46px; height: 46px; padding: 4px; border: 0; background: none; opacity: 0; pointer-events: none; transition: opacity .4s ease; z-index: 11; -webkit-tap-highlight-color: transparent; }
+#tpause svg { width: 100%; height: 100%; filter: drop-shadow(0 0 6px rgba(0,0,0,.5)); }
+#tpause.on { opacity: .55; pointer-events: auto; }
+#tpause.on:active { opacity: 1; }
+#ui:not(.touch) #tpause { display: none; }
+#stick { position: fixed; left: 0; top: 0; width: 0; height: 0; opacity: 0; transition: opacity .25s ease; pointer-events: none; }
+#stick::before { content: ''; position: absolute; left: -58px; top: -58px; width: 116px; height: 116px; border-radius: 50%; border: 1.5px solid rgba(255,244,220,.28); background: radial-gradient(circle, rgba(255,240,210,.06), rgba(255,240,210,0) 70%); }
+#stick i { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,244,220,.32); box-shadow: 0 0 14px rgba(255,220,160,.35); }
+#stick.on { opacity: 1; }
+#ui.touch #engage-hint { bottom: max(14px, env(safe-area-inset-bottom)); gap: 14px; }
+#ui.touch #engage-hint .tb { pointer-events: auto; width: 50px; height: 50px; border-radius: 50%; border: 1px solid rgba(255,244,220,.22); background: rgba(10,9,14,.32); color: rgba(255,244,220,.8); font-size: 22px; line-height: 1; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); }
+#ui.touch #engage-hint .tb:active { background: rgba(233,199,125,.35); color: #fff; }
+#ui.touch #engage-hint .tb.spin { font-size: 30px; }
+#rotate-hint { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0; transition: opacity .6s ease; pointer-events: none; color: rgba(255,244,220,.9); text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.7); font-family: var(--serif); font-size: 19px; max-width: 80vw; }
+#rotate-hint b { font-size: 46px; font-weight: 400; animation: spinhint 2.4s ease-in-out infinite; }
+#rotate-hint.on { opacity: 1; }
+@keyframes spinhint { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+.save-io .io-url { font: 15px/1.4 ui-monospace, Menlo, Consolas, monospace; color: var(--gold2); user-select: text; -webkit-user-select: text; word-break: break-all; margin: 4px 0 0; }
+/* phones in landscape (very short screens) */
+@media (max-height: 430px) {
+  #menu .logo svg.emblem { width: 40px; height: 40px; }
+  #menu .logo .word { font-size: 30px; margin-top: 2px; }
+  #menu .logo .orn, #menu .logo .sub { display: none; }
+  .menu-items { margin-top: 10px; }
+  .mi { font-size: 18px; padding: 2px 0 2px 18px; }
+  .dialog { padding: 14px 20px; max-height: 92vh; }
+  .dialog h2 { font-size: 22px; margin-bottom: 8px; }
+  .foot { display: none; }
+}

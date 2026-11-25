@@ -28,6 +28,7 @@ const SPOTS = [
 (async () => {
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: scale });
+  page.setDefaultTimeout(400000);
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(BASE + '?dev&at=8,52,180,0', { waitUntil: 'load' });
@@ -54,7 +55,7 @@ const SPOTS = [
       window.__setSky(a[a.length - 1]);
     }, { kind, a });
     await page.waitForTimeout(9000);
-    await page.screenshot({ path: `${out}/${name}.png` });
+    await page.screenshot({ path: `${out}/${name}.png`, timeout: 400000 });
     console.log('shot', name, ((Date.now() - t0) / 1000).toFixed(0) + 's');
   }
   console.log('errors:', errors.length ? errors.slice(0, 5) : 'none');

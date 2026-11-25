@@ -52,17 +52,30 @@ async function boot() {
       ui.setCrosshair('hidden');
     } else if (!game.secretClick?.()) input.lock();
   });
-  // touch taps behave like clicks: engage the aimed panel / press tiles / ring constellations
+  // touch: tap a panel (anywhere on screen, within reach) to use it; otherwise a tap touches the
+  // constellation star or orb under the finger
   input.onTap = (x, y) => {
-    if (game.state !== 'play') return;
-    if (game.pm.engaged) {
-      game.pm.pointerDown(x, y, 0);
-      game.pm.pointerUp();
-    } else if (game.pm.aimed) {
-      game.pm.engage(game.pm.aimed);
+    if (game.state !== 'play' || game.pm.engaged || game.pm.controllingCamera) return;
+    const p = game.pm.pickAt(x, y);
+    if (p) {
+      game.pm.engage(p);
       ui.setCrosshair('hidden');
-    } else game.secretClick?.();
+      return;
+    }
+    game.secretTap(x, y);
   };
+  // touch while a panel is engaged: press/drag paints tiles, the seal submits, a tap off the panel leaves
+  input.onPointerDown = (x, y) => {
+    if (game.state === 'play' && game.pm.engaged) game.pm.pointerDown(x, y, 0);
+  };
+  input.onPointerMove = (x, y) => {
+    if (game.pm.engaged) game.pm.pointerMove(x, y);
+  };
+  input.onPointerUp = (x, y, tap) => {
+    game.pm.pointerUp();
+    if (tap && game.state === 'play' && game.pm.engaged && !game.pm.tweening && !game.pm.faceAt(x, y)) game.pm.leave();
+  };
+  input.onTouchMode = () => ui.setTouch(true);
   input.on('mousedown', (e) => {
     const m = e as MouseEvent;
     if (game.state === 'play' && game.pm.engaged) game.pm.pointerDown(m.clientX, m.clientY, m.button);
@@ -115,6 +128,31 @@ async function boot() {
     document.body.appendChild(msg);
     setTimeout(() => location.reload(), 2500);
   });
+
+  // the installed game: offline copy + automatic updates (hosted site only; not the offline file or
+  // an embedded preview)
+  let topLevel = false;
+  try {
+    topLevel = window.top === window.self;
+  } catch {
+    topLevel = false;
+  }
+  const secure = location.protocol === 'https:' || location.hostname === 'localhost';
+  if (import.meta.env.PROD && 'serviceWorker' in navigator && secure && topLevel) {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && game.state !== 'boot') ui.toast(ui.t('updateReady'), 'info');
+    });
+  }
+  // say so once after an update arrived
+  try {
+    const prev = localStorage.getItem('tessella.version');
+    if (prev && prev !== __BUILD__) setTimeout(() => ui.toast(ui.t('updated'), 'info'), 12000);
+    localStorage.setItem('tessella.version', __BUILD__);
+  } catch {
+    /* storage blocked */
+  }
 
   game.state = 'boot';
   window.__ready = true;

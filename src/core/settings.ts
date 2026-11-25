@@ -31,6 +31,11 @@ export function loadSettings(): Settings {
   }
   const s = { ...DEFAULT_SETTINGS };
   if (typeof navigator !== 'undefined' && !navigator.language?.toLowerCase().startsWith('pt')) s.lang = 'en';
+  // phones and tablets start on medium quality (automatic resolution keeps it smooth from there)
+  if (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) {
+    s.quality = 'medium';
+    s.sensitivity = 1.15;
+  }
   return s;
 }
 

@@ -19,6 +19,44 @@ const h = (html: string) => {
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
+/** Where the installable, self-updating copy of the game lives. */
+export const INSTALL_URL = 'https://uchihadam3.github.io/tessella/';
+
+/** How this copy can be installed: already installed, the browser's prompt, iPhone steps, or not here. */
+function installMode(hasPrompt: boolean): 'installed' | 'prompt' | 'ios' | 'elsewhere' | 'unsupported' {
+  const nav = navigator as Navigator & { standalone?: boolean };
+  // (a browser tab made fullscreen by the game itself also reports display-mode: fullscreen)
+  const appWindow = matchMedia('(display-mode: standalone), (display-mode: minimal-ui)').matches || (matchMedia('(display-mode: fullscreen)').matches && !document.fullscreenElement);
+  if (appWindow || nav.standalone) return 'installed';
+  if (hasPrompt) return 'prompt';
+  let embedded = false;
+  try {
+    embedded = window.top !== window.self;
+  } catch {
+    embedded = true;
+  }
+  const official = location.protocol === 'https:' && location.href.startsWith(INSTALL_URL.replace(/\/$/, ''));
+  if (embedded || !official) return 'elsewhere';
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (ios) return 'ios';
+  return 'unsupported';
+}
+
+/** Phones: go fullscreen and hold landscape when the browser allows it (Android); ignored elsewhere. */
+function enterFullscreen() {
+  try {
+    const d = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
+    const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+    if (standalone || document.fullscreenElement) return;
+    const p = d.requestFullscreen ? d.requestFullscreen({ navigationUI: 'hide' }) : (d.webkitRequestFullscreen?.(), undefined);
+    Promise.resolve(p)
+      .then(() => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.('landscape'))
+      .catch(() => {});
+  } catch {
+    /* not supported: play in the browser window */
+  }
+}
+
 /** The TESSELLA emblem: nine tiles in a diamond (one per language). */
 export function emblemSVG(): string {
   const order: AreaId[] = ['kinship', 'mold', 'measure', 'twins', 'echo', 'beacon', 'contour', 'weave', 'mosaic'];
@@ -44,6 +82,10 @@ export class UI {
   private game!: Game;
   private titleTimer = 0;
   private skipIntro = false;
+  /** touch layout (phones/tablets): no keyboard hints, tap controls */
+  touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  /** the browser's install offer (Chrome, Edge, Android), kept until the player asks for it */
+  private installEvt: (Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }) | null = null;
 
   constructor() {
     this.root = h(`<div id="ui">
@@ -54,8 +96,11 @@ export class UI {
         <div id="toasts"></div>
         <div id="ach-pop"><small></small><b></b><span></span></div>
         <div id="engage-hint"></div>
+        <div id="stick"><i></i></div>
+        <div id="rotate-hint"><b>⟳</b><span></span></div>
         <div id="fps"></div>
       </div>
+      <button id="tpause" aria-label="menu">${emblemSVG()}</button>
       <div id="fade"></div>
     </div>`);
     document.body.appendChild(this.root);
@@ -65,6 +110,28 @@ export class UI {
     this.game = game;
     game.ui = this;
     this.buildScreens();
+    this.setTouch(this.touch);
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.installEvt = e as typeof this.installEvt;
+      if (this.game.state === 'menu') this.renderMenu();
+    });
+    window.addEventListener('appinstalled', () => {
+      this.installEvt = null;
+      this.toast(this.t('installed'), 'unlock');
+      if (this.game.state === 'menu') this.renderMenu();
+    });
+    $('#tpause', this.root).addEventListener('click', (e) => {
+      e.stopPropagation();
+      audio.uiClick();
+      this.pause();
+    });
+    const hudLoop = () => {
+      requestAnimationFrame(hudLoop);
+      this.updateTouchHud();
+    };
+    requestAnimationFrame(hudLoop);
+    window.addEventListener('resize', () => this.maybeRotateHint());
     window.addEventListener('keydown', (e) => this.onKey(e));
     setInterval(() => {
       const f = $('#fps');
@@ -154,7 +221,7 @@ export class UI {
   }
 
   private setTexts() {
-    $('#gate p', this.root).textContent = this.t('clickToBegin');
+    $('#gate p', this.root).textContent = this.t(this.touch ? 'tapToBegin' : 'clickToBegin');
     $('#gate small', this.root).textContent = this.t('headphones');
     $('#loading p', this.root).textContent = this.t('loading');
     this.root.querySelectorAll('.bk').forEach((b) => (b.textContent = this.t('back')));
@@ -180,6 +247,7 @@ export class UI {
       const go = () => {
         this.screens.get('gate')!.removeEventListener('click', go);
         window.removeEventListener('keydown', go);
+        if (this.touch) enterFullscreen();
         res();
       };
       this.screens.get('gate')!.addEventListener('click', go);
@@ -279,6 +347,7 @@ export class UI {
     box.append(this.menuButton(this.t('options'), () => this.renderOptions()));
     box.append(this.menuButton(this.t('achievements'), () => this.renderAchievements()));
     box.append(this.menuButton(this.t('credits'), () => this.renderCredits()));
+    if (installMode(!!this.installEvt) !== 'installed') box.append(this.menuButton(this.t('install'), () => this.install()));
     const tiles = this.screens.get('menu')!.querySelectorAll('.tile');
     tiles.forEach((t) => t.classList.add('on'));
   }
@@ -385,6 +454,43 @@ export class UI {
     setTimeout(() => ($('.io-code', el) as HTMLTextAreaElement).focus(), 50);
   }
 
+  /** "Install the game": the browser's own install prompt where it exists, clear steps elsewhere */
+  private async install() {
+    const mode = installMode(!!this.installEvt);
+    if (mode === 'prompt' && this.installEvt) {
+      const ev = this.installEvt;
+      try {
+        await ev.prompt();
+        const choice = await ev.userChoice;
+        if (choice.outcome === 'accepted') this.installEvt = null;
+      } catch {
+        /* the browser refused to show it again; fall through to the steps */
+      }
+      this.renderMenu();
+      return;
+    }
+    const key = mode === 'ios' ? 'installIos' : mode === 'elsewhere' ? 'installElsewhere' : 'installUnsupported';
+    const el = h(`<div class="screen on center dim-bg save-io" style="z-index:40"><div class="dialog" style="min-width:min(520px,92vw);max-width:min(620px,94vw)"><h2 style="font-size:28px">${this.t('install')}</h2><p class="io-help"></p><p class="io-url"></p><div class="row" style="margin-top:14px"><span class="spacer"></span><button class="btn x"></button><button class="btn primary go"></button></div></div></div>`);
+    $('.io-help', el).textContent = this.t(key);
+    $('.io-help', el).insertAdjacentHTML('afterend', `<p class="io-help" style="margin-top:-2px">${this.t('installWhy')}</p>`);
+    const url = $('.io-url', el);
+    url.textContent = INSTALL_URL;
+    url.style.display = mode === 'ios' ? 'none' : '';
+    $('.x', el).textContent = this.t('close');
+    const go = $('.go', el) as HTMLButtonElement;
+    go.textContent = this.t('openSite');
+    go.style.display = mode === 'elsewhere' ? '' : 'none';
+    go.addEventListener('click', () => {
+      try {
+        window.open(INSTALL_URL, '_blank', 'noopener');
+      } catch {
+        /* popups blocked: the address is on screen */
+      }
+    });
+    $('.x', el).addEventListener('click', () => el.remove());
+    this.root.append(el);
+  }
+
   private confirm(text: string, yes: () => void) {
     const el = h(`<div class="screen on center dim-bg" style="z-index:40"><div class="dialog" style="min-width:min(440px,92vw)"><p style="font-size:18px;line-height:1.5">${text}</p><div class="row" style="margin-top:16px"><span class="spacer"></span><button class="btn n">${this.t('no')}</button><button class="btn primary y">${this.t('yes')}</button></div></div></div>`);
     this.root.append(el);
@@ -424,6 +530,7 @@ export class UI {
     } else this.fadeTo(0, 1400);
     g.input.lock();
     g.engine.renderer.domElement.focus?.();
+    setTimeout(() => this.maybeRotateHint(), 1500);
   }
 
   // ───────────────────────── pause ─────────────────────────
@@ -479,7 +586,7 @@ export class UI {
     const el = this.screens.get('options')!;
     $('h2', el).textContent = this.t('options');
     $('h3', el).textContent = this.t('controls');
-    $('.ctl', el).textContent = this.t('controlsText');
+    $('.ctl', el).textContent = this.t(this.touch ? 'controlsTouch' : 'controlsText');
     const box = $('.opt', el);
     box.innerHTML = '';
     const row = (label: string, input: HTMLElement) => {
@@ -750,8 +857,74 @@ export class UI {
   setEngaged(on: boolean) {
     const hint = $('#engage-hint', this.root);
     hint.classList.toggle('on', on);
-    hint.innerHTML = on ? `<span>Z ↺</span><span>R ⟲</span><span>␣ ◎</span><span>Esc ✕</span>` : '';
+    hint.innerHTML = '';
+    if (on && this.touch) {
+      // touch: three quiet glyphs (undo, clear, leave) + drum spin when the panel is a drum
+      const g = this.game;
+      const drum = g.pm.engaged?.view.mount === 'drum';
+      const btn = (glyph: string, fn: () => void, cls = '') => {
+        const b = h(`<button class="tb ${cls}">${glyph}</button>`);
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          fn();
+        });
+        hint.append(b);
+      };
+      if (drum) btn('‹', () => g.pm.spinDrum(-0.25), 'spin');
+      btn('↺', () => g.pm.undo());
+      btn('⟲', () => g.pm.reset());
+      btn('✕', () => g.pm.leave(), 'leave');
+      if (drum) btn('›', () => g.pm.spinDrum(0.25), 'spin');
+    } else if (on) hint.innerHTML = `<span>Z ↺</span><span>R ⟲</span><span>␣ ◎</span><span>Esc ✕</span>`;
     $('#crosshair', this.root).classList.toggle('hidden', on);
+  }
+
+  /** switch between the keyboard/mouse and the touch layout */
+  setTouch(on: boolean) {
+    this.touch = on;
+    this.root.classList.toggle('touch', on);
+    $('#gate p', this.root).textContent = this.t(on ? 'tapToBegin' : 'clickToBegin');
+    const ctl = this.screens.get('options')?.querySelector('.ctl');
+    if (ctl) ctl.textContent = this.t(on ? 'controlsTouch' : 'controlsText');
+  }
+
+  /** thumb-stick ring and the pause emblem (touch only) */
+  private updateTouchHud() {
+    if (!this.touch || !this.game) return;
+    const g = this.game;
+    const st = g.input.stick;
+    const el = $('#stick', this.root);
+    if (st && g.state === 'play' && !g.pm.engaged) {
+      const R = g.input.stickRadius;
+      let dx = st.x - st.ox, dy = st.y - st.oy;
+      const l = Math.hypot(dx, dy);
+      if (l > R) {
+        dx *= R / l;
+        dy *= R / l;
+      }
+      el.style.transform = `translate(${st.ox}px, ${st.oy}px)`;
+      ($('i', el) as HTMLElement).style.transform = `translate(${dx}px, ${dy}px)`;
+      el.classList.add('on');
+    } else el.classList.remove('on');
+    const showPause = g.state === 'play' && !g.pm.engaged && !g.pm.controllingCamera && !$('#hud', this.root).classList.contains('cinematic');
+    $('#tpause', this.root).classList.toggle('on', showPause);
+  }
+
+  /** phones held upright get a gentle hint that the island is meant to be seen sideways */
+  private rotateShown = 0;
+  private maybeRotateHint() {
+    if (!this.touch || !this.game || this.game.state !== 'play') return;
+    const portrait = window.innerHeight > window.innerWidth * 1.1;
+    const el = $('#rotate-hint', this.root);
+    if (!portrait) {
+      el.classList.remove('on');
+      return;
+    }
+    if (performance.now() - this.rotateShown < 60000) return;
+    this.rotateShown = performance.now();
+    $('span', el).textContent = this.t('rotateHint');
+    el.classList.add('on');
+    setTimeout(() => el.classList.remove('on'), 5000);
   }
 
   setCinematic(on: boolean) {

@@ -622,9 +622,10 @@ export class ConstellationSystem {
         restColors.push(new THREE.Color('#9b9284'));
         starPos.push(h.p.clone());
       } else {
-        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false, fog: false }));
+        // barely there until the vision completes: a speck you would take for a far bird or a star
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: 0xffffff, transparent: true, opacity: 0.22, depthWrite: false, fog: false }));
         sp.position.copy(h.p);
-        sp.scale.setScalar(h.dist * 0.006);
+        sp.scale.setScalar(h.dist * 0.0048);
         g.add(sp);
         specks.push(sp);
         vis.push({ kind: 'sky', idx: specks.length - 1 });
@@ -974,7 +975,7 @@ export class ConstellationSystem {
     if (v.kind === 'sky') {
       const m = it.specks[v.idx].material as THREE.SpriteMaterial;
       m.color.copy(c).multiplyScalar(glow > 0 ? 1 : 0.9);
-      m.opacity = glow > 0 ? 1 : 0.55;
+      m.opacity = glow > 0 ? 1 : it.revealed ? 0.5 : 0.22;
       return;
     }
     const im = v.kind === 'prop' ? it.props! : v.kind === 'fruit' ? it.fruits! : it.discs!;

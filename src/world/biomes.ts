@@ -93,7 +93,7 @@ export const grassRules: GrassRules = {
     return d;
   },
   flowerChance(x, z) {
-    return 0.05 + 0.4 * w('weave', x, z, 50, 90) + 0.12 * w('twins', x, z, 50, 100) + 0.08 * w('contour', x, z, 50, 90) + 0.06 * w('hub', x, z, 40, 80);
+    return 0.05 + 0.4 * w('weave', x, z, 50, 90) + 0.3 * w('twins', x, z, 75, 120) + 0.08 * w('contour', x, z, 50, 90) + 0.06 * w('hub', x, z, 40, 80);
   },
   flower(x, z) {
     const r = (Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;

@@ -28,7 +28,9 @@ async function sheet(browser, name, info) {
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.setDefaultTimeout(600000);
-  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&at=8,52,180,0&p=0.45', { waitUntil: 'load' });
+  // ONLY=id,id… computes just those pictures' places (a quick look while working on them)
+  const only = process.env.ONLY ? `&starsCompute&starsOnly=${process.env.ONLY}` : '';
+  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&at=8,52,180,0&p=0.45' + only, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true && window.__game?.state === 'play');
   await page.evaluate(() => window.__game.stars.placeAll());
   await page.evaluate(() => {
@@ -42,6 +44,7 @@ async function sheet(browser, name, info) {
     const items = window.__game.stars.items;
     // names (e.g. "Owl,Whale") pick those figures; area ids pick a big one from each area;
     // "auto" picks a varied set: drawn mostly on walls, on trees, with a cloud, on rocks, on paving
+    if (areas[0] === 'all') return items.map((_, i) => i);
     if (areas[0] === 'auto') {
       const used = new Set(), areasUsed = new Set(), out = [];
       const share = (it, k) => { const tot = Object.values(it.drawnOn).reduce((a, b) => a + b, 0) || 1; return (it.drawnOn[k] || 0) / tot; };

@@ -1,62 +1,66 @@
 /**
- * What the lines of a constellation are made of, in the scenery: fallen branches and driftwood
- * lying on the ground (with twigs, and dead leaves in the autumn wood), cracks in walls, paving
- * and rocks, ivy climbing walls, vines around trunks. Each piece lies exactly on the surface you
- * see from the picture's spot, so from there the pieces join into the line.
+ * What the lines of a constellation are made of: the very stuff of the place they cross, added
+ * the way that place already is.
+ *
+ *   a meadow with flowers .. some of its flowers (of a colour that meadow has)
+ *   plain grass ............ tufts of drier grass
+ *   the autumn wood floor .. fallen leaves of another of its colours
+ *   sand ................... low ridges of sand
+ *   stony ground ........... stones like the ones lying around
+ *   a lake ................. reeds
+ *   a tree's crown ......... leaves of another of its own shades
+ *   a dead tree ............ its bare branches
+ *   a ruin, paving, a rock . cracks (and moss)
+ *
+ * Every element lies exactly where it is seen from the picture's spot, so from there they join
+ * into the line; anywhere else they are just flowers, leaves, sand, stones, reeds and cracks.
  */
 import * as THREE from 'three';
+import { BLOSSOM_COLORS, PALETTE } from '../world/vegetation';
+
+export type PieceKind = 'ground' | 'floor' | 'wall' | 'tree' | 'rock' | 'water';
 
 /** one surface's stretch of a line, ready to dress */
 export interface Piece {
-  kind: 'ground' | 'floor' | 'wall' | 'tree' | 'rock';
-  /** points on the surface, as seen from the eye (already joined to the neighbouring pieces) */
-  pts: THREE.Vector3[];
+  kind: PieceKind;
+  /** directions from the eye and distances to the surface, along the stretch */
   dirs: THREE.Vector3[];
   dists: number[];
-  /** the light's sweep parameter (0..1 over the whole picture) and "cut" flags, per point */
+  /** the light's sweep parameter (0..1 over the whole picture) and "cut" flags, per sample */
   ts: number[];
   cuts: number[];
-  /** the surface normal (facing the eye); for the ground, per point from the terrain */
+  /** the surface normal (facing the eye) */
   n: THREE.Vector3;
-  normals?: THREE.Vector3[];
   /** what the ground is (grass, sand, leaves, stone, gravel) */
   ground?: string;
-  /** on a tree crown: the wind there (phase, reach, the tree's turn), so the vine sways with it */
+  /** on a tree: the wind there (phase, reach, the tree's turn), so what grows there sways with it */
   wind?: [number, number, number] | null;
+  /** the surface's own colour (sRGB hex) */
+  color?: number;
+  /** on a tree: its species */
+  species?: string;
 }
 
 export interface DressCtx {
   eye: THREE.Vector3;
-  /** ground height (to rest branches on the ground) */
   heightAt(x: number, z: number): number;
-  stony: boolean;
-  sandy: boolean;
+  waterAt(x: number, z: number): number;
+  /** the colour of the meadow's flowers that draws here (one the meadow has), or null: no flowers here */
+  flowerAt(x: number, z: number): string | null;
+  /** the ground's own colour */
+  groundColor(x: number, z: number): THREE.Color;
+  area: string;
   rnd: () => number;
-  /** thickest a piece may be (metres): pieces far from the spot are thick, but not logs */
-  maxR?: number;
 }
 
-/** sizes, as fractions of the distance from the spot (i.e. angles in radians) */
-const BRANCH_R = 0.0036;
-const CROWN_R = 0.0039;
-const STEM_R = 0.0021;
-const CRACK_W = 0.0036;
-const LEAF = 0.0105;
-
-const C = (hex: string) => new THREE.Color(hex);
-const WOOD: Record<string, THREE.Color> = {
-  sand: C('#a39680'),
-  leaves: C('#4b3626'),
-  stone: C('#43372c'),
-  gravel: C('#57412f'),
-  grass: C('#5a4331'),
-};
-const CRACK = C('#342d27');
-const ROCK_CRACK = C('#30332b');
-const IVY_STEM = C('#35472a');
-const IVY = [C('#3f6b2e'), C('#4d7c34'), C('#355f27'), C('#5b8a3b'), C('#46702f')];
-const VINE = C('#3a2e22');
-const AUTUMN = [C('#c4612a'), C('#d9902f'), C('#a8432a'), C('#e0b24a'), C('#b8562c')];
+const C = (hex: string | number) => new THREE.Color(hex);
+const UP = new THREE.Vector3(0, 1, 0);
+const STEM = C('#4d7a33');
+const REED = [C('#6f8a3a'), C('#7f9844'), C('#5f7a33')];
+const CATTAIL = C('#6b4a2c');
+const FALLEN = ['#c9412a', '#e2662f', '#f0a033', '#f2c14e', '#d9572b'];
+const DRY = C('#c9b45a');
+const MOSS = [C('#5f7f34'), C('#6d8c3a'), C('#55732e')];
 
 export class StrokeBuilder {
   pos: number[] = [];
@@ -65,25 +69,37 @@ export class StrokeBuilder {
   tt: number[] = [];
   cut: number[] = [];
   wnd: number[] = [];
+  fade: number[] = [];
   /** the wind of what is being dressed now (0 reach: still) */
   wind: [number, number, number] = [0, 0, 0];
+  /** light sweep / cut of what is being added now; `far` 1: small things that fade far away like the meadow's own */
+  t = 0;
+  c = 0;
+  far = 0;
   get count() {
     return this.pos.length / 3;
   }
 
-  private v(p: THREE.Vector3, n: THREE.Vector3, c: THREE.Color, t: number, cut: number) {
+  private v(p: THREE.Vector3, n: THREE.Vector3, col: THREE.Color) {
     this.pos.push(p.x, p.y, p.z);
     this.nrm.push(n.x, n.y, n.z);
-    this.col.push(c.r, c.g, c.b);
-    this.tt.push(t);
-    this.cut.push(cut);
+    this.col.push(col.r, col.g, col.b);
+    this.tt.push(this.t);
+    this.cut.push(this.c);
     this.wnd.push(this.wind[0], this.wind[1], this.wind[2]);
+    this.fade.push(this.far);
   }
 
-  /** a round piece (branch, root, stem, twig): rings around pts with radius r[i] */
-  tube(pts: THREE.Vector3[], r: number[], base: THREE.Color, t: number[], cut: number[], sides = 6, shade = 0.3) {
+  tri(a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3, col: THREE.Color, n?: THREE.Vector3) {
+    const nn = n ?? new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)).normalize();
+    this.v(a, nn, col);
+    this.v(b, nn, col);
+    this.v(c, nn, col);
+  }
+
+  /** a round piece (a branch, a ridge of sand when `flat` < 1): rings around pts with radius r[i] */
+  tube(pts: THREE.Vector3[], r: number[], base: THREE.Color, t: number[], cut: number[], sides = 6, shade = 0.3, flat = 1) {
     if (pts.length < 2) return;
-    const up = new THREE.Vector3(0, 1, 0);
     const rings: THREE.Vector3[][] = [];
     let prevS: THREE.Vector3 | null = null;
     for (let i = 0; i < pts.length; i++) {
@@ -91,7 +107,7 @@ export class StrokeBuilder {
       const tan = b.clone().sub(a);
       if (tan.lengthSq() < 1e-12) tan.set(1, 0, 0);
       tan.normalize();
-      let s = new THREE.Vector3().crossVectors(tan, up);
+      let s = new THREE.Vector3().crossVectors(tan, UP);
       if (s.lengthSq() < 1e-6) s = prevS ? prevS.clone() : new THREE.Vector3(1, 0, 0);
       s.normalize();
       prevS = s;
@@ -99,7 +115,7 @@ export class StrokeBuilder {
       const ring: THREE.Vector3[] = [];
       for (let k = 0; k < sides; k++) {
         const ang = (k / sides) * Math.PI * 2;
-        ring.push(s.clone().multiplyScalar(Math.cos(ang)).addScaledVector(u2, Math.sin(ang)));
+        ring.push(s.clone().multiplyScalar(Math.cos(ang)).addScaledVector(u2, Math.sin(ang) * flat));
       }
       rings.push(ring);
     }
@@ -107,16 +123,17 @@ export class StrokeBuilder {
     for (let i = 0; i < pts.length - 1; i++) {
       for (let k = 0; k < sides; k++) {
         const k2 = (k + 1) % sides;
-        // counter-clockwise seen from outside
         const quad: [number, number][] = [[i, k], [i + 1, k], [i + 1, k2], [i, k2]];
         for (const qi of [0, 1, 2, 0, 2, 3]) {
           const [ii, kk] = quad[qi];
-          const n = rings[ii][kk];
-          const p = pts[ii].clone().addScaledVector(n, r[ii]);
-          // bark/moss: lighter on top, a little variation along the piece
-          const v = 0.86 + shade * Math.max(0, n.y) - 0.12 * Math.max(0, -n.y) + 0.08 * (((ii * 7 + kk * 3) % 5) / 4 - 0.5);
+          const off = rings[ii][kk];
+          const n = off.clone().normalize();
+          const p = pts[ii].clone().addScaledVector(off, r[ii]);
+          const v = 0.86 + shade * Math.max(0, n.y) - 0.12 * Math.max(0, -n.y) + 0.06 * (((ii * 7 + kk * 3) % 5) / 4 - 0.5);
           c.copy(base).multiplyScalar(v);
-          this.v(p, n, c, t[ii], cut[ii]);
+          this.t = t[ii];
+          this.c = cut[ii];
+          this.v(p, n, c);
         }
       }
     }
@@ -135,168 +152,387 @@ export class StrokeBuilder {
       const q = [pts[i].clone().sub(sides[i]), pts[i + 1].clone().sub(sides[i + 1]), pts[i + 1].clone().add(sides[i + 1]), pts[i].clone().add(sides[i])];
       const qi2 = [i, i + 1, i + 1, i];
       for (const k of [0, 1, 2, 0, 2, 3]) {
-        c.copy(base).multiplyScalar(0.9 + 0.2 * (((qi2[k] * 5) % 3) / 2));
-        this.v(q[k], n, c, t[qi2[k]], cut[qi2[k]]);
+        c.copy(base).multiplyScalar(0.92 + 0.16 * (((qi2[k] * 5) % 3) / 2));
+        this.t = t[qi2[k]];
+        this.c = cut[qi2[k]];
+        this.v(q[k], n, c);
       }
     }
   }
 
-  /** a leaf lying on a surface: a pointed oval, `along` its axis */
-  leaf(center: THREE.Vector3, n: THREE.Vector3, along: THREE.Vector3, size: number, color: THREE.Color, t: number, cut: number, width = 0.3) {
-    // a rounded leaf: a fan around its middle, a little pointed at the tip
+  /** a rounded leaf lying on a surface (normal n), `along` its axis */
+  leaf(center: THREE.Vector3, n: THREE.Vector3, along: THREE.Vector3, size: number, color: THREE.Color, width = 0.42) {
     const a = along.clone().normalize().multiplyScalar(size * 0.5);
     const s = new THREE.Vector3().crossVectors(n, along).normalize().multiplyScalar(size * width);
     const ring: THREE.Vector3[] = [];
-    const K = 8;
+    const K = 7;
     for (let k = 0; k < K; k++) {
       const ang = (k / K) * Math.PI * 2;
       const tip = Math.max(0, Math.cos(ang)) ** 3 * 0.25;
       ring.push(center.clone().addScaledVector(a, Math.cos(ang) * (1 + tip)).addScaledVector(s, Math.sin(ang) * (1 - 0.15 * Math.cos(ang))));
     }
-    const mid = color.clone().multiplyScalar(1.08), edge = color.clone().multiplyScalar(0.86);
+    const mid = color.clone().multiplyScalar(1.06), edge = color.clone().multiplyScalar(0.88);
     for (let k = 0; k < K; k++) {
-      this.v(center, n, mid, t, cut);
-      this.v(ring[k], n, edge, t, cut);
-      this.v(ring[(k + 1) % K], n, edge, t, cut);
+      this.v(center, n, mid);
+      this.v(ring[k], n, edge);
+      this.v(ring[(k + 1) % K], n, edge);
     }
   }
 
-  geometry(): THREE.BufferGeometry | null {
-    if (!this.pos.length) return null;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nrm, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
-    g.setAttribute('aGlow', new THREE.Float32BufferAttribute(new Float32Array(this.pos.length), 3));
-    g.setAttribute('aT', new THREE.Float32BufferAttribute(this.tt, 1));
-    g.setAttribute('aCut', new THREE.Float32BufferAttribute(this.cut, 1));
-    g.setAttribute('aWind', new THREE.Float32BufferAttribute(this.wnd, 3));
-    g.computeBoundingSphere();
-    return g;
+  /** a low-poly lump (leaves, a stone, moss), flat-shaded like the island */
+  blob(c: THREE.Vector3, rx: number, ry: number, rz: number, color: THREE.Color, rnd: () => number, spin = 0) {
+    const pa = BLOB.attributes.position as THREE.BufferAttribute;
+    const jit = Array.from({ length: 12 }, () => 0.84 + rnd() * 0.3);
+    const cs = Math.cos(spin), sn = Math.sin(spin);
+    const vtx: THREE.Vector3[] = [];
+    for (let i = 0; i < pa.count; i++) {
+      const k = jit[BLOB_KEY[i]];
+      const x = pa.getX(i) * rx * k, y = pa.getY(i) * ry * k, z = pa.getZ(i) * rz * k;
+      vtx.push(new THREE.Vector3(c.x + x * cs + z * sn, c.y + y, c.z - x * sn + z * cs));
+    }
+    const col = new THREE.Color();
+    for (let i = 0; i < vtx.length; i += 3) {
+      const a = vtx[i], b = vtx[i + 1], d = vtx[i + 2];
+      const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(d, a)).normalize();
+      col.copy(color).multiplyScalar(0.86 + 0.2 * Math.max(0, n.y) + 0.06 * (rnd() - 0.5));
+      this.v(a, n, col);
+      this.v(b, n, col);
+      this.v(d, n, col);
+    }
+  }
+
+  /** a meadow flower like the island's own: a thin stem and a flat head of five petals */
+  flower(base: THREE.Vector3, head: THREE.Vector3, radius: number, petal: THREE.Color, face: THREE.Vector3, rnd: () => number) {
+    let side = new THREE.Vector3().crossVectors(face, UP);
+    if (side.lengthSq() < 1e-6) side = new THREE.Vector3(1, 0, 0);
+    side.normalize();
+    const w = 0.012;
+    const sn = side.clone().cross(UP).normalize();
+    this.tri(base.clone().addScaledVector(side, -w), base.clone().addScaledVector(side, w), head, STEM, sn);
+    const u = new THREE.Vector3().crossVectors(face, side).normalize();
+    const rot = rnd() * Math.PI;
+    const p = (ang: number, rad: number) => head.clone().addScaledVector(side, Math.cos(ang) * rad).addScaledVector(u, Math.sin(ang) * rad);
+    const c0 = head.clone().addScaledVector(face, radius * 0.15);
+    for (let i = 0; i < 5; i++) {
+      const a0 = rot + (i / 5) * Math.PI * 2, a1 = a0 + Math.PI / 5, a2 = a0 + (2 * Math.PI) / 5;
+      this.tri(c0, p(a0, radius * 0.64), p(a1, radius), petal, face);
+      this.tri(c0, p(a1, radius), p(a2, radius * 0.64), petal, face);
+    }
+  }
+
+  /** a blossom like the blossom trees' own (five rounded petals, a yellow centre), facing `face` */
+  blossom(c: THREE.Vector3, face: THREE.Vector3, size: number, petal: THREE.Color, rnd: () => number) {
+    let side = new THREE.Vector3().crossVectors(face, UP);
+    if (side.lengthSq() < 1e-6) side = new THREE.Vector3(1, 0, 0);
+    side.normalize();
+    const u = new THREE.Vector3().crossVectors(face, side).normalize();
+    const rot = rnd() * Math.PI * 2;
+    const p = (ang: number, rad: number) => c.clone().addScaledVector(side, Math.cos(ang) * rad * size).addScaledVector(u, Math.sin(ang) * rad * size);
+    for (let i = 0; i < 5; i++) {
+      const a = rot + (i / 5) * Math.PI * 2;
+      this.tri(c, p(a, 0.5), p(a - 0.42, 0.31), petal, face);
+      this.tri(c, p(a + 0.42, 0.31), p(a, 0.5), petal, face);
+    }
+    const lift = face.clone().multiplyScalar(size * 0.01);
+    this.tri(p(rot, 0.09).add(lift), p(rot + 4.2, 0.09).add(lift), p(rot + 2.1, 0.09).add(lift), C('#f2c95c'), face);
+  }
+
+  /** a tuft of grass blades (tips at height `top`) */
+  tuft(base: THREE.Vector3, top: number, color: THREE.Color, rnd: () => number) {
+    for (let k = 0; k < 5; k++) {
+      const a = rnd() * Math.PI * 2;
+      const w = 0.02 + rnd() * 0.015;
+      const lean = 0.06 + rnd() * 0.14;
+      const dx = Math.cos(a), dz = Math.sin(a);
+      const b0 = base.clone().add(new THREE.Vector3(-dz * w, 0, dx * w)), b1 = base.clone().add(new THREE.Vector3(dz * w, 0, -dx * w));
+      const tip = base.clone().add(new THREE.Vector3(dx * lean, (top - base.y) * (0.75 + rnd() * 0.25), dz * lean));
+      this.tri(b0, b1, tip, color.clone().multiplyScalar(0.9 + rnd() * 0.15), new THREE.Vector3(dx, 0.4, dz).normalize());
+    }
+  }
+
+  /** reeds standing in shallow water (some with a cattail) */
+  reeds(base: THREE.Vector3, top: number, rnd: () => number) {
+    for (let k = 0; k < 4; k++) {
+      const a = rnd() * Math.PI * 2;
+      const w = 0.018;
+      const dx = Math.cos(a), dz = Math.sin(a);
+      const o = new THREE.Vector3((rnd() - 0.5) * 0.12, 0, (rnd() - 0.5) * 0.12);
+      const b0 = base.clone().add(o).add(new THREE.Vector3(-dz * w, 0, dx * w)), b1 = base.clone().add(o).add(new THREE.Vector3(dz * w, 0, -dx * w));
+      const h = (top - base.y) * (0.8 + rnd() * 0.25);
+      const tip = base.clone().add(o).add(new THREE.Vector3(dx * 0.05, h, dz * 0.05));
+      this.tri(b0, b1, tip, REED[Math.floor(rnd() * REED.length)], new THREE.Vector3(dx, 0.3, dz).normalize());
+      if (k === 0 && rnd() < 0.5) this.blob(tip.clone().addScaledVector(UP, -0.1), 0.025, 0.09, 0.025, CATTAIL, rnd);
+    }
   }
 }
 
-/** where on its ray a round piece of radius r rests on the ground (it lies on it, not in it) */
-function restOnGround(ctx: DressCtx, dir: THREE.Vector3, dist: number, r: number): number {
+// a unit icosahedron (non-indexed) and, per corner, which of its 12 points it is (to bend them alike)
+const BLOB = new THREE.IcosahedronGeometry(1, 0);
+const BLOB_KEY: number[] = (() => {
+  const pa = BLOB.attributes.position as THREE.BufferAttribute;
+  const pts: THREE.Vector3[] = [];
+  const out: number[] = [];
+  for (let i = 0; i < pa.count; i++) {
+    const v = new THREE.Vector3(pa.getX(i), pa.getY(i), pa.getZ(i));
+    let k = pts.findIndex((q) => q.distanceToSquared(v) < 1e-6);
+    if (k < 0) {
+      k = pts.length;
+      pts.push(v);
+    }
+    out.push(k);
+  }
+  return out;
+})();
+
+export function finishGeometry(b: StrokeBuilder): THREE.BufferGeometry | null {
+  if (!b.pos.length) return null;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(b.pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(b.nrm, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(b.col, 3));
+  g.setAttribute('aGlow', new THREE.Float32BufferAttribute(new Float32Array(b.pos.length), 3));
+  g.setAttribute('aT', new THREE.Float32BufferAttribute(b.tt, 1));
+  g.setAttribute('aCut', new THREE.Float32BufferAttribute(b.cut, 1));
+  g.setAttribute('aWind', new THREE.Float32BufferAttribute(b.wnd, 3));
+  g.setAttribute('aFade', new THREE.Float32BufferAttribute(b.fade, 1));
+  g.computeBoundingSphere();
+  return g;
+}
+
+/** where on its ray a point `h` above the ground (or water) is: heads of flowers, tops of stones… */
+function overGround(ctx: DressCtx, dir: THREE.Vector3, dist: number, h: number, water = false): number {
   const e = ctx.eye;
-  const above = (t: number) => e.y + dir.y * t - ctx.heightAt(e.x + dir.x * t, e.z + dir.z * t);
-  let lo = Math.max(0.6, dist * 0.55), hi = dist;
-  if (above(lo) < r) return lo; // rising ground in front: as close as allowed
-  for (let k = 0; k < 14; k++) {
+  const floor = (x: number, z: number) => (water ? Math.max(ctx.heightAt(x, z), ctx.waterAt(x, z)) : ctx.heightAt(x, z));
+  const above = (t: number) => e.y + dir.y * t - floor(e.x + dir.x * t, e.z + dir.z * t);
+  let lo = Math.max(0.6, dist * 0.45), hi = dist;
+  if (above(lo) < h) return lo;
+  for (let k = 0; k < 16; k++) {
     const mid = (lo + hi) / 2;
-    if (above(mid) > r) lo = mid;
+    if (above(mid) > h) lo = mid;
     else hi = mid;
   }
   return lo;
 }
 
-/** where on its ray a piece of thickness r rests on a flat surface (normal n) */
-function restOnPlane(dir: THREE.Vector3, dist: number, n: THREE.Vector3, r: number, minC = 0.1): number {
+/** where on its ray something of thickness r rests on a flat surface (normal n) */
+function onPlane(dir: THREE.Vector3, dist: number, n: THREE.Vector3, r: number, minC = 0.12): number {
   const c = Math.max(minC, Math.abs(n.dot(dir)));
-  return Math.max(dist * 0.55, dist - (r + 0.006 * dist) / c);
+  return Math.max(dist * 0.5, dist - (r + 0.006 * dist) / c);
 }
 
 /**
- * Dress one piece. Returns nothing; adds to the builder. `ends` says whether each end of the piece
- * is a free end (the line jumps to another depth there) — those taper a little, like real wood.
+ * Walk along a piece, one element after another, each placed where the line is (as seen from the
+ * spot), spaced by its own apparent size so they touch; `put` places one (direction, distance to
+ * the surface, its size, the direction across the line).
  */
-export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx, ends: [boolean, boolean]): { pts: THREE.Vector3[]; r: number[] } | null {
-  const N = pc.pts.length;
-  if (N < 2) return null;
+function walk(pc: Piece, ctx: DressCtx, b: StrokeBuilder, size: (d: number) => number, gap: number, put: (dir: THREE.Vector3, dist: number, s: number, across: THREE.Vector3) => void) {
+  const N = pc.dirs.length;
+  const seg: number[] = [0];
+  for (let i = 1; i < N; i++) seg.push(seg[i - 1] + pc.dirs[i - 1].angleTo(pc.dirs[i]));
+  const L = seg[N - 1];
+  const rnd = ctx.rnd;
+  let a = 0, i = 0;
+  for (let guard = 0; guard < 4000 && a <= L + 1e-9; guard++) {
+    while (i < N - 2 && seg[i + 1] < a) i++;
+    const j = Math.min(N - 1, i + 1);
+    const f = seg[j] > seg[i] ? Math.min(1, Math.max(0, (a - seg[i]) / (seg[j] - seg[i]))) : 0;
+    const dir = pc.dirs[i].clone().lerp(pc.dirs[j], f).normalize();
+    const dist = pc.dists[i] + (pc.dists[j] - pc.dists[i]) * f;
+    b.t = pc.ts[i] + (pc.ts[j] - pc.ts[i]) * f;
+    b.c = pc.cuts[i];
+    const s = size(dist);
+    const across = new THREE.Vector3().crossVectors(dir, pc.dirs[j].clone().sub(pc.dirs[i]));
+    if (across.lengthSq() < 1e-14) across.crossVectors(dir, UP);
+    across.normalize();
+    put(dir, dist, s, across);
+    a += (s / dist) * gap * (0.8 + rnd() * 0.4);
+  }
+}
+
+/** a direction a little across the line (as seen from the spot): things grow in a loose band */
+function spread(dir: THREE.Vector3, across: THREE.Vector3, ang: number): THREE.Vector3 {
+  return dir.clone().addScaledVector(across, ang).normalize();
+}
+
+/** of a set of colours, the one farthest from `c` (another of the thing's own shades) */
+function otherShade(colors: string[], c: THREE.Color): THREE.Color {
+  let best = C(colors[0]), bd = -1;
+  for (const h of colors) {
+    const k = C(h);
+    const d = (k.r - c.r) ** 2 + (k.g - c.g) ** 2 + (k.b - c.b) ** 2;
+    if (d > bd) {
+      bd = d;
+      best = k;
+    }
+  }
+  return best;
+}
+
+/** Dress one piece of a line with the stuff of the place it crosses. */
+export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx): void {
+  const N = pc.dirs.length;
+  if (N < 2) return;
   const { eye, rnd } = ctx;
-  const maxR = ctx.maxR ?? 0.11;
   b.wind = pc.wind ?? [0, 0, 0];
-  const along = (pts: THREE.Vector3[], i: number) => pts[Math.min(pts.length - 1, i + 1)].clone().sub(pts[Math.max(0, i - 1)]).normalize();
-  const taper = (i: number) => {
-    const f = N <= 2 ? 0.5 : i / (N - 1);
-    return (ends[0] ? 0.72 + 0.28 * Math.min(1, f * 4) : 1) * (ends[1] ? 0.72 + 0.28 * Math.min(1, (1 - f) * 4) : 1);
-  };
-  const c = Math.abs(pc.n.dot(pc.dirs[Math.floor(N / 2)]));
+  b.far = 0;
+  const mid = eye.clone().addScaledVector(pc.dirs[Math.floor(N / 2)], pc.dists[Math.floor(N / 2)]);
+  const midC = Math.abs(pc.n.dot(pc.dirs[Math.floor(N / 2)]));
+  const hitCol = C(pc.color ?? 0x7a7a6a);
 
-  if (pc.kind === 'ground' || (pc.kind === 'floor' && c < 0.3) || (pc.kind === 'rock' && c < 0.3)) {
-    // a fallen branch, a root, driftwood on the sand
-    const wood = pc.kind === 'ground' ? WOOD[pc.ground ?? 'grass'] ?? WOOD.grass : WOOD.gravel;
-    const r = pc.dists.map((d, i) => Math.min(maxR, d * BRANCH_R) * taper(i));
-    const pts = pc.dirs.map((dir, i) => {
-      const t = pc.kind === 'ground' ? restOnGround(ctx, dir, pc.dists[i], r[i]) : restOnPlane(dir, pc.dists[i], pc.n, r[i]);
-      return eye.clone().addScaledVector(dir, t);
-    });
-    const rr = pts.map((p, i) => Math.min(maxR, p.distanceTo(eye) * BRANCH_R) * taper(i));
-    b.tube(pts, rr, wood, pc.ts, pc.cuts, 6, 0.34);
-    // a twig now and then, lying on the ground beside it
-    for (let i = 1; i < N - 1; i++) {
-      if (rnd() > 0.2) continue;
-      const nrm = pc.normals?.[i] ?? pc.n;
-      const tan = along(pts, i);
-      const side = new THREE.Vector3().crossVectors(nrm, tan).normalize().multiplyScalar(rnd() < 0.5 ? 1 : -1);
-      const dirT = tan.clone().multiplyScalar(rnd() < 0.5 ? 1.1 : -1.1).add(side).normalize();
-      const len = rr[i] * (4 + rnd() * 3);
-      const p0 = pts[i], p1 = p0.clone().addScaledVector(dirT, len * 0.5).addScaledVector(nrm, rr[i] * 0.1), p2 = p0.clone().addScaledVector(dirT, len).addScaledVector(nrm, -rr[i] * 0.3);
-      b.tube([p0, p1, p2], [rr[i] * 0.4, rr[i] * 0.28, rr[i] * 0.12], wood, [pc.ts[i], pc.ts[i], pc.ts[i]], [pc.cuts[i], pc.cuts[i], pc.cuts[i]], 4, 0.3);
-    }
-    // dead leaves around branches in the autumn wood
-    if (pc.ground === 'leaves') {
-      for (let i = 0; i < N; i++) {
-        for (let k = 0; k < 2; k++) {
-          if (rnd() > 0.5) continue;
-          const nrm = pc.normals?.[i] ?? pc.n;
-          const tan = along(pts, i);
-          const side = new THREE.Vector3().crossVectors(nrm, tan).normalize();
-          const p = pts[i].clone().addScaledVector(side, (rnd() - 0.5) * rr[i] * 8).addScaledVector(tan, (rnd() - 0.5) * rr[i] * 6);
-          p.y = ctx.heightAt(p.x, p.z) + 0.02;
-          const ax = tan.clone().applyAxisAngle(nrm, rnd() * Math.PI * 2);
-          b.leaf(p, nrm, ax, rr[i] * (3 + rnd() * 2), AUTUMN[Math.floor(rnd() * AUTUMN.length)], pc.ts[i], pc.cuts[i], 0.4);
+  if (pc.kind === 'ground') {
+    const g = pc.ground ?? 'grass';
+    const flower = g === 'grass' || g === 'leaves' ? ctx.flowerAt(mid.x, mid.z) : null;
+    if (flower) {
+      // a meadow in flower: some of its flowers (one of its colours), leaning a little towards you
+      const petal = C(flower);
+      b.far = 1;
+      walk(pc, ctx, b, () => 0.24, 0.95, (dir0, dist, s0, across) => {
+        const n = rnd() < 0.3 ? 2 : 1;
+        for (let k = 0; k < n; k++) {
+          const s = 0.8 + rnd() * 0.6;
+          const dir = spread(dir0, across, (rnd() - 0.5) * 1.2 * (s0 / dist));
+          const h = 0.42 * s * (0.85 + rnd() * 0.4);
+          const head = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, h));
+          const base = new THREE.Vector3(head.x, ctx.heightAt(head.x, head.z) - 0.02, head.z);
+          const face = UP.clone().multiplyScalar(1.7).add(eye.clone().sub(head).setY(0).normalize()).add(new THREE.Vector3(rnd() - 0.5, 0, rnd() - 0.5).multiplyScalar(0.5)).normalize();
+          b.flower(base, head, 0.11 * s, petal.clone().multiplyScalar(0.95 + rnd() * 0.08), face, rnd);
         }
-      }
+      });
+      return;
     }
-    return { pts, r: rr };
-  }
-
-  const crown = pc.kind === 'tree' && !!pc.wind && pc.wind[1] > 0.05;
-  if (crown) {
-    // a thin dead branch caught across the crown (it sways with it)
-    const r = pc.dists.map((d, i) => Math.min(maxR * 0.8, d * CROWN_R) * taper(i));
-    const pts = pc.dirs.map((dir, i) => eye.clone().addScaledVector(dir, restOnPlane(dir, pc.dists[i], pc.n, r[i] + 0.07, 0.3)));
-    b.tube(pts, r, VINE, pc.ts, pc.cuts, 5, 0.3);
-    return null;
-  }
-
-  if (pc.kind === 'tree' || (pc.kind === 'wall' && !(ctx.stony || ctx.sandy) && rnd() < 0.8) || (pc.kind === 'wall' && c < 0.3)) {
-    // ivy on a wall, a vine around a trunk: a stem in a band of leaves
-    const r = pc.dists.map((d, i) => Math.min(maxR * 0.6, d * STEM_R) * taper(i));
-    const pts = pc.dirs.map((dir, i) => eye.clone().addScaledVector(dir, restOnPlane(dir, pc.dists[i], pc.n, r[i], 0.1)));
-    b.tube(pts, r, IVY_STEM, pc.ts, pc.cuts, 5, 0.25);
-    for (let i = 0; i < N - 1; i++) {
-      for (let k = 0; k < 3; k++) {
-        const f = (k + rnd() * 0.8) / 3;
-        const p0 = pts[i].clone().lerp(pts[i + 1], f);
-        const d = pc.dists[i] + (pc.dists[i + 1] - pc.dists[i]) * f;
-        const tan = pts[i + 1].clone().sub(pts[i]).normalize();
-        const side = new THREE.Vector3().crossVectors(pc.n, tan).normalize();
-        const sgn = (i * 3 + k) % 2 ? 1 : -1;
-        const size = Math.min(maxR * 3, d * LEAF) * (0.7 + rnd() * 0.4);
-        const p = p0.addScaledVector(side, sgn * size * 0.22).addScaledVector(pc.n, r[i] * 0.5);
-        const ax = tan.clone().multiplyScalar(rnd() < 0.5 ? 1 : -1).addScaledVector(side, sgn * (0.35 + rnd() * 0.3)).normalize();
-        const t = pc.ts[i] + (pc.ts[i + 1] - pc.ts[i]) * f;
-        b.leaf(p, pc.n, ax, size, IVY[Math.floor(rnd() * IVY.length)], t, pc.cuts[i], 0.42);
-      }
+    if (g === 'leaves') {
+      // the autumn wood's floor: fallen leaves, a few together, of another of the wood's colours
+      const col = otherShade(FALLEN, ctx.groundColor(mid.x, mid.z));
+      walk(pc, ctx, b, () => 0.34, 0.9, (dir0, dist, s0, across) => {
+        const dir = spread(dir0, across, (rnd() - 0.5) * 0.8 * (s0 / dist));
+        const c = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, 0.06));
+        const n = 3 + Math.floor(rnd() * 3);
+        for (let k = 0; k < n; k++) {
+          const q = c.clone().add(new THREE.Vector3((rnd() - 0.5) * 0.3, 0, (rnd() - 0.5) * 0.3));
+          q.y = ctx.heightAt(q.x, q.z) + 0.03 + k * 0.01;
+          // lying flat, tilted a little (curled leaves catch the light)
+          const nrm = new THREE.Vector3((rnd() - 0.5) * 0.9, 1, (rnd() - 0.5) * 0.9).normalize();
+          const ax = new THREE.Vector3(rnd() - 0.5, 0, rnd() - 0.5).normalize();
+          b.leaf(q, nrm, ax, 0.16 + rnd() * 0.08, col.clone().multiplyScalar(0.9 + rnd() * 0.15));
+        }
+      });
+      return;
     }
-    return null;
+    if (g === 'grass') {
+      // plain grass: tufts of drier grass
+      const col = ctx.groundColor(mid.x, mid.z).clone().lerp(DRY, 0.55);
+      b.far = 1;
+      walk(pc, ctx, b, () => 0.2, 0.7, (dir0, dist, s0, across) => {
+        const dir = spread(dir0, across, (rnd() - 0.5) * 0.8 * (s0 / dist));
+        const h = 0.5 + rnd() * 0.25;
+        const top = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, h));
+        const base = new THREE.Vector3(top.x, ctx.heightAt(top.x, top.z) - 0.02, top.z);
+        b.tuft(base, top.y, col, rnd);
+      });
+      return;
+    }
+    if (g === 'sand') {
+      // sand: low ridges of the sand itself
+      const col = ctx.groundColor(mid.x, mid.z).clone().multiplyScalar(0.94);
+      const hR = pc.dists.map((d) => THREE.MathUtils.clamp(d * 0.0035, 0.05, 0.16));
+      const pts = pc.dirs.map((dir, i) => {
+        const p = eye.clone().addScaledVector(dir, overGround(ctx, dir, pc.dists[i], hR[i]));
+        p.y = ctx.heightAt(p.x, p.z);
+        return p;
+      });
+      b.tube(pts, hR.map((h) => h * 2.4), col, pc.ts, pc.cuts, 7, 0.4, 0.42);
+      return;
+    }
+    // stony ground: stones like the ones lying around
+    const col = ctx.groundColor(mid.x, mid.z).clone().lerp(C('#b5b0a6'), 0.5);
+    walk(pc, ctx, b, (d) => THREE.MathUtils.clamp(d * 0.0135, 0.14, 0.7), 0.85, (dir0, dist, s0, across) => {
+      const r = s0 * 0.5 * (0.65 + rnd() * 0.5);
+      const dir = spread(dir0, across, (rnd() - 0.5) * 0.7 * (s0 / dist));
+      const c = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, r * 0.42));
+      c.y = Math.max(c.y, ctx.heightAt(c.x, c.z) + r * 0.25);
+      b.blob(c, r * (0.9 + rnd() * 0.25), r * (0.5 + rnd() * 0.15), r * (0.85 + rnd() * 0.25), col.clone().multiplyScalar(0.9 + rnd() * 0.2), rnd, rnd() * 6);
+    });
+    return;
   }
 
-  // a crack: dark, uneven, now and then splitting, lying on the wall / paving / rock face
-  const base = pc.kind === 'rock' ? ROCK_CRACK : CRACK;
+  if (pc.kind === 'water') {
+    // a lake: reeds standing in the shallows
+    b.far = 1;
+    walk(pc, ctx, b, () => 0.16, 0.75, (dir0, dist, s0, across) => {
+      const dir = spread(dir0, across, (rnd() - 0.5) * 0.8 * (s0 / dist));
+      const h = 0.8 + rnd() * 0.35;
+      const top = eye.clone().addScaledVector(dir, overGround(ctx, dir, dist, h, true));
+      const base = new THREE.Vector3(top.x, Math.max(ctx.heightAt(top.x, top.z), ctx.waterAt(top.x, top.z)) - 0.05, top.z);
+      b.reeds(base, top.y, rnd);
+    });
+    return;
+  }
+
+  if (pc.kind === 'tree') {
+    if (pc.species === 'deadtree') {
+      // a dead tree: its bare branches
+      const r = pc.dists.map((d) => THREE.MathUtils.clamp(d * 0.0026, 0.02, 0.08));
+      const pts = pc.dirs.map((dir, i) => eye.clone().addScaledVector(dir, onPlane(dir, pc.dists[i], pc.n, r[i], 0.2)));
+      b.tube(pts, r, C(PALETTE.deadtree.trunk), pc.ts, pc.cuts, 5, 0.3);
+      return;
+    }
+    const bl = BLOSSOM_COLORS[pc.species ?? ''];
+    if (bl) {
+      // a tree in flower: some of its blossoms, of the rarer colour it already has
+      const petal = C(bl.colors[bl.colors.length - 1]);
+      walk(pc, ctx, b, () => 0.19, 0.9, (dir0, dist, s0, across) => {
+        const n = rnd() < 0.3 ? 2 : 1;
+        for (let k = 0; k < n; k++) {
+          const sz = 0.15 + rnd() * 0.07;
+          const dir = spread(dir0, across, (rnd() - 0.5) * 1.1 * (s0 / dist));
+          const c = eye.clone().addScaledVector(dir, Math.max(dist * 0.5, dist - 0.04));
+          const face = pc.n.clone().multiplyScalar(1.3).add(eye.clone().sub(c).normalize()).add(new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(0.6)).normalize();
+          b.blossom(c, face, sz, petal.clone().multiplyScalar(0.95 + rnd() * 0.08), rnd);
+        }
+      });
+      return;
+    }
+    // a crown: a few clusters of its leaves in another of its own colours
+    const pal = PALETTE[(pc.species ?? 'oak') as keyof typeof PALETTE]?.leaves;
+    const col = otherShade(pal && pal.length ? pal : PALETTE.oak.leaves, hitCol);
+    walk(pc, ctx, b, () => 0.3, 0.95, (dir0, dist, s0, across) => {
+      const dir = spread(dir0, across, (rnd() - 0.5) * 0.9 * (s0 / dist));
+      const c = eye.clone().addScaledVector(dir, Math.max(dist * 0.5, dist - 0.06));
+      const face = pc.n.clone().add(eye.clone().sub(c).normalize()).normalize();
+      const n = 3 + Math.floor(rnd() * 3);
+      for (let k = 0; k < n; k++) {
+        const ax = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).cross(face).normalize();
+        const off = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(0.16);
+        b.leaf(c.clone().add(off).addScaledVector(face, 0.01 * k), face.clone().add(off.clone().multiplyScalar(2)).normalize(), ax, 0.14 + rnd() * 0.08, col.clone().multiplyScalar(0.92 + rnd() * 0.14));
+      }
+    });
+    return;
+  }
+
+  if (pc.kind === 'floor' && midC < 0.35) {
+    // paving seen low: moss growing along a joint
+    walk(pc, ctx, b, (d) => THREE.MathUtils.clamp(d * 0.012, 0.1, 0.5), 0.7, (dir0, dist, s0, across) => {
+      const r = s0 * 0.5 * (0.7 + rnd() * 0.5);
+      const dir = spread(dir0, across, (rnd() - 0.5) * 0.6 * (s0 / dist));
+      const c = eye.clone().addScaledVector(dir, onPlane(dir, dist, pc.n, r * 0.35));
+      b.blob(c, r, r * 0.36, r, MOSS[Math.floor(rnd() * MOSS.length)], rnd, rnd() * 6);
+    });
+    return;
+  }
+
+  // a crack in a wall, the paving or a rock: a darker shade of the stone itself, uneven
+  const base = hitCol.clone().multiplyScalar(0.42);
+  const c = midC;
   const lift = (d: number) => (0.012 + d * 0.0012) / Math.max(0.2, c);
-  const half = (d: number) => Math.min(maxR * 0.7, (d * CRACK_W) / Math.max(0.35, c) / 2);
+  const half = (d: number) => THREE.MathUtils.clamp((d * 0.0032) / Math.max(0.35, c) / 2, 0.006, 0.06);
   const cp: THREE.Vector3[] = [], cw: number[] = [], ct: number[] = [], cc: number[] = [];
   for (let i = 0; i < N; i++) {
     const p = eye.clone().addScaledVector(pc.dirs[i], pc.dists[i] - lift(pc.dists[i]));
     cp.push(p);
-    cw.push(half(pc.dists[i]) * (0.6 + rnd() * 0.7) * taper(i));
+    cw.push(half(pc.dists[i]) * (0.6 + rnd() * 0.7));
     ct.push(pc.ts[i]);
     cc.push(pc.cuts[i]);
     if (i < N - 1) {
-      // a zigzag point between samples, within the crack's own width
       const f = 0.35 + rnd() * 0.3;
       const dir = pc.dirs[i].clone().lerp(pc.dirs[i + 1], f).normalize();
       const d = pc.dists[i] + (pc.dists[i + 1] - pc.dists[i]) * f;
@@ -311,9 +547,15 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx, ends: [bo
     }
   }
   b.ribbon(cp, pc.n, cw, base, ct, cc);
-  // short side cracks
   for (let i = 1; i < cp.length - 1; i++) {
-    if (rnd() > 0.12) continue;
+    if (rnd() > (pc.kind === 'rock' ? 0.4 : 0.1)) continue;
+    b.t = ct[i];
+    b.c = cc[i];
+    if (pc.kind === 'rock') {
+      const r = cw[i] * 2.4;
+      b.blob(cp[i].clone().addScaledVector(pc.n, r * 0.2), r, r * 0.4, r, MOSS[Math.floor(rnd() * MOSS.length)], rnd, rnd() * 6);
+      continue;
+    }
     const tan = cp[i + 1].clone().sub(cp[i - 1]).normalize();
     const side = new THREE.Vector3().crossVectors(pc.n, tan).normalize().multiplyScalar(rnd() < 0.5 ? 1 : -1);
     const dirB = tan.clone().multiplyScalar(rnd() < 0.5 ? 1 : -1).add(side.multiplyScalar(1.2)).normalize();
@@ -321,5 +563,4 @@ export function dressPiece(b: StrokeBuilder, pc: Piece, ctx: DressCtx, ends: [bo
     const q1 = cp[i].clone().addScaledVector(dirB, len * 0.5), q2 = cp[i].clone().addScaledVector(dirB, len);
     b.ribbon([cp[i], q1, q2], pc.n, [cw[i] * 0.6, cw[i] * 0.4, cw[i] * 0.1], base, [ct[i], ct[i], ct[i]], [cc[i], cc[i], cc[i]]);
   }
-  return null;
 }

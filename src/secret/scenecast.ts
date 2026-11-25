@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { TriBVH } from './bvh';
 
-export type CastClass = 'terrain' | 'static' | 'rock' | 'tree' | 'bad';
+export type CastClass = 'terrain' | 'static' | 'rock' | 'tree' | 'bad' | 'water';
 export interface CastHit {
   t: number;
   cls: CastClass;
@@ -21,6 +21,37 @@ export interface CastHit {
   id: number;
   /** trees: the wind's phase there, the sway's reach (sway² × size) and the tree's turn */
   wind: [number, number, number] | null;
+  /** the colour of what was hit (sRGB hex) */
+  color: number;
+  /** instances (trees): where the hit one stands, and its kind (oak, bush…) */
+  ox: number;
+  oz: number;
+  species: string;
+  /** a fixed surface (wall, paving…): its index in staticSurfaces() (-1 otherwise) */
+  sid: number;
+}
+
+/**
+ * The fixed surfaces of the scene (walls, paving, ruins…) in a stable order, so a saved picture can
+ * name the one its line lies on (and draw on it again, the same every time).
+ */
+export function staticSurfaces(scene: THREE.Object3D): THREE.Mesh[] {
+  const out: THREE.Mesh[] = [];
+  const walk = (o: THREE.Object3D, inherited: string | null, hidden: boolean) => {
+    const tag = (o.userData?.castAs as string | undefined) ?? inherited;
+    if (tag === 'skip') return;
+    if ((o as THREE.Points).isPoints || (o as THREE.Sprite).isSprite || (o as THREE.Line).isLine) return;
+    const hid = hidden || !o.visible;
+    const m = o as THREE.Mesh;
+    if (m.isMesh && !(m as THREE.InstancedMesh).isInstancedMesh && !hid && (tag === null || tag === 'static')) {
+      const mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.Material | undefined;
+      const seeThrough = !!mat && ((mat.transparent && mat.opacity < 0.75) || !mat.depthWrite || mat.blending === THREE.AdditiveBlending || !mat.visible);
+      if (!seeThrough) out.push(m);
+    }
+    for (const ch of o.children) walk(ch, tag, hid);
+  };
+  walk(scene, null, false);
+  return out;
 }
 
 interface Entry {
@@ -37,6 +68,10 @@ interface Entry {
   oz: number;
   scale: number;
   rot: number;
+  colors: ArrayLike<number> | null;
+  tint: THREE.Color;
+  species: string;
+  sid: number;
 }
 
 const CELL = 12;
@@ -51,8 +86,11 @@ export class SceneCaster {
   fingerprint = 0;
   triangles = 0;
 
+  private sids = new Map<THREE.Object3D, number>();
+
   constructor(scene: THREE.Object3D) {
     scene.updateMatrixWorld(true);
+    staticSurfaces(scene).forEach((m, i) => this.sids.set(m, i));
     this.collect(scene, null, false);
   }
 
@@ -105,6 +143,10 @@ export class SceneCaster {
   }
 
   private addMesh(m: THREE.Mesh, cls: CastClass, world: THREE.Matrix4, sway: ArrayLike<number> | null = null) {
+    const ca = m.geometry.attributes.color as THREE.BufferAttribute | undefined;
+    const mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshStandardMaterial | undefined;
+    const colors = ca && ca.itemSize >= 3 && !(ca as unknown as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute ? ca.array : null;
+    const tint = mat?.color ? mat.color.clone() : new THREE.Color(1, 1, 1);
     const bvh = this.bvhFor(m.geometry);
     if (!bvh) return;
     const identity = world.equals(IDENTITY);
@@ -126,7 +168,8 @@ export class SceneCaster {
     const tr = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
     world.decompose(tr, q, sc);
     const rot = new THREE.Euler().setFromQuaternion(q, 'YXZ').y;
-    const e: Entry = { bvh, inv, cls, box, sway, stamp: 0, id: this.entries.length, ox: tr.x, oz: tr.z, scale: sc.y, rot };
+    const species = m.name.startsWith('veg_') ? m.name.slice(4).split('#')[0] : '';
+    const e: Entry = { bvh, inv, cls, box, sway, stamp: 0, id: this.entries.length, ox: tr.x, oz: tr.z, scale: sc.y, rot, colors, tint, species, sid: this.sids.get(m) ?? -1 };
     this.entries.push(e);
     this.mix(box[0] + box[2] * 3 + box[4] * 7 + (cls.length * 13));
     const i0 = Math.floor(box[0] / CELL), i1 = Math.floor(box[3] / CELL);
@@ -217,7 +260,20 @@ export class SceneCaster {
     if (n.dot(d) > 0) n.negate();
     const sway = bestE.sway ? bestE.bvh.maxOver(bestTri, bestE.sway) : 0;
     const wind: [number, number, number] | null = bestE.sway ? [bestE.ox * 0.071 + bestE.oz * 0.053, sway * sway * bestE.scale, bestE.rot] : null;
-    return { t: best, cls: bestE.cls, n, sway, id: bestE.id, wind };
+    const col = bestE.tint.clone();
+    if (bestE.colors) {
+      const cs = bestE.colors;
+      const stride = (cs.length / (bestE.bvh.pos.length / 3)) | 0 || 3;
+      let r = 0, g = 0, b = 0;
+      for (let k = 0; k < 3; k++) {
+        const v = bestE.bvh.corner(bestTri, k) * stride;
+        r += cs[v];
+        g += cs[v + 1];
+        b += cs[v + 2];
+      }
+      col.multiply(new THREE.Color(r / 3, g / 3, b / 3));
+    }
+    return { t: best, cls: bestE.cls, n, sway, id: bestE.id, wind, color: col.getHex(), ox: bestE.ox, oz: bestE.oz, species: bestE.species, sid: bestE.sid };
   }
 }
 

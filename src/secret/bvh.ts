@@ -102,6 +102,11 @@ export class TriBVH {
     return (this.index ? this.index[tri * 3 + k] : tri * 3 + k) * 3;
   }
 
+  /** the vertex index of a triangle's corner k */
+  corner(tri: number, k: number): number {
+    return this.index ? this.index[tri * 3 + k] : tri * 3 + k;
+  }
+
   /** nearest hit along o + t·d with tMin < t < tMax (both sides of every triangle); Infinity if none */
   raycast(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, tMin: number, tMax: number): number {
     const B = this.bounds, L = this.links, P = this.pos, T = this.tris;

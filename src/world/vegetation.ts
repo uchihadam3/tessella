@@ -11,7 +11,7 @@ export const windUniforms = { uTime: { value: 0 }, uWind: { value: 1 } };
 
 export type Species = 'oak' | 'autumn' | 'blossom' | 'pine' | 'cypress' | 'palm' | 'poplar' | 'bush' | 'deadtree';
 
-const PALETTE: Record<Species, { trunk: string; leaves: string[] }> = {
+export const PALETTE: Record<Species, { trunk: string; leaves: string[] }> = {
   oak: { trunk: '#6b4f3a', leaves: ['#5c9a3c', '#6fae45', '#4f8a36', '#7db84e'] },
   autumn: { trunk: '#5a4232', leaves: ['#e2662f', '#f0a033', '#c9412a', '#f2c14e', '#d9572b'] },
   blossom: { trunk: '#4a3530', leaves: ['#f7b6d2', '#f4a3c4', '#fbd0e1', '#fde6ef'] },
@@ -300,7 +300,7 @@ export function makeWindMaterial(opts: { flutter?: number; roughness?: number } 
 
 // ───────────────────────── forest (instanced) ─────────────────────────
 
-interface Placement {
+export interface Placement {
   x: number;
   y: number;
   z: number;
@@ -379,6 +379,55 @@ export class Forest {
       for (const p of list) h = (h * 17 + Math.round(p.x * 3 + p.z * 5 + p.s * 100 + p.r * 10)) % 1000000007;
     }
     return h;
+  }
+
+  /** the tree standing at (x,z) — its species, geometry and placement (to dress it with blossoms) */
+  treeAt(x: number, z: number, tol = 0.08): { species: Species; geometry: THREE.BufferGeometry; p: Placement } | null {
+    for (const [key, list] of this.placements) {
+      if (key.startsWith('rock')) continue;
+      for (const p of list) if (Math.abs(p.x - x) < tol && Math.abs(p.z - z) < tol) return { species: key.split('#')[0] as Species, geometry: this.geometryFor(key), p };
+    }
+    return null;
+  }
+
+  /** the rock or tree standing at (x,z): its geometry and its exact matrix (as drawn) */
+  instanceAt(x: number, z: number, tol = 0.08): { key: string; geometry: THREE.BufferGeometry; matrix: THREE.Matrix4 } | null {
+    for (const [key, list] of this.placements) {
+      for (let i = 0; i < list.length; i++) {
+        const p = list[i];
+        if (Math.abs(p.x - x) > tol || Math.abs(p.z - z) > tol) continue;
+        const o = new THREE.Object3D();
+        o.position.set(p.x, p.y, p.z);
+        o.rotation.set(0, p.r, 0);
+        o.scale.setScalar(p.s);
+        if (key.startsWith('rock')) o.scale.set(p.s * (0.8 + hash2(i, 3) * 0.5), p.s, p.s * (0.8 + hash2(i, 7) * 0.5));
+        o.updateMatrix();
+        return { key, geometry: this.geometryFor(key), matrix: o.matrix.clone() };
+      }
+    }
+    return null;
+  }
+
+  /** the trees in flower (the blossom trees) within r of (x,z) */
+  flowering(x: number, z: number, r: number): { key: string; species: string; geometry: THREE.BufferGeometry; p: Placement }[] {
+    const out: { key: string; species: string; geometry: THREE.BufferGeometry; p: Placement }[] = [];
+    for (const [key, list] of this.placements) {
+      const species = key.split('#')[0];
+      if (!(species in BLOSSOM_COLORS)) continue;
+      const geometry = this.geometryFor(key);
+      for (const p of list) if ((p.x - x) ** 2 + (p.z - z) ** 2 < r * r) out.push({ key, species, geometry, p });
+    }
+    return out;
+  }
+
+  /** trees of a species within r of (x,z) (a grove that blossoms together) */
+  treesNear(x: number, z: number, r: number, species: string): { species: Species; geometry: THREE.BufferGeometry; p: Placement }[] {
+    const out: { species: Species; geometry: THREE.BufferGeometry; p: Placement }[] = [];
+    for (const [key, list] of this.placements) {
+      if (key.split('#')[0] !== species) continue;
+      for (const p of list) if ((p.x - x) ** 2 + (p.z - z) ** 2 < r * r) out.push({ species: species as Species, geometry: this.geometryFor(key), p });
+    }
+    return out;
   }
 
   /** drop trees and rocks whose base is within r of (x,z) (e.g. under something placed later) */
@@ -741,4 +790,189 @@ export class GrassField {
     if (this.grass.instanceColor) this.grass.instanceColor.needsUpdate = true;
     if (this.flowers.instanceColor) this.flowers.instanceColor.needsUpdate = true;
   }
+}
+
+
+// ───────────────────────── blossoms on the blossom trees (around the player) ─────────────────────────
+
+/** the blossoms of the trees that flower: mostly the first colour, a few of the second */
+export const BLOSSOM_COLORS: Record<string, { colors: string[]; weights: number[] }> = {
+  blossom: { colors: ['#f9c4d7', '#fdf3f6'], weights: [0.84, 0.16] },
+};
+
+/** a blossom facing +Y (unit size): five rounded petals and a small yellow centre */
+export function makeBlossom(): THREE.BufferGeometry {
+  const pos: number[] = [], col: number[] = [];
+  const P = (a: number, r: number) => [Math.cos(a) * r, 0, Math.sin(a) * r];
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    const s1 = P(a - 0.42, 0.31), tip = P(a, 0.5), s2 = P(a + 0.42, 0.31);
+    pos.push(0, 0, 0, ...tip, ...s1, 0, 0, 0, ...s2, ...tip);
+    for (let k = 0; k < 6; k++) col.push(1, 1, 1);
+  }
+  const c = new THREE.Color('#f2c95c');
+  const cc = [P(0, 0.09), P(2.1, 0.09), P(4.2, 0.09)];
+  pos.push(cc[0][0], 0.01, cc[0][2], cc[2][0], 0.01, cc[2][2], cc[1][0], 0.01, cc[1][2]);
+  for (let k = 0; k < 3; k++) col.push(c.r, c.g, c.b);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  const n = new Float32Array(pos.length);
+  for (let i = 1; i < n.length; i += 3) n[i] = 1;
+  g.setAttribute('normal', new THREE.BufferAttribute(n, 3));
+  return g;
+}
+
+/** spots on a tree model's crown where blossoms sit (local units), with the crown's area */
+export function crownSpots(geo: THREE.BufferGeometry, count: number, seed: number) {
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const sway = geo.attributes.aSway as THREE.BufferAttribute | undefined;
+  const idx = geo.index;
+  const n = idx ? idx.count / 3 : pos.count / 3;
+  const tris: number[] = [], cum: number[] = [];
+  let total = 0;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  for (let t = 0; t < n; t++) {
+    const i0 = idx ? idx.getX(t * 3) : t * 3, i1 = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, i2 = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+    if (sway && Math.min(sway.getX(i0), sway.getX(i1), sway.getX(i2)) < 0.3) continue;
+    a.fromBufferAttribute(pos, i0);
+    b.fromBufferAttribute(pos, i1);
+    c.fromBufferAttribute(pos, i2);
+    const ar = b.clone().sub(a).cross(c.clone().sub(a)).length() / 2;
+    if (ar < 1e-5) continue;
+    total += ar;
+    tris.push(i0, i1, i2);
+    cum.push(total);
+  }
+  const rand = rng(seed);
+  const out: { p: THREE.Vector3; n: THREE.Vector3; sway: number }[] = [];
+  if (!tris.length) return { spots: out, area: 0 };
+  for (let k = 0; k < count; k++) {
+    const u = rand() * total;
+    let lo = 0, hi = cum.length - 1;
+    while (lo < hi) {
+      const m = (lo + hi) >> 1;
+      if (cum[m] < u) lo = m + 1;
+      else hi = m;
+    }
+    const i0 = tris[lo * 3], i1 = tris[lo * 3 + 1], i2 = tris[lo * 3 + 2];
+    let r1 = rand(), r2 = rand();
+    if (r1 + r2 > 1) {
+      r1 = 1 - r1;
+      r2 = 1 - r2;
+    }
+    a.fromBufferAttribute(pos, i0);
+    b.fromBufferAttribute(pos, i1);
+    c.fromBufferAttribute(pos, i2);
+    const nn = b.clone().sub(a).cross(c.clone().sub(a)).normalize();
+    out.push({ p: a.clone().addScaledVector(b.clone().sub(a), r1).addScaledVector(c.clone().sub(a), r2), n: nn, sway: sway ? Math.max(sway.getX(i0), sway.getX(i1), sway.getX(i2)) : 1 });
+  }
+  return { spots: out, area: total };
+}
+
+/**
+ * The blossom trees (around the mirror lake) are in flower: their blossoms are drawn around the
+ * player, swaying with the crowns in the wind.
+ */
+export class BlossomField {
+  readonly group = new THREE.Group();
+  private mesh: THREE.InstancedMesh;
+  private wind: THREE.InstancedBufferAttribute;
+  private cx = Infinity;
+  private cz = Infinity;
+  radius = 64;
+  private maxN = 16000;
+  private spots = new Map<string, { p: THREE.Vector3; n: THREE.Vector3; sway: number }[]>();
+
+  constructor(private forest: Forest) {
+    this.mesh = new THREE.InstancedMesh(makeBlossom(), blossomMaterial(), this.maxN);
+    this.mesh.frustumCulled = false;
+    this.mesh.count = 0;
+    this.mesh.receiveShadow = true;
+    this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.mesh.setColorAt(0, new THREE.Color());
+    this.wind = new THREE.InstancedBufferAttribute(new Float32Array(this.maxN * 3), 3);
+    this.wind.setUsage(THREE.DynamicDrawUsage);
+    this.mesh.geometry.setAttribute('aWind', this.wind);
+    this.group.add(this.mesh);
+  }
+
+  private spotsFor(key: string, geo: THREE.BufferGeometry) {
+    let s = this.spots.get(key);
+    if (!s) {
+      const area = crownSpots(geo, 1, 1).area;
+      s = crownSpots(geo, Math.min(420, Math.max(60, Math.round(area / 0.045))), key.length * 131 + key.charCodeAt(0)).spots;
+      this.spots.set(key, s);
+    }
+    return s;
+  }
+
+  update(px: number, pz: number, force = false) {
+    const cx = Math.round(px / 8) * 8, cz = Math.round(pz / 8) * 8;
+    if (!force && cx === this.cx && cz === this.cz) return;
+    this.cx = cx;
+    this.cz = cz;
+    let n = 0;
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const col = new THREE.Color();
+    const wp = new THREE.Vector3(), wn = new THREE.Vector3();
+    for (const t of this.forest.flowering(px, pz, this.radius)) {
+      const pal = BLOSSOM_COLORS[t.species];
+      const spots = this.spotsFor(t.key, t.geometry);
+      const cs = Math.cos(t.p.r), sn = Math.sin(t.p.r);
+      const ph = t.p.x * 0.071 + t.p.z * 0.053;
+      for (let k = 0; k < spots.length && n < this.maxN; k++) {
+        const sp = spots[k];
+        wp.set(t.p.x + (sp.p.x * cs + sp.p.z * sn) * t.p.s, t.p.y + sp.p.y * t.p.s, t.p.z + (-sp.p.x * sn + sp.p.z * cs) * t.p.s);
+        wn.set(sp.n.x * cs + sp.n.z * sn, sp.n.y, -sp.n.x * sn + sp.n.z * cs).normalize();
+        const h = hash2(Math.round(t.p.x * 10) + k * 7, Math.round(t.p.z * 10) - k * 3);
+        wp.addScaledVector(wn, 0.03);
+        wn.x += (hash2(k, 11) - 0.5) * 0.7;
+        wn.z += (hash2(k, 17) - 0.5) * 0.7;
+        q.setFromUnitVectors(up, wn.normalize());
+        const size = 0.15 + h * 0.07;
+        m.compose(wp, q, sc.set(size, size, size));
+        this.mesh.setMatrixAt(n, m);
+        let ci = 0, acc = pal.weights[0];
+        const pick = hash2(k * 13 + 5, Math.round(t.p.x * 7));
+        while (pick > acc && ci < pal.colors.length - 1) acc += pal.weights[++ci];
+        this.mesh.setColorAt(n, col.set(pal.colors[ci]).multiplyScalar(0.95 + h * 0.08));
+        this.wind.setXYZ(n, ph, sp.sway * sp.sway * t.p.s, t.p.r);
+        n++;
+      }
+    }
+    this.mesh.count = n;
+    this.mesh.instanceMatrix.needsUpdate = true;
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
+    this.wind.needsUpdate = true;
+  }
+}
+
+/** blossoms: lit like leaves, swaying with their tree (the same wind as the trees' own shader) */
+export function blossomMaterial(): THREE.MeshStandardMaterial {
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, side: THREE.DoubleSide });
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = windUniforms.uTime;
+    sh.uniforms.uWind = windUniforms.uWind;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute vec3 aWind;\nuniform float uTime;\nuniform float uWind;')
+      .replace(
+        '#include <project_vertex>',
+        `vec4 mvPosition = vec4( transformed, 1.0 );
+#ifdef USE_INSTANCING
+  mvPosition = instanceMatrix * mvPosition;
+#endif
+{
+  float ph = aWind.x;
+  float w = sin(uTime * 1.2 + ph) * 0.6 + sin(uTime * 2.3 + ph * 1.7) * 0.25 + sin(uTime * 0.5 + ph * 0.3) * 0.4;
+  vec2 d = vec2(w * aWind.y * uWind * 0.22, cos(uTime * 1.05 + ph) * aWind.y * uWind * 0.14);
+  float c = cos(aWind.z), s = sin(aWind.z);
+  mvPosition.x += d.x * c + d.y * s;
+  mvPosition.z += -d.x * s + d.y * c;
+}
+mvPosition = modelViewMatrix * mvPosition;
+gl_Position = projectionMatrix * mvPosition;`,
+      );
+  };
+  return mat;
 }

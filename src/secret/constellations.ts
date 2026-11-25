@@ -552,6 +552,8 @@ export class ConstellationSystem {
       const h = hits[i];
       if (h.kind === 'sky') continue;
       if (h.p.distanceTo(eye) < 3) return false;
+      // never on a panel (they are solid too): a boss on a panel would read as part of the puzzle
+      if (h.kind === 'wall' && this.nearAnchor(h.p.x, h.p.z, h.p.y - 1.2)) return false;
       if (this.taken.some((q) => q.distanceTo(h.p) < 1.1)) return false;
       if ((h.kind === 'ground' || h.kind === 'floor') && this.world.terrain.pathAt(h.p.x, h.p.z) > 0.35 && h.kind === 'ground') return false;
       for (let j = 0; j < i; j++) if (hits[j].kind !== 'sky' && hits[j].p.distanceTo(h.p) < 0.45) return false;

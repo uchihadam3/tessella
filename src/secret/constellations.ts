@@ -28,7 +28,7 @@ export const VAULT_THRESHOLD = 100;
 /** the player's eye height (see Player.eye) */
 const EYE_H = 1.62;
 /** half-width of a figure as seen from its spot (degrees, centre to the farthest object) */
-const SPAN_DEG = 21;
+const SPAN_DEG = 24;
 /** how close to the spot you must stand (metres) and how straight you must look (degrees) */
 const SPOT_TOL = 0.42;
 const LOOK_TOL = 4;
@@ -37,7 +37,7 @@ const REVEAL_SECONDS = 6;
 /** viewing spots this far apart at least: the figures are spread over the whole island */
 const SPOT_SPACING = 16;
 /** threads are this thin (radians) seen from the spot, whatever their distance */
-const THREAD_W = 0.0042;
+const THREAD_W = 0.0062;
 
 // ───────────────────────── per-place objects ─────────────────────────
 
@@ -268,11 +268,13 @@ attribute float aT; attribute vec3 color;
 varying float vT; varying vec3 vC;
 void main(){ vT = aT; vC = color; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const threadFrag = /* glsl */ `
-uniform float uReveal; uniform float uAlpha; varying float vT; varying vec3 vC;
+uniform float uReveal; uniform float uAlpha; uniform float uLit; varying float vT; varying vec3 vC;
 void main(){
   if (vT > uReveal || uAlpha <= 0.001) discard;
   float head = smoothstep(uReveal - 0.08, uReveal, vT) * step(uReveal, 0.999);
-  gl_FragColor = vec4(vC * (1.0 + head * 3.0), uAlpha);
+  // unlit: a quiet ink line in the scenery; lit: light
+  vec3 ink = vec3(0.30, 0.29, 0.36);
+  gl_FragColor = vec4(mix(ink, vC * (1.0 + head * 3.0), uLit), uAlpha);
 }`;
 
 type HitKind = 'ground' | 'floor' | 'wall' | 'tree' | 'rock' | 'sky';
@@ -296,7 +298,7 @@ export interface CItem {
   specks: THREE.Sprite[];
   threads: THREE.Mesh;
   threadShadow: THREE.Mesh;
-  threadU: { uReveal: { value: number }; uAlpha: { value: number } };
+  threadU: { uReveal: { value: number }; uAlpha: { value: number }; uLit: { value: number } };
   threadRanges: [number, number][];
   sprites: THREE.Sprite[];
   /** a ring around each object, drawn with the threads */
@@ -341,11 +343,25 @@ export class ConstellationSystem {
   private discGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.05, 14).rotateX(Math.PI / 2);
   private fruitGeo = new THREE.IcosahedronGeometry(0.1, 1);
   private spots: { x: number; z: number }[] = [];
+  /** a veil over the world (drawn just before the figures) that dims it while a figure is in view */
+  private veil = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({
+      uniforms: { uOpacity: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: 'uniform float uOpacity; varying vec2 vUv; void main(){ float d = length(vUv - 0.5); gl_FragColor = vec4(0.015, 0.02, 0.05, uOpacity * (0.62 + 0.75 * d)); }',
+      transparent: true, depthTest: false, depthWrite: false,
+    }),
+  );
   private taken: THREE.Vector3[] = [];
   private lastFwd = new THREE.Vector3();
 
   constructor(private world: World) {
     world.root.add(this.group);
+    this.veil.frustumCulled = false;
+    this.veil.renderOrder = 18;
+    this.veil.visible = false;
+    this.group.add(this.veil);
   }
 
   // ───────────────────────── placement ─────────────────────────
@@ -355,8 +371,8 @@ export class ConstellationSystem {
     return this.world.collision.groundAt(x, z, t + 30)[0];
   }
 
-  /** flat, free, dry ground off the paths (for standing spots and props) */
-  private okPoint(x: number, z: number): number | null {
+  /** flat, free, dry ground off the paths (for props); `onPath` also accepts paths (for standing spots) */
+  private okPoint(x: number, z: number, onPath = false): number | null {
     const g = this.groundAt(x, z);
     if (!isFinite(g)) return null;
     if (g < this.world.waterAt(x, z) + 0.15) return null;
@@ -365,7 +381,7 @@ export class ConstellationSystem {
     for (const [dx, dz] of [[d, 0], [-d, 0], [0, d], [0, -d]]) if (Math.abs(this.groundAt(x + dx, z + dz) - g) > 0.5) return null;
     if (this.world.collision.blockedAt(x, z, 0.8, g + 0.2, g + 1.6)) return null;
     const onFloor = g > this.world.terrain.heightAt(x, z) + 0.05;
-    if (!onFloor && this.world.terrain.pathAt(x, z) > 0.3) return null;
+    if (!onPath && !onFloor && this.world.terrain.pathAt(x, z) > 0.3) return null;
     return g;
   }
 
@@ -520,7 +536,7 @@ export class ConstellationSystem {
   }
 
   private tryPlace(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number, pass: number): boolean {
-    const gy = this.okPoint(vx, vz);
+    const gy = this.okPoint(vx, vz, true);
     if (gy === null) return false;
     // not on the Sky Spire: its landings only exist once the stair of light is lit
     if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26) return false; // the Spire's island and landings
@@ -720,13 +736,13 @@ export class ConstellationSystem {
       }
       const end = tPos.length / 3;
       ranges.push([start, end]);
-      for (let v = start; v < end; v++) tCol.push(0.6, 0.57, 0.7);
+      for (let v = start; v < end; v++) tCol.push(1.25, 1.2, 1.45);
     });
     const tg = new THREE.BufferGeometry();
     tg.setAttribute('position', new THREE.Float32BufferAttribute(tPos, 3));
     tg.setAttribute('color', new THREE.Float32BufferAttribute(tCol, 3));
     tg.setAttribute('aT', new THREE.Float32BufferAttribute(tT, 1));
-    const threadU = { uReveal: { value: 1 }, uAlpha: { value: 0 } };
+    const threadU = { uReveal: { value: 1 }, uAlpha: { value: 0 }, uLit: { value: 0 } };
     // a soft dark band under each thread keeps it readable against bright sky or sand
     const shadowGeo = tg.clone();
     {
@@ -744,7 +760,7 @@ export class ConstellationSystem {
     }
     const shadowMat = new THREE.ShaderMaterial({
       uniforms: threadU, vertexShader: threadVert,
-      fragmentShader: threadFrag.replace('gl_FragColor = vec4(vC * (1.0 + head * 3.0), uAlpha);', 'gl_FragColor = vec4(0.03, 0.03, 0.06, uAlpha * 0.42);'),
+      fragmentShader: threadFrag.replace('gl_FragColor = vec4(mix(ink, vC * (1.0 + head * 3.0), uLit), uAlpha);', 'gl_FragColor = vec4(0.02, 0.02, 0.05, uAlpha * (0.4 + 0.2 * uLit));'),
       side: THREE.DoubleSide, toneMapped: false, transparent: true, depthTest: false, depthWrite: false,
     });
     const threadShadow = new THREE.Mesh(shadowGeo, shadowMat);
@@ -778,7 +794,7 @@ export class ConstellationSystem {
       const d = p.distanceTo(eye);
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTexture(), color: 0xfff1d6, depthWrite: false, depthTest: false, transparent: true, opacity: 0, fog: false, toneMapped: false }));
       sp.position.copy(p);
-      sp.scale.setScalar(d * 0.034);
+      sp.scale.setScalar(d * 0.05);
       sp.renderOrder = 21;
       sp.visible = false;
       g.add(sp);
@@ -869,6 +885,7 @@ export class ConstellationSystem {
    * draws it out of the scenery: faint at first, complete after REVEAL_SECONDS.
    */
   watch(dt: number, camera: THREE.PerspectiveCamera, _playerSpeed = 0) {
+    let focus = 0;
     const fwd = new THREE.Vector3();
     camera.getWorldDirection(fwd);
     // turning the head quickly breaks the spell
@@ -888,18 +905,25 @@ export class ConstellationSystem {
       const dv = Math.abs(cam.y - it.view.eye.y);
       const ang = THREE.MathUtils.radToDeg(fwd.angleTo(it.view.dir));
       const aligned = dh < SPOT_TOL && dv < 0.45 && ang < LOOK_TOL;
-      // how close to the right way of looking (for the faint first glimpse)
-      const close = THREE.MathUtils.clamp(1 - dh / 1.3, 0, 1) * THREE.MathUtils.clamp(1 - ang / 10, 0, 1) * (dv < 0.6 ? 1 : 0);
-      let alpha: number;
-      if (it.revealed || this.blaze) {
-        alpha = this.blaze ? 0.9 : THREE.MathUtils.clamp(1 - (dh - 1.2) / 2.2, 0, 1) * THREE.MathUtils.clamp(1 - (ang - 25) / 25, 0, 1);
+      // seen from the right place the figure is there in the scenery, unlit: it sharpens as you
+      // step onto the spot and face it, and is gone a step or two away
+      const place = THREE.MathUtils.clamp(1 - (dh - SPOT_TOL) / 0.9, 0, 1);
+      const facing = THREE.MathUtils.clamp(1 - (ang - LOOK_TOL) / 8, 0, 1);
+      const seen = Math.pow(place * facing, 1.6) * (dv < 0.6 ? 1 : 0);
+      let alpha: number, lit: number;
+      if (this.blaze) {
+        alpha = 0.9;
+        lit = 1;
+      } else if (it.revealed) {
+        alpha = THREE.MathUtils.clamp(1 - (dh - 1.2) / 2.2, 0, 1) * THREE.MathUtils.clamp(1 - (ang - 25) / 25, 0, 1);
+        lit = 1;
       } else {
         const before = it.hold;
         if (aligned && steady) it.hold = Math.min(1, it.hold + dt / REVEAL_SECONDS);
         else it.hold = Math.max(0, it.hold - dt * (aligned ? 0.15 : 0.5));
         if (it.hold !== before) it.dirty = true;
-        // a ghost of the figure only right at the spot, then slowly stronger while you keep looking
-        alpha = 0.05 * close * close + 0.85 * it.hold * it.hold;
+        alpha = 0.78 * seen + 0.22 * it.hold;
+        lit = it.hold * it.hold;
         if (it.hold >= 1) {
           it.revealed = true;
           it.reveal = 0;
@@ -908,11 +932,19 @@ export class ConstellationSystem {
           this.onRevealed(it);
         }
       }
-      if (Math.abs(alpha - it.threadU.uAlpha.value) > 1e-3) {
+      if (Math.abs(alpha - it.threadU.uAlpha.value) > 1e-3 || Math.abs(lit - it.threadU.uLit.value) > 1e-3) {
         it.threadU.uAlpha.value = alpha;
+        it.threadU.uLit.value = lit;
         it.threads.visible = it.threadShadow.visible = alpha > 0.002;
       }
+      if (!this.blaze) focus = Math.max(focus, alpha * lit);
     }
+    // the world quietly dims as a figure lights up
+    const veil = this.veil.material as THREE.ShaderMaterial;
+    const target = 0.42 * Math.min(1, focus * 1.15);
+    const cur = veil.uniforms.uOpacity.value as number;
+    veil.uniforms.uOpacity.value = cur + (target - cur) * Math.min(1, dt * 3);
+    this.veil.visible = veil.uniforms.uOpacity.value > 0.004;
   }
 
   // ───────────────────────── interaction ─────────────────────────
@@ -1046,6 +1078,7 @@ export class ConstellationSystem {
         it.dirty = true;
       }
       const show = (it.revealed || this.blaze) && it.threadU.uAlpha.value > 0.02;
+      const ghost = !show && it.threadU.uAlpha.value > 0.02;
       it.orb.visible = show && !it.solved;
       if (it.orb.visible) {
         const bob = Math.sin(t * 1.6 + it.orbBase.x) * 0.04 * Math.max(1, it.orbBase.distanceTo(it.view.eye) / 6);
@@ -1058,8 +1091,14 @@ export class ConstellationSystem {
         (s.material as THREE.SpriteMaterial).opacity = Math.min(1, it.reveal * 1.4) * it.threadU.uAlpha.value;
       }
       it.rings.forEach((r, i) => {
-        r.visible = show;
+        r.visible = show || ghost;
         const m = r.material as THREE.SpriteMaterial;
+        if (ghost) {
+          // the unlit figure: plain grey rings around the objects
+          m.opacity = 0.6 * it.threadU.uAlpha.value;
+          m.color.setRGB(0.55, 0.55, 0.6).lerp(new THREE.Color(1, 0.97, 0.9), it.threadU.uLit.value);
+          return;
+        }
         m.opacity = Math.min(1, it.reveal * 1.4) * it.threadU.uAlpha.value * (it.state[i] ? 1 : 0.55);
         if (it.solved || this.blaze) m.color.setRGB(1.6, 1.4, 1.0);
         else if (it.state[i]) m.color.copy(it.lit).multiplyScalar(1.8);
@@ -1085,12 +1124,12 @@ export class ConstellationSystem {
       }
       const col = it.threads.geometry.attributes.color as THREE.BufferAttribute;
       it.threadRanges.forEach(([a, b], k) => {
-        let r = 0.6, gg = 0.57, bl = 0.72;
-        if (blinkOn && it.badThreads.has(k)) [r, gg, bl] = [2, 0.15, 0.1];
-        else if (it.solved || this.blaze) [r, gg, bl] = [1.7, 1.45, 1.0];
+        let r = 1.25, gg = 1.2, bl = 1.45;
+        if (blinkOn && it.badThreads.has(k)) [r, gg, bl] = [2.6, 0.2, 0.12];
+        else if (it.solved || this.blaze) [r, gg, bl] = [2.3, 1.95, 1.3];
         else {
           const th = it.def.threads[k];
-          if (it.state[th.a] && it.state[th.b]) [r, gg, bl] = [1.2, 1.1, 0.85];
+          if (it.state[th.a] && it.state[th.b]) [r, gg, bl] = [2.4, 2.1, 1.5];
         }
         for (let v = a; v < b; v++) col.setXYZ(v, r, gg, bl);
       });

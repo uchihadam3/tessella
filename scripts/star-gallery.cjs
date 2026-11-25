@@ -45,16 +45,22 @@ fs.mkdirSync(outDir, { recursive: true });
     await page.waitForTimeout(6000);
     await page.screenshot({ path: `${name}-1-de-lado.png` });
     await place(0, 0);
-    await page.waitForTimeout(3000);
-    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0.62; it.dirty = true; }, idx);
-    await page.waitForTimeout(2500);
-    await page.screenshot({ path: `${name}-2-no-ponto.png` });
+    // stop the vision from advancing while we take the "unlit" picture
+    await page.evaluate((idx) => { window.__REVEAL_FREEZE = idx; }, idx);
+    await page.waitForTimeout(3500);
+    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0; it.dirty = true; }, idx);
+    await page.waitForTimeout(1200);
+    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0; }, idx);
+    await page.screenshot({ path: `${name}-2-apagada.png` });
+    await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0.75; it.dirty = true; }, idx);
+    await page.waitForTimeout(1800);
+    await page.screenshot({ path: `${name}-3-acendendo.png` });
     await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; it.hold = 0.999; }, idx);
     await page.waitForFunction((idx) => window.__game.stars.items[idx].revealed && window.__game.stars.items[idx].reveal >= 1, idx);
     // light a couple of objects so the picture shows what lit ones look like
     await page.evaluate((idx) => { const it = window.__game.stars.items[idx]; for (let i = 0; i < it.state.length; i += 2) if (it.def.stars[i].lock === undefined) it.state[i] = 1; it.dirty = true; }, idx);
     await page.waitForTimeout(2500);
-    await page.screenshot({ path: `${name}-3-revelada.png` });
+    await page.screenshot({ path: `${name}-4-acesa.png` });
     console.log('shots', name);
   }
   await browser.close();

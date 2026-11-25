@@ -174,6 +174,84 @@ export class CollisionWorld {
     return { x: p.x, z: p.z, y: g, surface: surf };
   }
 
+  /** A number that changes whenever the solid world changes (for caches built from it). */
+  fingerprint(): number {
+    let h = this.blockers.length * 7 + this.floors.length * 13;
+    for (const b of this.blockers) h = (h * 31 + Math.round(b.x * 3 + b.z * 7 + b.y1 * 11 + (b.r ?? b.hw ?? 0) * 13)) % 1000000007;
+    for (const f of this.floors) h = (h * 37 + Math.round(f.x * 5 + f.z * 3 + (typeof f.top === 'number' ? f.top : 1) * 17)) % 1000000007;
+    return h;
+  }
+
+  /**
+   * What is at this point, for lines of sight (one grid lookup): 0 nothing, 1 a fixed solid,
+   * 2 something that moves or appears later (a door, a gate, steps that rise) — open or not,
+   * with a margin, so nothing is ever drawn on, or hidden by, a thing that will move.
+   */
+  solidAt(x: number, y: number, z: number): 0 | 1 | 2 {
+    const b = this.grid.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`);
+    if (!b) return 0;
+    let hit: 0 | 1 = 0;
+    for (const o of b.b) {
+      const m = o.tag ? 0.4 : 0;
+      if (y < o.y0 - m || y > o.y1 + m) continue;
+      if (!o.tag && !o.enabled) continue;
+      let inside: boolean;
+      if (o.r !== undefined) {
+        const dx = x - o.x, dz = z - o.z;
+        inside = dx * dx + dz * dz <= (o.r + m) * (o.r + m);
+      } else {
+        const [lx, lz] = this.local(x, z, o.x, o.z, o.rot);
+        inside = Math.abs(lx) <= o.hw! + m && Math.abs(lz) <= o.hd! + m;
+      }
+      if (!inside) continue;
+      if (o.tag) return 2;
+      hit = 1;
+    }
+    for (const f of b.f) {
+      if (!f.tag) continue;
+      let u: number, v: number;
+      if (f.r !== undefined) {
+        const dx = x - f.x, dz = z - f.z;
+        if (dx * dx + dz * dz > (f.r + 0.4) * (f.r + 0.4)) continue;
+        u = Math.max(-1, Math.min(1, dx / f.r));
+        v = Math.max(-1, Math.min(1, dz / f.r));
+      } else {
+        const [lx, lz] = this.local(x, z, f.x, f.z, f.rot);
+        if (Math.abs(lx) > f.hw! + 0.4 || Math.abs(lz) > f.hd! + 0.4) continue;
+        u = Math.max(-1, Math.min(1, lx / f.hw!));
+        v = Math.max(-1, Math.min(1, lz / f.hd!));
+      }
+      const top = typeof f.top === 'number' ? f.top : f.top(u, v);
+      if (y <= top + 0.5 && y >= top - 1.1) return 2;
+    }
+    return hit;
+  }
+
+  /** Top of the highest fixed (untagged, enabled) floor at (x,z) that is at or below y (-Infinity if none). */
+  floorBelow(x: number, y: number, z: number): number {
+    const b = this.grid.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`);
+    let best = -Infinity;
+    if (!b) return best;
+    for (const f of b.f) {
+      if (!f.enabled || f.tag) continue;
+      let u: number, v: number;
+      if (f.r !== undefined) {
+        const dx = x - f.x, dz = z - f.z;
+        if (dx * dx + dz * dz > f.r * f.r) continue;
+        u = dx / f.r;
+        v = dz / f.r;
+      } else {
+        const [lx, lz] = this.local(x, z, f.x, f.z, f.rot);
+        if (Math.abs(lx) > f.hw! || Math.abs(lz) > f.hd!) continue;
+        u = lx / f.hw!;
+        v = lz / f.hd!;
+      }
+      const top = typeof f.top === 'number' ? f.top : f.top(u, v);
+      if (top <= y && top > best) best = top;
+    }
+    return best;
+  }
+
   /** Is a circle at (x,z) with radius r overlapping any enabled blocker within [y0,y1]? */
   blockedAt(x: number, z: number, r: number, y0: number, y1: number): boolean {
     const p = { x, z };

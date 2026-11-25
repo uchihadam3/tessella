@@ -17,6 +17,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { CONSTELLATIONS } from '../data/constellations';
+import SAVED_PLACES from '../data/constellation-places.json';
 import type { ConstellationDef } from './types';
 import { checkConstellation, initialState, isPressable, pressSet, stateString } from './graph';
 import type { World } from '../world/world';
@@ -139,6 +140,20 @@ void main(){
   gl_FragColor = vec4(c, soft * soft * (0.34 + 0.5 * on));
 }`;
 
+// ───────────────────────── saved placement ─────────────────────────
+
+const KINDS: HitKind[] = ['ground', 'floor', 'wall', 'tree', 'rock', 'sky'];
+const r2 = (v: number) => Math.round(v * 100) / 100;
+const r5 = (v: number) => Math.round(v * 1e5) / 1e5;
+/** where every picture was placed (computed once by scripts/place-constellations.cjs) */
+export interface PlaceRecord {
+  /** fingerprint of the world the places were computed for (terrain, solids, trees, pictures) */
+  signature: string;
+  places: Record<string, { e: number[]; g: number; f: number[]; h: number[][]; l: number[][][] }>;
+  /** decoy lines per area: [eye x,y,z, dirA x,y,z, dirB x,y,z, ...runs] */
+  decoys: Record<string, { e: number[]; a: number[]; b: number[]; l: number[][] }[]>;
+}
+
 // ───────────────────────── glyph sprites ─────────────────────────
 
 const glyphTexCache = new Map<string, THREE.Texture>();
@@ -186,7 +201,8 @@ function tube(pts: THREE.Vector3[], r: number[], col: THREE.Color, t0: number[],
   for (let i = 0; i < pts.length - 1; i++) {
     for (let k = 0; k < SIDES; k++) {
       const k2 = (k + 1) % SIDES;
-      const quad: [number, number][] = [[i, k], [i, k2], [i + 1, k2], [i + 1, k]];
+      // counter-clockwise seen from outside, so the outside is what gets lit (not the inner wall)
+      const quad: [number, number][] = [[i, k], [i + 1, k], [i + 1, k2], [i, k2]];
       for (const qi of [0, 1, 2, 0, 2, 3]) {
         const [ii, kk] = quad[qi];
         const n = rings[ii].n[kk];
@@ -276,6 +292,8 @@ export interface CItem {
   near: boolean;
   /** how brightly the picture is lit right now (0..1) */
   alpha: number;
+  /** what its lines run through: samples per kind of scenery */
+  drawnOn: Record<string, number>;
 }
 
 export type CTarget = { item: CItem; star: number } | { item: CItem; bell: true };
@@ -409,34 +427,39 @@ export class ConstellationSystem {
   /** where a line of sight from the spot first meets the scenery (null: into water) */
   private castRay(eye: THREE.Vector3, dir: THREE.Vector3, tMin: number, tMax: number): Hit | null {
     const col = this.world.collision;
-    const p = new THREE.Vector3();
-    let t = tMin;
+    const terrain = this.world.terrain;
     const veg = this.world.forest.raycast(eye, dir, tMax);
     const vegT = veg && veg.t > tMin ? veg.t : Infinity;
-    p.copy(eye).addScaledVector(dir, t);
-    if (p.y <= this.world.terrain.heightAt(p.x, p.z) || col.blockedAt(p.x, p.z, 0.04, p.y - 0.04, p.y + 0.04)) return null;
+    let t = tMin;
+    let x = eye.x + dir.x * t, y = eye.y + dir.y * t, z = eye.z + dir.z * t;
+    if (y <= terrain.heightAt(x, z) || col.solidAt(x, y, z)) return null;
+    let prevFloor = col.floorBelow(x, y, z);
     while (t < tMax) {
-      const step = t < 14 ? 0.22 : 0.45;
+      const step = t < 14 ? 0.3 : 0.6;
       t += step;
       if (t >= vegT) return { kind: veg!.kind, p: eye.clone().addScaledVector(dir, vegT), dist: vegT };
-      p.copy(eye).addScaledVector(dir, t);
-      const terr = this.world.terrain.heightAt(p.x, p.z);
-      if (p.y <= terr) {
+      x = eye.x + dir.x * t;
+      y = eye.y + dir.y * t;
+      z = eye.z + dir.z * t;
+      if (y <= terrain.heightAt(x, z)) {
         // refine where the line of sight meets the ground
         let lo = t - step, hi = t;
         for (let k = 0; k < 6; k++) {
           const mid = (lo + hi) / 2;
-          const q = eye.clone().addScaledVector(dir, mid);
-          if (q.y <= this.world.terrain.heightAt(q.x, q.z)) hi = mid;
+          if (eye.y + dir.y * mid <= terrain.heightAt(eye.x + dir.x * mid, eye.z + dir.z * mid)) hi = mid;
           else lo = mid;
         }
         const q = eye.clone().addScaledVector(dir, hi);
-        if (this.world.terrain.heightAt(q.x, q.z) < this.world.waterAt(q.x, q.z) + 0.05) return null;
+        if (terrain.heightAt(q.x, q.z) < this.world.waterAt(q.x, q.z) + 0.05) return null;
         return { kind: 'ground', p: q, dist: hi };
       }
-      const [g, surf] = col.groundAt(p.x, p.z, p.y + 0.01);
-      if (surf !== null && p.y - g < step * Math.abs(dir.y) + 0.04) return { kind: 'floor', p: new THREE.Vector3(p.x, g, p.z), dist: t };
-      if (col.blockedAt(p.x, p.z, 0.04, p.y - 0.04, p.y + 0.04)) return { kind: 'wall', p: eye.clone().addScaledVector(dir, t - 0.1), dist: t - 0.1 };
+      // crossing down through a floor's top (a deck, a terrace, paving)
+      const fl = col.floorBelow(x, y + step * Math.abs(dir.y) + 0.05, z);
+      if (fl > prevFloor && y <= fl + 0.02) return { kind: 'floor', p: new THREE.Vector3(x, fl, z), dist: t };
+      prevFloor = col.floorBelow(x, y, z);
+      const solid = col.solidAt(x, y, z);
+      if (solid === 2) return null; // a door or something else that moves: never draw on it or behind it
+      if (solid === 1) return { kind: 'wall', p: eye.clone().addScaledVector(dir, t - 0.1), dist: t - 0.1 };
     }
     return { kind: 'sky', p: eye.clone().addScaledVector(dir, SKY_DIST), dist: SKY_DIST };
   }
@@ -448,7 +471,7 @@ export class ConstellationSystem {
    */
   private traceLine(eye: THREE.Vector3, dA: THREE.Vector3, dB: THREE.Vector3): Run[] | null {
     const ang = THREE.MathUtils.radToDeg(dA.angleTo(dB));
-    const n = Math.max(4, Math.ceil(ang / 1.1));
+    const n = Math.max(4, Math.ceil(ang / 1.4));
     const runs: Run[] = [];
     let cur: Run | null = null;
     for (let i = 0; i <= n; i++) {
@@ -481,6 +504,8 @@ export class ConstellationSystem {
 
   /** true once every picture has found its place */
   ready = false;
+  /** what this run decided (exported by scripts/place-constellations.cjs) */
+  readonly record: PlaceRecord = { signature: '', places: {}, decoys: {} };
   private placer: Generator<void, void> | null = null;
   /** saved states for pictures not placed yet (applied as soon as each one is built) */
   private pending = new Map<string, { s?: string; solved: boolean; revealed: boolean }>();
@@ -492,6 +517,16 @@ export class ConstellationSystem {
    */
   startPlacing() {
     if (this.placer || this.ready) return;
+    this.record.signature = this.worldSignature();
+    const saved = SAVED_PLACES as unknown as PlaceRecord;
+    const force = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsCompute');
+    if (!force && saved.signature === this.record.signature && Object.keys(saved.places).length === CONSTELLATIONS.length) {
+      // the island has not changed since the places were computed: just build them (fast)
+      this.buildFromRecord(saved);
+      this.ready = true;
+      return;
+    }
+    if (!force && saved.signature) console.warn('constellation places are out of date: searching again in the background');
     this.placer = this.placeSteps();
     type IdleDeadline = { timeRemaining(): number };
     const ric = (window as unknown as { requestIdleCallback?: (cb: (d: IdleDeadline) => void, o?: { timeout: number }) => number }).requestIdleCallback;
@@ -515,10 +550,109 @@ export class ConstellationSystem {
 
   /** Place everything right now (tests and tools). */
   placeAll() {
+    if (this.ready) return;
+    if (!this.record.signature) this.record.signature = this.worldSignature();
     if (!this.placer) this.placer = this.placeSteps();
     while (!this.placer.next().done) { /* keep going */ }
     this.placer = null;
     this.ready = true;
+  }
+
+  /** fingerprint of everything the placement depends on: terrain, solids, trees and the pictures */
+  private worldSignature(): string {
+    let h = 0x811c9dc5;
+    const mix = (v: number) => {
+      h = Math.imul(h ^ (Math.round(v * 20) | 0), 16777619) >>> 0;
+    };
+    for (let x = -540; x <= 540; x += 30) for (let z = -540; z <= 540; z += 30) mix(this.world.terrain.heightAt(x, z));
+    mix(this.world.collision.fingerprint());
+    mix(this.world.forest.fingerprint());
+    for (const d of CONSTELLATIONS) {
+      mix(d.stars.length);
+      for (const st of d.stars) {
+        mix(st.x);
+        mix(st.z);
+      }
+      for (const t of d.threads) mix(t.a * 31 + t.b);
+      mix(d.bell.x);
+      mix(d.bell.z);
+    }
+    return h.toString(16) + '-' + SPAN_DEG + '-' + SPOT_SPACING;
+  }
+
+  /** the decided places as JSON (written to src/data/constellation-places.json by the tool) */
+  exportPlaces(): string {
+    return JSON.stringify(this.record);
+  }
+
+  private basis(fwd: THREE.Vector3) {
+    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+    const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
+    return { right, up };
+  }
+
+  /** the directions of a picture's points from its spot (exactly as when it was placed) */
+  private directions(def: ConstellationDef, fwd: THREE.Vector3): THREE.Vector3[] {
+    const { right, up } = this.basis(fwd);
+    const pts2 = [...def.stars.map((st) => [st.x, st.z]), [def.bell.x, def.bell.z]];
+    const xs = def.stars.map((s) => s.x), zs = def.stars.map((s) => s.z);
+    const mx = (Math.min(...xs) + Math.max(...xs)) / 2, mz = (Math.min(...zs) + Math.max(...zs)) / 2;
+    const maxR = Math.max(0.3, ...pts2.map((q) => Math.hypot(q[0] - mx, q[1] - mz)));
+    const k = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG)) / maxR;
+    return pts2.map(([x, z]) => fwd.clone().addScaledVector(right, (x - mx) * k).addScaledVector(up, -(z - mz) * k).normalize());
+  }
+
+  private runsFrom(eye: THREE.Vector3, dA: THREE.Vector3, dB: THREE.Vector3, stored: number[][]): Run[] {
+    return stored.map((r) => {
+      const kind = KINDS[r[0]];
+      const samples: Sample[] = [];
+      for (let i = 1; i < r.length; i += 2) {
+        const t = r[i], dist = r[i + 1];
+        const dir = dA.clone().lerp(dB, t).normalize();
+        samples.push({ t, dir, hit: { kind, p: eye.clone().addScaledVector(dir, dist), dist } });
+      }
+      return { kind, samples };
+    });
+  }
+
+  /** Build every picture (and the decoys) from saved places, without searching. */
+  private buildFromRecord(rec: PlaceRecord) {
+    for (const def of CONSTELLATIONS) {
+      const e = rec.places[def.id];
+      if (!e) continue;
+      const eye = new THREE.Vector3(e.e[0], e.e[1], e.e[2]);
+      const fwd = new THREE.Vector3(e.f[0], e.f[1], e.f[2]).normalize();
+      const dirs = this.directions(def, fwd);
+      const hits: Hit[] = e.h.map(([k, d], i) => ({ kind: KINDS[k], p: eye.clone().addScaledVector(dirs[i], d), dist: d }));
+      const lines = def.threads.map((th, li) => this.runsFrom(eye, dirs[th.a], dirs[th.b], e.l[li]));
+      this.spots.push({ x: eye.x, z: eye.z });
+      this.build(def, def.area, eye, e.g, fwd, dirs, hits, lines);
+      const count: Record<string, number> = {};
+      for (const runs of lines) for (const r of runs) count[r.kind] = (count[r.kind] ?? 0) + r.samples.length;
+      this.items[this.items.length - 1].drawnOn = count;
+      this.record.places[def.id] = e;
+    }
+    for (const [area, list] of Object.entries(rec.decoys)) {
+      const lines = list.map((d) => {
+        const eye = new THREE.Vector3(d.e[0], d.e[1], d.e[2]);
+        return { eye, runs: this.runsFrom(eye, new THREE.Vector3(d.a[0], d.a[1], d.a[2]), new THREE.Vector3(d.b[0], d.b[1], d.b[2]), d.l) };
+      });
+      this.addDecoyMesh(area as AreaId, lines);
+    }
+    this.record.decoys = rec.decoys;
+  }
+
+  private addDecoyMesh(area: AreaId, lines: { eye: THREE.Vector3; runs: Run[] }[]) {
+    const solids: THREE.BufferGeometry[] = [];
+    for (const { eye, runs } of lines) {
+      const res = this.dress([runs], area, eye, () => 0, () => 0);
+      if (res.solid) solids.push(res.solid);
+    }
+    if (!solids.length) return;
+    const m = new THREE.Mesh(mergeGeometries(solids, false)!, this.decoyMat);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    this.group.add(m);
   }
 
   private *placeSteps(): Generator<void, void> {
@@ -534,7 +668,7 @@ export class ConstellationSystem {
         let done = false;
         // strict first (a picture across several kinds of scenery), then relaxed, then wider
         for (let pass = 0; pass < 4 && !done; pass++) {
-          for (let attempt = 0; attempt < (pass === 3 ? 1600 : 300) && !done; attempt++) {
+          for (let attempt = 0; attempt < (pass === 3 ? 1200 : 400) && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
             const wide = pass >= 2 ? 1.5 : 1;
             let r = rMin + Math.sqrt(rnd()) * (rMax - rMin) * wide;
@@ -569,13 +703,38 @@ export class ConstellationSystem {
     if (area !== 'echo' && Math.hypot(vx - CALDERA.x, vz - CALDERA.z) < CALDERA.inner + 6) return false;
     const spacing = pass === 3 ? SPOT_SPACING * 0.7 : SPOT_SPACING;
     if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < spacing)) return false;
-    if (!this.enterable(vx, vz, gy)) return false;
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
     if (this.world.forest.crownNear(eye, 2.2)) return false;
-    const yaw = rnd() * Math.PI * 2;
-    // mostly level or a little down; in open country the last pass looks further down (the sea has
-    // nothing to draw with)
-    const pitch = THREE.MathUtils.degToRad(pass === 3 ? -30 + rnd() * 20 : -18 + rnd() * 26);
+    // look around from here and face the richest view: trees, walls, ruins and rocks rather than
+    // bare ground, and no open sky (a quick 3×3 probe across the picture's extent per direction)
+    let bestScore = -Infinity, yaw = 0, pitch = 0;
+    const yaw0 = rnd() * Math.PI * 2;
+    const tSpan = Math.tan(THREE.MathUtils.degToRad(SPAN_DEG * 0.8));
+    for (let yi = 0; yi < 8; yi++) {
+      const yw = yaw0 + (yi / 8) * Math.PI * 2;
+      for (const pd of pass === 3 ? [-24, -14] : [-14, -4, 6]) {
+        const pt = THREE.MathUtils.degToRad(pd + (rnd() - 0.5) * 6);
+        const f = new THREE.Vector3(Math.sin(yw) * Math.cos(pt), Math.sin(pt), Math.cos(yw) * Math.cos(pt));
+        const rt = new THREE.Vector3().crossVectors(f, new THREE.Vector3(0, 1, 0)).normalize();
+        const upv = new THREE.Vector3().crossVectors(rt, f).normalize();
+        let score = 0;
+        for (const [ax, ay] of [[0, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          const d = f.clone().addScaledVector(rt, ax * tSpan).addScaledVector(upv, ay * tSpan).normalize();
+          const h = this.castRay(eye, d, 1.5, 50);
+          if (!h || (h.kind !== 'sky' && h.dist < 3)) score -= 20;
+          else if (h.kind === 'sky') score -= 6;
+          else if (h.kind === 'tree' || h.kind === 'wall' || h.kind === 'rock') score += 3;
+          else if (h.kind === 'floor') score += 1;
+        }
+        score += rnd() * 2; // a little variety among equally good views
+        if (score > bestScore) {
+          bestScore = score;
+          yaw = yw;
+          pitch = pt;
+        }
+      }
+    }
+    if (bestScore < -6) return false;
     const fwd = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
     const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
     const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
@@ -601,6 +760,7 @@ export class ConstellationSystem {
       const h = this.castRay(eye, dir, 0.4, 4.5);
       if (h && (h.kind === 'wall' || h.kind === 'tree' || h.kind === 'rock')) return false;
     }
+    if (!this.enterable(vx, vz, gy)) return false;
     // never on a panel: a crack across a panel would read as part of its puzzle
     for (const h of hits) if (h.kind === 'wall' && this.nearAnchor(h.p.x, h.p.z, h.p.y - 1.2)) return false;
     if (this.taken.some((q) => hits.some((h) => h.kind !== 'sky' && q.distanceTo(h.p) < 1.2))) return false;
@@ -631,6 +791,12 @@ export class ConstellationSystem {
     if (!this.connected(vx, vz, gy)) return false;
     this.spots.push({ x: vx, z: vz });
     this.build(def, area, eye, gy, fwd, dirs, hits, lines);
+    this.items[this.items.length - 1].drawnOn = { ...count };
+    this.record.places[def.id] = {
+      e: [r2(eye.x), r2(eye.y), r2(eye.z)], g: r2(gy), f: [r5(fwd.x), r5(fwd.y), r5(fwd.z)],
+      h: hits.map((h) => [KINDS.indexOf(h.kind), r2(h.dist)]),
+      l: lines.map((runs) => runs.map((r) => [KINDS.indexOf(r.kind), ...r.samples.flatMap((sm) => [r5(sm.t), r2(sm.hit.dist)])])),
+    };
     return true;
   }
 
@@ -755,7 +921,7 @@ export class ConstellationSystem {
       def, area, group: g, strokes, cloud, lineRanges: dressed.ranges, u, knots, sprites, orb, orbBase,
       state: initialState(def), solved: false, revealed: false, reveal: 0, hold: 0,
       view: { spot: new THREE.Vector3(eye.x, gy, eye.z), eye: eye.clone(), dir: fwd.clone() },
-      center: centroid, radius: 3, starPos, lit: new THREE.Color('#ffd9a0'), blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false, alpha: 0,
+      center: centroid, radius: 3, starPos, lit: new THREE.Color('#ffd9a0'), blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false, alpha: 0, drawnOn: {},
     });
     const p = this.pending.get(def.id);
     if (p) {
@@ -764,11 +930,11 @@ export class ConstellationSystem {
     }
   }
 
-  /** Roots, vines, cracks and wisps of cloud that draw nothing at all (the island is full of them). */
+  /** Roots, vines and cracks that draw nothing at all (the island is full of them). */
   private scatterDecoys(area: AreaId, center: { x: number; z: number }, rMin: number, rMax: number, count: number, rnd: () => number) {
-    const solids: THREE.BufferGeometry[] = [];
-    let made = 0;
-    for (let attempt = 0; attempt < count * 12 && made < count; attempt++) {
+    const lines: { eye: THREE.Vector3; runs: Run[] }[] = [];
+    const rec: PlaceRecord['decoys'][string] = [];
+    for (let attempt = 0; attempt < count * 12 && lines.length < count; attempt++) {
       const ang = rnd() * Math.PI * 2;
       const r = rMin + Math.sqrt(rnd()) * (rMax - rMin) * 1.2;
       const cx = center.x + Math.cos(ang) * r, cz = center.z + Math.sin(ang) * r;
@@ -785,18 +951,16 @@ export class ConstellationSystem {
       const dB = d.clone().addScaledVector(side, Math.tan(half)).add(new THREE.Vector3(0, -tilt * Math.tan(half), 0)).normalize();
       const runs = this.traceLine(eye, dA, dB);
       if (!runs) continue;
-      const ground = runs.filter((r) => r.kind !== 'sky');
+      const ground = runs.filter((rr) => rr.kind !== 'sky');
       if (!ground.length) continue;
-      const res = this.dress([ground], area, eye, () => 0, () => 0);
-      if (res.solid) solids.push(res.solid);
-      made++;
+      lines.push({ eye, runs: ground });
+      rec.push({
+        e: [r2(eye.x), r2(eye.y), r2(eye.z)], a: [r5(dA.x), r5(dA.y), r5(dA.z)], b: [r5(dB.x), r5(dB.y), r5(dB.z)],
+        l: ground.map((rr) => [KINDS.indexOf(rr.kind), ...rr.samples.flatMap((sm) => [r5(sm.t), r2(sm.hit.dist)])]),
+      });
     }
-    if (solids.length) {
-      const m = new THREE.Mesh(mergeGeometries(solids, false)!, this.decoyMat);
-      m.castShadow = true;
-      m.receiveShadow = true;
-      this.group.add(m);
-    }
+    this.record.decoys[area] = rec;
+    this.addDecoyMesh(area, lines);
   }
 
   // ───────────────────────── seeing ─────────────────────────

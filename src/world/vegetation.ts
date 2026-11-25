@@ -371,6 +371,16 @@ export class Forest {
     }
   }
 
+  /** A number that changes whenever the trees and rocks change (for caches built from them). */
+  fingerprint(): number {
+    let h = 0;
+    for (const [key, list] of this.placements) {
+      h = (h * 31 + key.length * 7 + list.length) % 1000000007;
+      for (const p of list) h = (h * 17 + Math.round(p.x * 3 + p.z * 5 + p.s * 100 + p.r * 10)) % 1000000007;
+    }
+    return h;
+  }
+
   /** drop trees and rocks whose base is within r of (x,z) (e.g. under something placed later) */
   removeNear(x: number, z: number, r: number) {
     for (const list of this.placements.values()) {

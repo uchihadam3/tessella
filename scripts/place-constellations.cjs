@@ -16,7 +16,7 @@ const out = process.env.OUT || 'src/data/constellation-places.json';
   const t0 = Date.now();
   // ONLY=id,id… places just those (a quick look at why some do not fit; write OUT elsewhere then)
   const only = process.env.ONLY ? `&starsOnly=${process.env.ONLY}` : '';
-  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&starsCompute' + (process.env.QUICK ? '&starsQuick' : '') + only + '&at=8,52,180,0', { waitUntil: 'load' });
+  await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&starsCompute' + (process.env.QUICK ? '&starsQuick' : '') + (process.env.HOME_ONLY ? '&starsHome' : '') + only + '&at=8,52,180,0', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true && window.__game?.state === 'play');
   await page.evaluate(() => window.__game.stars.placeAll());
   const res = await page.evaluate(() => {

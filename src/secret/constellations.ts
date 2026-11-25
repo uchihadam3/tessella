@@ -944,10 +944,13 @@ export class ConstellationSystem {
           }
         }
         // strict first (a picture across several kinds of scenery), then relaxed, then wider
-        for (let pass = 0; pass < 7 && !done; pass++) {
+        // (tools: ?starsHome tries only within the picture's own grounds, much longer — to bring
+        // pictures placed in a neighbouring place back home; those that do not fit stay unplaced)
+        const home = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsHome');
+        for (let pass = 0; pass < (home ? 4 : 7) && !done; pass++) {
           // (only places with standing room count as attempts: most random points are slopes or water)
           const quick = typeof location !== 'undefined' && new URLSearchParams(location.search).has('starsQuick');
-          const tries = (quick ? [150, 150, 250, 800, 800, 1200, 1500] : [900, 900, 1500, 6000, 8000, 14000, 16000])[pass];
+          const tries = (quick ? [150, 150, 250, 800, 800, 1200, 1500] : [900, 900, 1500, 6000, 8000, 14000, 16000])[pass] * (home ? 4 : 1);
           let real = 0;
           for (let attempt = 0; real < tries && attempt < tries * 30 && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
@@ -976,6 +979,7 @@ export class ConstellationSystem {
             }
             const vx = base.x + Math.cos(ang) * r, vz = base.z + Math.sin(ang) * r;
             if (Math.hypot(vx, vz - 20) > 520) continue; // stay on the island
+            if (home && territory(vx, vz) !== territoryOf(area)) continue;
             if (this.okPoint(vx, vz) === null) {
               if (attempt % 25 === 0) yield;
               continue;

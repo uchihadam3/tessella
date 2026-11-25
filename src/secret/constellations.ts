@@ -19,7 +19,7 @@ import type { ConstellationDef } from './types';
 import { checkConstellation, initialState, isPressable, pressSet, stateString } from './graph';
 import type { World } from '../world/world';
 import type { AreaId } from '../data/areas';
-import { ANCHORS, AREA_RADIUS, CALDERA, CITADEL, NORTH_LANDING } from '../world/layout';
+import { ANCHORS, AREA_RADIUS, CALDERA, CITADEL, NORTH_LANDING, SPIRE } from '../world/layout';
 import { drawGlyph } from '../puzzle/glyphs';
 import { rng, simplex } from '../world/noise';
 import { audio } from '../audio';
@@ -30,10 +30,12 @@ const EYE_H = 1.62;
 /** half-width of a figure as seen from its spot (degrees, centre to the farthest object) */
 const SPAN_DEG = 15;
 /** how close to the spot you must stand (metres) and how straight you must look (degrees) */
-const SPOT_TOL = 0.6;
-const LOOK_TOL = 4.5;
+const SPOT_TOL = 0.42;
+const LOOK_TOL = 4;
 /** seconds of steady looking for the vision to complete */
-const REVEAL_SECONDS = 5;
+const REVEAL_SECONDS = 6;
+/** viewing spots this far apart at least: the figures are spread over the whole island */
+const SPOT_SPACING = 16;
 /** threads are this thin (radians) seen from the spot, whatever their distance */
 const THREAD_W = 0.003;
 
@@ -212,6 +214,12 @@ function glyphTexture(g: NonNullable<ConstellationDef['stars'][number]['glyph']>
   return t;
 }
 
+/** what hangs in the trees of each place (berries, fruit, pods…), unlit colour */
+const FRUIT: Partial<Record<AreaId, string>> = {
+  prologue: '#8a6d4b', hub: '#a8452f', kinship: '#b8452b', measure: '#c9b25a', mold: '#9a8f7c', contour: '#7a2f45',
+  mosaic: '#c98d3a', beacon: '#6b4a32', weave: '#b8793a', twins: '#e59bbd', citadel: '#5d4a3a', echo: '#4c5a78',
+};
+
 // a soft round speck for objects that sit in the sky
 let dotTex: THREE.Texture | null = null;
 function dotTexture(): THREE.Texture {
@@ -261,7 +269,7 @@ void main(){
   gl_FragColor = vec4(vC * (1.0 + head * 3.0), uAlpha);
 }`;
 
-type HitKind = 'ground' | 'floor' | 'wall' | 'sky';
+type HitKind = 'ground' | 'floor' | 'wall' | 'tree' | 'rock' | 'sky';
 interface Hit {
   kind: HitKind;
   p: THREE.Vector3;
@@ -273,9 +281,12 @@ export interface CItem {
   area: AreaId;
   group: THREE.Group;
   /** how each object glows: an instance of the area's prop, a boss on a wall, or a speck in the sky */
-  vis: { kind: 'prop' | 'disc' | 'sky'; idx: number }[];
+  vis: { kind: 'prop' | 'disc' | 'fruit' | 'sky'; idx: number }[];
   props: THREE.InstancedMesh | null;
   discs: THREE.InstancedMesh | null;
+  fruits: THREE.InstancedMesh | null;
+  /** each object's own colour while unlit (they blend into what they sit on) */
+  restColors: THREE.Color[];
   specks: THREE.Sprite[];
   threads: THREE.Mesh;
   threadU: { uReveal: { value: number }; uAlpha: { value: number } };
@@ -321,6 +332,7 @@ export class ConstellationSystem {
   private bodyMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
   private glowMat = glowMaterial();
   private discGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.05, 14).rotateX(Math.PI / 2);
+  private fruitGeo = new THREE.IcosahedronGeometry(0.1, 1);
   private spots: { x: number; z: number }[] = [];
   private taken: THREE.Vector3[] = [];
   private lastFwd = new THREE.Vector3();
@@ -350,16 +362,95 @@ export class ConstellationSystem {
     return g;
   }
 
+  /**
+   * Can someone walk onto this spot from its surroundings? (Rules out the top of a tall block, a
+   * ledge or a pit.) Walks in from eight directions with the player's own movement rule.
+   */
+  private enterable(x: number, z: number, y: number): boolean {
+    const col = this.world.collision;
+    let ways = 0;
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      let px = x + Math.cos(a) * 5, pz = z + Math.sin(a) * 5;
+      let py = this.groundAt(px, pz);
+      if (!isFinite(py) || col.blockedAt(px, pz, 0.32, py + 0.5, py + 1.7)) continue;
+      for (let i = 0; i < 30; i++) {
+        const dx = x - px, dz = z - pz;
+        const l = Math.hypot(dx, dz);
+        if (l < 0.35) break;
+        const st = Math.min(0.3, l);
+        const m = col.tryMove(px, pz, py, px + (dx / l) * st, pz + (dz / l) * st, 0.32, 0.55, 1.7);
+        if (!m || Math.hypot(m.x - px, m.z - pz) < 0.05) break;
+        px = m.x;
+        pz = m.z;
+        py = m.y;
+      }
+      if (Math.hypot(x - px, z - pz) < 0.5 && Math.abs(py - y) < 0.35 && ++ways >= 2) return true;
+    }
+    return false;
+  }
+
+  /** places known to be reachable (where panels are), bucketed for quick lookup */
+  private anchors = new Map<string, { x: number; z: number; y: number }[]>();
+  setAnchors(points: { x: number; z: number; y: number }[]) {
+    this.anchors.clear();
+    for (const p of points) {
+      const k = `${Math.floor(p.x / 4)},${Math.floor(p.z / 4)}`;
+      if (!this.anchors.has(k)) this.anchors.set(k, []);
+      this.anchors.get(k)!.push(p);
+    }
+  }
+  private nearAnchor(x: number, z: number, y: number): boolean {
+    const cx = Math.floor(x / 4), cz = Math.floor(z / 4);
+    for (let i = cx - 1; i <= cx + 1; i++) for (let j = cz - 1; j <= cz + 1; j++) {
+      for (const a of this.anchors.get(`${i},${j}`) ?? []) if (Math.abs(a.x - x) < 3.5 && Math.abs(a.z - z) < 3.5 && Math.abs(a.y - y) < 1.2) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Is the spot connected on foot to the rest of the island? Walks out from it (the player's own
+   * movement rule, 1 m steps, up to ~30 m) until it meets a path or a panel's standing place.
+   */
+  private connected(x: number, z: number, y: number): boolean {
+    const col = this.world.collision;
+    const seen = new Set<number>([2048 * 4096 + 2048]);
+    const q: [number, number, number, number, number][] = [[0, 0, x, z, y]];
+    for (let head = 0; head < q.length && q.length < 3200; head++) {
+      const [i, j, px, pz, py] = q[head];
+      if (this.world.terrain.pathAt(px, pz) > 0.5 && py - this.world.terrain.heightAt(px, pz) < 0.3) return true;
+      if (this.nearAnchor(px, pz, py)) return true;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const ni = i + di, nj = j + dj;
+        const k = (ni + 2048) * 4096 + (nj + 2048);
+        if (seen.has(k) || ni * ni + nj * nj > 900) continue;
+        const tx = x + ni, tz = z + nj;
+        const m = col.tryMove(px, pz, py, tx, tz, 0.32, 0.55, 1.7);
+        if (!m || Math.hypot(m.x - tx, m.z - tz) > 0.35) continue;
+        seen.add(k);
+        q.push([ni, nj, m.x, m.z, m.y]);
+      }
+    }
+    return false;
+  }
+
   /** where a line of sight from the spot first meets the scenery */
   private castRay(eye: THREE.Vector3, dir: THREE.Vector3, tMin: number, tMax: number): Hit | null {
     const col = this.world.collision;
     const p = new THREE.Vector3();
     let t = tMin;
+    // tree crowns and rocks are part of the scenery too
+    const veg = this.world.forest.raycast(eye, dir, tMax);
+    const vegT = veg && veg.t > tMin ? veg.t : Infinity;
     p.copy(eye).addScaledVector(dir, t);
     if (p.y <= this.world.terrain.heightAt(p.x, p.z) || col.blockedAt(p.x, p.z, 0.04, p.y - 0.04, p.y + 0.04)) return null;
     while (t < tMax) {
       const step = t < 14 ? 0.22 : 0.45;
       t += step;
+      if (t >= vegT) {
+        const back = veg!.kind === 'tree' ? 0.12 : 0.06;
+        return { kind: veg!.kind, p: eye.clone().addScaledVector(dir, vegT - back), dist: vegT - back };
+      }
       p.copy(eye).addScaledVector(dir, t);
       const terr = this.world.terrain.heightAt(p.x, p.z);
       if (p.y <= terr) {
@@ -377,11 +468,12 @@ export class ConstellationSystem {
   }
 
   private region(area: AreaId): { center: { x: number; z: number }; rMin: number; rMax: number } {
-    if (area === 'prologue') return { center: { x: 0, z: 316 }, rMin: 0, rMax: 28 };
-    if (area === 'echo') return { center: { x: CALDERA.x, z: CALDERA.z }, rMin: 14, rMax: 48 };
-    if (area === 'citadel') return { center: { x: CITADEL.x, z: CITADEL.z }, rMin: 4, rMax: 40 };
-    if (area === 'hub') return { center: ANCHORS.hub, rMin: 30, rMax: 72 };
-    return { center: ANCHORS[area], rMin: 10, rMax: (AREA_RADIUS[area] ?? 80) + 18 };
+    // each place keeps its figures, but they spread over its whole surroundings, wild parts included
+    if (area === 'prologue') return { center: { x: 0, z: 300 }, rMin: 0, rMax: 62 };
+    if (area === 'echo') return { center: { x: CALDERA.x, z: CALDERA.z }, rMin: 10, rMax: 50 };
+    if (area === 'citadel') return { center: { x: CITADEL.x, z: CITADEL.z - 10 }, rMin: 0, rMax: 75 };
+    if (area === 'hub') return { center: ANCHORS.hub, rMin: 26, rMax: 120 };
+    return { center: ANCHORS[area], rMin: 0, rMax: (AREA_RADIUS[area] ?? 80) + 60 };
   }
 
   place() {
@@ -396,19 +488,20 @@ export class ConstellationSystem {
       for (const def of defs) {
         let done = false;
         // strict first (objects at very different depths, some off the ground), then relaxed, then wider
-        for (let pass = 0; pass < 3 && !done; pass++) {
-          for (let attempt = 0; attempt < 260 && !done; attempt++) {
+        for (let pass = 0; pass < 4 && !done; pass++) {
+          for (let attempt = 0; attempt < (pass === 3 ? 600 : 260) && !done; attempt++) {
             const ang = rnd() * Math.PI * 2;
-            const wide = pass === 2 ? 1.6 : 1;
+            const wide = pass >= 2 ? 1.6 : 1;
             let r = rMin + Math.sqrt(rnd()) * (rMax - rMin) * wide;
             let base = center;
             if (pass === 2 && area === 'citadel' && attempt % 2) base = { x: NORTH_LANDING.x, z: NORTH_LANDING.z + 20 };
-            if (pass === 2 && area === 'echo' && attempt % 2) {
-              base = { x: CALDERA.x, z: CALDERA.z + 70 };
-              r = rnd() * 22;
+            if (pass >= 2 && area === 'echo' && attempt % 2) {
+              // the caldera is cramped: its outer slopes belong to the hollow too
+              base = { x: CALDERA.x, z: CALDERA.z };
+              r = 70 + rnd() * 45;
             }
             const vx = base.x + Math.cos(ang) * r, vz = base.z + Math.sin(ang) * r;
-            if (area === 'prologue' && (Math.abs(vx) > 30 || vz < 296 || vz > 336)) continue;
+            if (Math.hypot(vx, vz - 20) > 520) continue; // stay on the island
             done = this.tryPlace(def, area, vx, vz, rnd, pass);
           }
         }
@@ -422,7 +515,10 @@ export class ConstellationSystem {
   private tryPlace(def: ConstellationDef, area: AreaId, vx: number, vz: number, rnd: () => number, pass: number): boolean {
     const gy = this.okPoint(vx, vz);
     if (gy === null) return false;
-    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < 7)) return false;
+    // not on the Sky Spire: its landings only exist once the stair of light is lit
+    if (Math.hypot(vx - SPIRE.x, vz - SPIRE.z) < 26 && gy > SPIRE.baseY + 2.5) return false;
+    if (this.spots.some((v) => Math.hypot(v.x - vx, v.z - vz) < SPOT_SPACING)) return false;
+    if (!this.enterable(vx, vz, gy)) return false;
     const eye = new THREE.Vector3(vx, gy + EYE_H, vz);
     const yaw = rnd() * Math.PI * 2;
     const pitch = THREE.MathUtils.degToRad(-11 + rnd() * 25);
@@ -447,16 +543,21 @@ export class ConstellationSystem {
     const spread = near.length ? Math.max(...near) / Math.max(0.5, Math.min(...near)) : 1;
     const skies = stars.filter((h) => h.kind === 'sky').length;
     if (skies > Math.max(1, stars.length / 3)) return false; // mostly in the scenery, not the sky
-    if (pass === 0 && (offGround < 2 || spread < 2.2)) return false;
-    if (pass === 1 && offGround < 1 && spread < 1.8) return false;
+    // everywhere, not only on the ground: most points sit in trees, on rocks, walls, ruins, decks or the sky
+    if (pass === 0 && (offGround < Math.ceil(stars.length * 0.55) || spread < 2.2)) return false;
+    if (pass === 1 && (offGround < Math.ceil(stars.length * 0.4) || spread < 1.8)) return false;
+    if (pass === 2 && offGround < Math.ceil(stars.length * 0.25)) return false;
+    if (pass === 3 && offGround < 1 && stars.length > 3) return false;
     for (let i = 0; i < hits.length; i++) {
       const h = hits[i];
       if (h.kind === 'sky') continue;
       if (h.p.distanceTo(eye) < 3) return false;
       if (this.taken.some((q) => q.distanceTo(h.p) < 1.1)) return false;
-      if (h.kind === 'ground' && this.world.terrain.pathAt(h.p.x, h.p.z) > 0.35) return false;
+      if ((h.kind === 'ground' || h.kind === 'floor') && this.world.terrain.pathAt(h.p.x, h.p.z) > 0.35 && h.kind === 'ground') return false;
       for (let j = 0; j < i; j++) if (hits[j].kind !== 'sky' && hits[j].p.distanceTo(h.p) < 0.45) return false;
     }
+    // last (the slowest check): the spot must be walkable-to from the rest of the island
+    if (!this.connected(vx, vz, gy)) return false;
     this.spots.push({ x: vx, z: vz });
     this.build(def, area, eye, gy, fwd, hits);
     return true;
@@ -470,7 +571,9 @@ export class ConstellationSystem {
     const vis: CItem['vis'] = [];
     const propMats: THREE.Matrix4[] = [];
     const discMats: THREE.Matrix4[] = [];
+    const fruitMats: THREE.Matrix4[] = [];
     const specks: THREE.Sprite[] = [];
+    const restColors: THREE.Color[] = [];
     const sample = makeProp(area, 1);
     let rest = new THREE.Color(sample.rest), lit = new THREE.Color(sample.lit);
     for (let i = 0; i < n; i++) {
@@ -485,9 +588,28 @@ export class ConstellationSystem {
         bodies.push(prop.body.clone().rotateY(rot).translate(x, y, z));
         propMats.push(new THREE.Matrix4().makeRotationY(rot).setPosition(x, y + prop.glowAt, z));
         vis.push({ kind: 'prop', idx: propMats.length - 1 });
+        restColors.push(new THREE.Color(prop.rest));
         starPos.push(new THREE.Vector3(x, y + prop.glowAt, z));
         this.world.collision.addBlocker({ x, z, r: 0.14, y0: y - 1, y1: y + prop.glowAt + 0.2 });
-        this.world.forest.exclude(x, z, 0.7);
+        this.world.forest.removeNear(x, z, 0.5);
+      } else if (h.kind === 'tree') {
+        // something hanging in the crown: a cluster of berries / fruit / pods, the biggest one glows
+        const fc = FRUIT[area] ?? '#a8452f';
+        fruitMats.push(new THREE.Matrix4().setPosition(h.p));
+        vis.push({ kind: 'fruit', idx: fruitMats.length - 1 });
+        restColors.push(new THREE.Color(fc));
+        for (const [ox, oy, oz] of [[0.11, -0.06, 0.02], [-0.09, -0.08, -0.04]]) {
+          bodies.push(colored(new THREE.IcosahedronGeometry(0.07, 1).translate(h.p.x + ox, h.p.y + oy, h.p.z + oz), fc, false));
+        }
+        bodies.push(colored(new THREE.CylinderGeometry(0.008, 0.008, 0.22, 4).translate(h.p.x, h.p.y + 0.13, h.p.z), '#4a3a2a', false));
+        starPos.push(h.p.clone());
+      } else if (h.kind === 'rock') {
+        // a round patch of lichen on the rock, facing the spot
+        const m = new THREE.Matrix4().lookAt(h.p, eye, new THREE.Vector3(0, 1, 0)).setPosition(h.p).multiply(new THREE.Matrix4().makeRotationY(Math.PI));
+        discMats.push(m);
+        vis.push({ kind: 'disc', idx: discMats.length - 1 });
+        restColors.push(new THREE.Color('#9aa36a'));
+        starPos.push(h.p.clone());
       } else if (h.kind === 'wall') {
         // a round boss set into the wall, facing the spot
         const m = new THREE.Matrix4().lookAt(h.p, eye, new THREE.Vector3(0, 1, 0)).setPosition(h.p);
@@ -497,6 +619,7 @@ export class ConstellationSystem {
         bodies.push(colored(rim, '#8d8578', false));
         discMats.push(m);
         vis.push({ kind: 'disc', idx: discMats.length - 1 });
+        restColors.push(new THREE.Color('#9b9284'));
         starPos.push(h.p.clone());
       } else {
         const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false, fog: false }));
@@ -505,6 +628,7 @@ export class ConstellationSystem {
         g.add(sp);
         specks.push(sp);
         vis.push({ kind: 'sky', idx: specks.length - 1 });
+        restColors.push(new THREE.Color('#ffffff'));
         starPos.push(h.p.clone());
       }
       if (def.stars[i].lock !== undefined && h.kind !== 'sky') {
@@ -537,6 +661,7 @@ export class ConstellationSystem {
     };
     const props = mkInst(sample.glow, propMats);
     const discs = mkInst(this.discGeo, discMats);
+    const fruits = mkInst(this.fruitGeo, fruitMats);
     // threads: straight between the objects; widened with distance so from the spot they all look thin
     const tPos: number[] = [];
     const tCol: number[] = [];
@@ -634,7 +759,7 @@ export class ConstellationSystem {
     if (nonSky) centroid.multiplyScalar(1 / nonSky);
     else centroid.copy(eye);
     this.items.push({
-      def, area, group: g, vis, props, discs, specks, threads, threadU, threadRanges: ranges, sprites, rings, orb, orbBase,
+      def, area, group: g, vis, props, discs, fruits, restColors, specks, threads, threadU, threadRanges: ranges, sprites, rings, orb, orbBase,
       state: initialState(def), solved: false, revealed: false, reveal: 1, hold: 0,
       view: { spot: new THREE.Vector3(eye.x, gy, eye.z), eye: eye.clone(), dir: fwd.clone() },
       center: centroid, radius: 3, starPos, rest, lit, blink: 0, bad: new Set(), badThreads: new Set(), dirty: true, near: false,
@@ -649,19 +774,27 @@ export class ConstellationSystem {
       const ang = rnd() * Math.PI * 2;
       const r = rMin + Math.sqrt(rnd()) * (rMax - rMin);
       const cx = center.x + Math.cos(ang) * r, cz = center.z + Math.sin(ang) * r;
-      if (area === 'prologue' && (Math.abs(cx) > 30 || cz < 300 || cz > 336)) continue;
-      if (rnd() < 0.3) {
-        // a boss on whatever wall a random glance meets
+      if (Math.hypot(cx, cz - 20) > 520) continue;
+      if (rnd() < 0.55) {
+        // whatever a random glance meets: a boss on a wall, fruit in a tree, lichen on a rock
         const y0 = this.groundAt(cx, cz);
         if (!isFinite(y0)) continue;
         const eye = new THREE.Vector3(cx, y0 + EYE_H, cz);
         const a2 = rnd() * Math.PI * 2;
-        const dir = new THREE.Vector3(Math.sin(a2), -0.1 + rnd() * 0.4, Math.cos(a2)).normalize();
-        const h = this.castRay(eye, dir, 2, 20);
-        if (!h || h.kind !== 'wall' || this.taken.some((q) => q.distanceTo(h.p) < 1.5)) continue;
+        const dir = new THREE.Vector3(Math.sin(a2), -0.15 + rnd() * 0.6, Math.cos(a2)).normalize();
+        const h = this.castRay(eye, dir, 2, 26);
+        if (!h || h.kind === 'ground' || h.kind === 'floor' || h.kind === 'sky' || this.taken.some((q) => q.distanceTo(h.p) < 1.5)) continue;
         const m = new THREE.Matrix4().lookAt(h.p, eye, new THREE.Vector3(0, 1, 0)).setPosition(h.p).multiply(new THREE.Matrix4().makeRotationY(Math.PI));
-        parts.push(colored(new THREE.TorusGeometry(0.12, 0.035, 6, 16).applyMatrix4(m), '#8d8578', false));
-        parts.push(colored(this.discGeo.clone().applyMatrix4(m), makeProp(area, 3).rest, false));
+        if (h.kind === 'wall') {
+          parts.push(colored(new THREE.TorusGeometry(0.12, 0.035, 6, 16).applyMatrix4(m), '#8d8578', false));
+          parts.push(colored(this.discGeo.clone().applyMatrix4(m), '#9b9284', false));
+        } else if (h.kind === 'rock') {
+          parts.push(colored(this.discGeo.clone().applyMatrix4(m), '#9aa36a', false));
+        } else {
+          const fc = FRUIT[area] ?? '#a8452f';
+          parts.push(colored(this.fruitGeo.clone().translate(h.p.x, h.p.y, h.p.z), fc, false));
+          for (const [ox, oy, oz] of [[0.11, -0.06, 0.02], [-0.09, -0.08, -0.04]]) parts.push(colored(new THREE.IcosahedronGeometry(0.07, 1).translate(h.p.x + ox, h.p.y + oy, h.p.z + oz), fc, false));
+        }
         made++;
         continue;
       }
@@ -675,7 +808,7 @@ export class ConstellationSystem {
         parts.push(prop.body.clone().rotateY(rot).translate(x, y, z));
         parts.push(colored(prop.glow.clone(), prop.rest, false).rotateY(rot).translate(x, y + prop.glowAt, z));
         this.world.collision.addBlocker({ x, z, r: 0.14, y0: y - 1, y1: y + prop.glowAt + 0.2 });
-        this.world.forest.exclude(x, z, 0.6);
+        this.world.forest.removeNear(x, z, 0.4);
         made++;
       }
     }
@@ -844,7 +977,7 @@ export class ConstellationSystem {
       m.opacity = glow > 0 ? 1 : 0.55;
       return;
     }
-    const im = v.kind === 'prop' ? it.props! : it.discs!;
+    const im = v.kind === 'prop' ? it.props! : v.kind === 'fruit' ? it.fruits! : it.discs!;
     im.setColorAt(v.idx, c);
     (im.geometry.attributes.aGlow as THREE.InstancedBufferAttribute).setX(v.idx, glow);
   }
@@ -902,9 +1035,9 @@ export class ConstellationSystem {
         if (blinkOn && it.bad.has(i)) this.setGlow(it, i, c.setRGB(1, 0.08, 0.05), 2.2);
         else if (it.solved || this.blaze) this.setGlow(it, i, c.set('#fff2cf'), 1.6 + 0.4 * Math.sin(t * 2 + i));
         else if (it.revealed && it.state[i]) this.setGlow(it, i, c.copy(it.lit), 2.4);
-        else this.setGlow(it, i, c.copy(it.rest), 0);
+        else this.setGlow(it, i, c.copy(it.restColors[i] ?? it.rest), 0);
       }
-      for (const im of [it.props, it.discs]) {
+      for (const im of [it.props, it.discs, it.fruits]) {
         if (!im) continue;
         if (im.instanceColor) im.instanceColor.needsUpdate = true;
         (im.geometry.attributes.aGlow as THREE.InstancedBufferAttribute).needsUpdate = true;

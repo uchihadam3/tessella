@@ -338,7 +338,9 @@ export class Forest {
     return false;
   }
 
-  add(kind: string, x: number, z: number, s = 1, r = Math.random() * Math.PI * 2, y?: number) {
+  // the rotation comes from the position: the island must be identical every time it is built
+  // (the constellations are placed by looking at the scenery, trees included)
+  add(kind: string, x: number, z: number, s = 1, r = hash2(Math.round(x * 7) + 11, Math.round(z * 7) - 5) * Math.PI * 2, y?: number) {
     const variant = Math.floor(hash2(Math.round(x * 10), Math.round(z * 10)) * this.variants);
     const key = `${kind}#${variant}`;
     if (!this.placements.has(key)) this.placements.set(key, []);
@@ -369,23 +371,116 @@ export class Forest {
     }
   }
 
+  /** drop trees and rocks whose base is within r of (x,z) (e.g. under something placed later) */
+  removeNear(x: number, z: number, r: number) {
+    for (const list of this.placements.values()) {
+      for (let i = list.length - 1; i >= 0; i--) {
+        const p = list[i];
+        if ((p.x - x) ** 2 + (p.z - z) ** 2 < (r + 0.4 * p.s) ** 2) list.splice(i, 1);
+      }
+    }
+    this.hitGrid = null;
+  }
+
+  private geoCache = new Map<string, THREE.BufferGeometry>();
+  private geometryFor(key: string): THREE.BufferGeometry {
+    let geo = this.geoCache.get(key);
+    if (geo) return geo;
+    const [kind, v] = key.split('#');
+    const variant = Number(v);
+    if (kind.startsWith('rock')) {
+      geo = makeRockGeometry(variant + (kind === 'rockflat' ? 20 : 0), kind === 'rockflat' ? 0.45 : 0.75);
+      const tint = kind === 'rocksand' ? '#d8bb8a' : kind === 'rockdark' ? '#6a6670' : kind === 'rockwhite' ? '#e4ddd0' : '#a29c92';
+      const col = geo.attributes.color;
+      const t = new THREE.Color(tint);
+      for (let i = 0; i < col.count; i++) col.setXYZ(i, col.getX(i) * t.r, col.getY(i) * t.g, col.getZ(i) * t.b);
+    } else geo = makeTreeGeometry(kind as Species, variant + 1);
+    this.geoCache.set(key, geo);
+    return geo;
+  }
+
+  /** the solid part of a tree (its crown) or a rock, as an axis-aligned ellipsoid in local units */
+  private shapeCache = new Map<string, { c: THREE.Vector3; e: THREE.Vector3 }>();
+  private shapeFor(key: string) {
+    let sh = this.shapeCache.get(key);
+    if (sh) return sh;
+    const pos = this.geometryFor(key).attributes.position;
+    let maxY = -Infinity;
+    for (let i = 0; i < pos.count; i++) maxY = Math.max(maxY, pos.getY(i));
+    const rock = key.startsWith('rock');
+    const cut = rock ? -Infinity : maxY * 0.38; // the crown, not the trunk
+    const box = new THREE.Box3();
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      if (v.y >= cut) box.expandByPoint(v);
+    }
+    const c = box.getCenter(new THREE.Vector3());
+    const e = box.getSize(new THREE.Vector3()).multiplyScalar(0.5 * (rock ? 0.9 : 0.82));
+    sh = { c, e };
+    this.shapeCache.set(key, sh);
+    return sh;
+  }
+
+  private hitGrid: Map<string, { key: string; p: Placement }[]> | null = null;
+  private static readonly HIT_CELL = 8;
+
+  /**
+   * First tree crown or rock along a ray (for placing things "in the scenery"). Crowns and rocks
+   * are approximated by ellipsoids fitted to their geometry.
+   */
+  raycast(o: THREE.Vector3, d: THREE.Vector3, tMax: number): { t: number; kind: 'tree' | 'rock'; species: string; point: THREE.Vector3 } | null {
+    const C = Forest.HIT_CELL;
+    if (!this.hitGrid) {
+      this.hitGrid = new Map();
+      for (const [key, list] of this.placements) {
+        for (const p of list) {
+          const k = `${Math.floor(p.x / C)},${Math.floor(p.z / C)}`;
+          let cell = this.hitGrid.get(k);
+          if (!cell) this.hitGrid.set(k, (cell = []));
+          cell.push({ key, p });
+        }
+      }
+    }
+    let best: { t: number; key: string } | null = null;
+    const seen = new Set<Placement>();
+    const lo = new THREE.Vector3(), ld = new THREE.Vector3();
+    for (let t = 0; t <= tMax + C; t += C * 0.5) {
+      if (best && t > best.t + C) break;
+      const x = o.x + d.x * t, z = o.z + d.z * t;
+      const cx = Math.floor(x / C), cz = Math.floor(z / C);
+      for (let ix = cx - 1; ix <= cx + 1; ix++) for (let iz = cz - 1; iz <= cz + 1; iz++) {
+        const cell = this.hitGrid.get(`${ix},${iz}`);
+        if (!cell) continue;
+        for (const { key, p } of cell) {
+          if (seen.has(p)) continue;
+          seen.add(p);
+          const sh = this.shapeFor(key);
+          // ray into the instance's local frame (rotation about Y, uniform scale), then into the unit sphere
+          const cs = Math.cos(-p.r), sn = Math.sin(-p.r);
+          const ox = o.x - p.x, oy = o.y - p.y, oz = o.z - p.z;
+          lo.set((ox * cs + oz * sn) / p.s, oy / p.s, (-ox * sn + oz * cs) / p.s).sub(sh.c).divide(sh.e);
+          ld.set((d.x * cs + d.z * sn) / p.s, d.y / p.s, (-d.x * sn + d.z * cs) / p.s).divide(sh.e);
+          const a = ld.dot(ld), b = 2 * lo.dot(ld), cc = lo.dot(lo) - 1;
+          const disc = b * b - 4 * a * cc;
+          if (disc < 0) continue;
+          const t0 = (-b - Math.sqrt(disc)) / (2 * a);
+          if (t0 > 0.5 && t0 < tMax && (!best || t0 < best.t)) best = { t: t0, key };
+        }
+      }
+    }
+    if (!best) return null;
+    const species = best.key.split('#')[0];
+    return { t: best.t, kind: species.startsWith('rock') ? 'rock' : 'tree', species, point: o.clone().addScaledVector(d, best.t) };
+  }
+
   build(): THREE.Group {
     const dummy = new THREE.Object3D();
     for (const [key, list] of this.placements) {
-      const [kind, v] = key.split('#');
-      const variant = Number(v);
-      let geo: THREE.BufferGeometry;
-      let mat: THREE.Material = this.treeMat;
-      if (kind.startsWith('rock')) {
-        geo = makeRockGeometry(variant + (kind === 'rockflat' ? 20 : 0), kind === 'rockflat' ? 0.45 : 0.75);
-        const tint = kind === 'rocksand' ? '#d8bb8a' : kind === 'rockdark' ? '#6a6670' : kind === 'rockwhite' ? '#e4ddd0' : '#a29c92';
-        mat = this.rockMat;
-        const col = geo.attributes.color;
-        const t = new THREE.Color(tint);
-        for (let i = 0; i < col.count; i++) col.setXYZ(i, col.getX(i) * t.r, col.getY(i) * t.g, col.getZ(i) * t.b);
-      } else {
-        geo = makeTreeGeometry(kind as Species, variant + 1);
-      }
+      if (!list.length) continue;
+      const kind = key.split('#')[0];
+      const geo = this.geometryFor(key);
+      const mat: THREE.Material = kind.startsWith('rock') ? this.rockMat : this.treeMat;
       const mesh = new THREE.InstancedMesh(geo, mat, list.length);
       list.forEach((p, i) => {
         dummy.position.set(p.x, p.y, p.z);

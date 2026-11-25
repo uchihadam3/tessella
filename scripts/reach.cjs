@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 320, height: 180 } });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-  page.on('console', (m) => { if (m.type() === 'warning' && !m.text().includes('GPU')) console.log('[warn]', m.text().slice(0, 120)); });
+  page.on('console', (m) => { const t = m.text(); if (/^(spot|star) /.test(t) || (m.type() === 'warning' && !t.includes('GPU'))) console.log('[page]', t.slice(0, 160)); });
   await page.goto((process.env.BASE || 'http://localhost:5180/') + '?dev&norender&at=0,279.5,180,0', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 240000 });
   const report = await page.evaluate(() => {

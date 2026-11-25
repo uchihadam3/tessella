@@ -65,8 +65,16 @@ export class World {
   }
 
   /** After areas registered their exclusions & explicit plants. */
-  finalize() {
+  private scattered = false;
+  /** plant trees and rocks (before anything that wants to sit in them, e.g. the constellations) */
+  scatter() {
+    if (this.scattered) return;
+    this.scattered = true;
     scatterVegetation(this.forest);
+  }
+
+  finalize() {
+    this.scatter();
     this.root.add(this.forest.build());
     for (const c of this.forest.colliders) this.collision.addBlocker({ x: c.x, z: c.z, r: c.r, y0: -100, y1: 400 });
     // no grass where floors/plazas/decks cover the ground

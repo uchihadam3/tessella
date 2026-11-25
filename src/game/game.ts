@@ -118,6 +118,12 @@ export class Game {
     progress(0.62, 'areas');
     await tick();
     this.stars = new ConstellationSystem(this.world);
+    this.world.scatter();
+    // panels are known to be reachable: constellation spots must connect to them or to a path
+    this.stars.setAnchors(this.pm.panels.map((p) => {
+      const r = p.view.root.position;
+      return { x: r.x, z: r.z, y: this.world.collision.groundAt(r.x, r.z, r.y + 0.5)[0] };
+    }));
     this.stars.place();
     this.stars.onSolved = (it) => this.onStarSolved(it);
     this.stars.onRevealed = (it) => {

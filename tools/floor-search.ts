@@ -7,7 +7,7 @@ const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 const seen = new Set<string>();
 let tries = 0;
 const out: { g: string; ins: number }[] = [];
-while (out.length < (N || 6) && tries < 4000) {
+while (out.length < (N || 6) && tries < (Number(process.env.TRIES) || 4000)) {
   tries++;
   const sol = Array.from({ length: W * H }, () => (rnd() < 0.5 ? '1' : '0')).join('');
   const cnt = (t: number) => { const r0 = Math.floor(t / W), c0 = t % W; let n = 0; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const r = r0 + dr, c = c0 + dc; if (r >= 0 && r < H && c >= 0 && c < W && sol[r * W + c] === '1') n++; } return n; };

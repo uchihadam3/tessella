@@ -93,15 +93,20 @@ function sceneryV4(d: SaveData): SaveData {
 }
 
 /**
- * version 5: the desert's panels are all drawings now (a plate, an outline, or the place itself);
- * nothing of the old ones carries over, except that a finished desert stays finished.
+ * version 5: the desert's introduction became its gate (12 of the 20 teaching panels), and one
+ * pergola moved: what was solved stays solved where it went.
  */
-const DESERT_V5 = { gate: 3, light: 4, tower: 4, roof: 4, heart: 3 };
-function drawingsV5(d: SaveData): SaveData {
-  const finished = !!d.panels['mosaic.heart.3']?.done;
+const DESERT_V5: Record<string, string> = {
+  ...Object.fromEntries([1, 2, 4, 5, 7, 8, 11, 12, 14, 16, 17, 20].map((n, i) => [`mosaic.gate.${i + 1}`, `mosaic.intro.${n}`])),
+  'mosaic.light.1': 'mosaic.light.1', 'mosaic.light.2': 'mosaic.light.3', 'mosaic.light.4': 'mosaic.light.4',
+  ...Object.fromEntries(['tower.1', 'tower.2', 'tower.3', 'roof.1', 'roof.2', 'roof.3', 'roof.4', 'heart.1', 'heart.2', 'heart.3'].map((k) => [`mosaic.${k}`, `mosaic.${k}`])),
+};
+function desertV5(d: SaveData): SaveData {
   const panels: SaveData['panels'] = {};
   for (const [id, v] of Object.entries(d.panels)) if (!id.startsWith('mosaic.')) panels[id] = v;
-  if (finished) for (const [g, n] of Object.entries(DESERT_V5)) for (let i = 1; i <= n; i++) panels[`mosaic.${g}.${i}`] = { done: 1 };
+  for (const [now, was] of Object.entries(DESERT_V5)) if (d.panels[was]) panels[now] = d.panels[was];
+  // the one new pergola counts as solved if the desert went on past it
+  if (d.panels['mosaic.light.4']?.done) panels['mosaic.light.3'] = { done: 1 };
   return { ...d, panels };
 }
 
@@ -109,7 +114,7 @@ function migrate(d: SaveData): SaveData {
   if (d.version < 2) d = { ...migrateV2(d), version: 2 };
   if (d.version < 3) d = { ...remap(d, INTRO_V3), version: 3 };
   if (d.version < 4) d = { ...sceneryV4(d), version: 4 };
-  if (d.version < 5) d = { ...drawingsV5(d), version: 5 };
+  if (d.version < 5) d = { ...desertV5(d), version: 5 };
   return d;
 }
 

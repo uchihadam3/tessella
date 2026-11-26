@@ -31,14 +31,14 @@ function row(a: AreaCtx, defs: PuzzleDef[], group: string, cx: number, cz: numbe
  * The introduction: one row across the way in, or — when it is long — two rows, the first farther
  * out (you meet it first), the second nearer the gateway, all facing the way you come from.
  */
-function introRows(a: AreaCtx, ax: { ang: number; f: { x: number; z: number } }, ip: { x: number; z: number }): Panel[] {
-  const defs = a.group('intro');
+function introRows(a: AreaCtx, ax: { ang: number; f: { x: number; z: number } }, ip: { x: number; z: number }, key = 'intro'): Panel[] {
+  const defs = a.group(key);
   const ang = ax.ang + Math.PI / 2;
-  if (defs.length <= 11) return row(a, defs, 'intro', ip.x, ip.z, ang, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  if (defs.length <= 11) return row(a, defs, key, ip.x, ip.z, ang, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
   const half = Math.ceil(defs.length / 2);
   const ox = ip.x - ax.f.x * 7, oz = ip.z - ax.f.z * 7;
-  const first = row(a, defs.slice(0, half), 'intro', ox, oz, ang, 3.1, ox - ax.f.x * 6, oz - ax.f.z * 6);
-  const second = row(a, defs.slice(half), 'intro', ip.x, ip.z, ang, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const first = row(a, defs.slice(0, half), key, ox, oz, ang, 3.1, ox - ax.f.x * 6, oz - ax.f.z * 6);
+  const second = row(a, defs.slice(half), key, ip.x, ip.z, ang, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
   return [...first, ...second];
 }
 
@@ -438,18 +438,11 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const land = L(22.6, -10.35);
   solidBox(b, sandS, land.x, cy, land.z, 1.4, roofY - cy, 2.6, rot);
 
-  // ── 0. before the gate: a plate to copy, a plate of outlines, and the first pergola ──
-  const gateDefs = a.group('gate');
-  const gateG = gateDefs.map((def, i) => {
-    if (i < 2) {
-      const P = L(-55, i === 0 ? -3.4 : 3.4);
-      return a.panel(def, { x: P.x, z: P.z, yaw: yawToward(P.x, P.z, P.x - ax.f.x, P.z - ax.f.z) }, 'gate');
-    }
-    return pergolaStation(a, def, 'gate', L(-48, 3.4), { x: ax.r.x, z: ax.r.z }, sand, sandS);
-  });
+  // ── 0. before the gate: the language, taught one idea at a time ──
+  const gateG = introRows(a, ax, ax.at(-48, 0), 'gate');
 
   // ── 1. light: stone pergolas along the avenue; their lattice draws the answer on the floor ──
-  const buried: Record<string, string> = { 'mosaic.light.2': '..../..../..??/..??' };
+  const buried: Record<string, string> = { 'mosaic.light.2': '..../..../..??/..??', 'mosaic.light.3': '..../..../????/????' };
   const light = a.group('light').map((def, i) => {
     const fw = i < 2 ? -34 : -25;
     const sd = i % 2 === 0 ? 1 : -1;
@@ -476,8 +469,8 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const tLand = { x: T.x + ax.r.x * 4.75 - ax.f.x * 3.6, z: T.z + ax.r.z * 4.75 - ax.f.z * 3.6 };
   solidBox(b, sandS, tLand.x, ty, tLand.z, 1.6, TH, 2.5, rot);
   a.exclude(T.x, T.z, 10);
-  // three fields around it, and on the stairs' side a plate of outlines
-  const towerDirs = [{ x: -ax.r.x, z: -ax.r.z }, { x: -ax.f.x, z: -ax.f.z }, { x: ax.r.x, z: ax.r.z }, { x: ax.f.x, z: ax.f.z }];
+  // three fields around it (the fourth side has the stairs)
+  const towerDirs = [{ x: -ax.r.x, z: -ax.r.z }, { x: -ax.f.x, z: -ax.f.z }, { x: ax.f.x, z: ax.f.z }];
   const tower = a.group('tower').map((def, i) => {
     const v = towerDirs[i];
     const u = { x: -v.z, z: v.x };
@@ -521,23 +514,8 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
     panel.view.root.userData.clue = { x: V.x, z: V.z, tx: B.x, tz: B.z };
     return panel;
   });
-  // ── 4. the heart: three windows of the court's ring mosaic, framed in gold (turquoise is lit),
-  // each with its panel lying on the floor just before it ──
-  const windowCols = [-6.5, -0.5, 6];
-  const heart = a.group('heart').map((def, i) => {
-    const jc = windowCols[i];
-    const h = def.h, w = def.w;
-    const rim = M.gold();
-    const f0 = -h * 1.2 - 0.6, f1 = -0.6, s0 = (jc - (w - 1) / 2 - 0.5) * 1.2, s1 = (jc + (w - 1) / 2 + 0.5) * 1.2;
-    const mid = L((f0 + f1) / 2, (s0 + s1) / 2);
-    for (const fw of [f0, f1]) { const q = L(fw, (s0 + s1) / 2); b.batch.add(G.box(0.14, 0.08, s1 - s0 + 0.14), rim, mtx(q.x, cy + 0.03, q.z, rot)); }
-    for (const sdv of [s0, s1]) { const q = L((f0 + f1) / 2, sdv); b.batch.add(G.box(f1 - f0 + 0.14, 0.08, 0.14), rim, mtx(q.x, cy + 0.03, q.z, rot)); }
-    const P = L(1.7, jc * 1.2);
-    const panel = a.panel(def, { x: P.x, z: P.z, y: cy + 0.02, yaw: yawToward(P.x, P.z, P.x + ax.f.x, P.z + ax.f.z), mount: 'floor' }, 'heart');
-    const V = L(3.6, jc * 1.2);
-    panel.view.root.userData.clue = { x: V.x, z: V.z, tx: mid.x, tz: mid.z };
-    return panel;
-  });
+  // ── 4. the heart: three big ornaments in a half ring on the old mosaic floor of the court ──
+  const heart = arc(a, a.group('heart'), 'heart', C.x, C.z, 8.0, ax.ang + Math.PI * 0.62, ax.ang + Math.PI * 1.38, true, undefined, () => cy);
   a.addTotem(S.x, S.z, roofY + 4.8);
   a.exclude(C.x, C.z, 26);
   a.exclude(S.x, S.z, 12);

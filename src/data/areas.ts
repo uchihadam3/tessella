@@ -98,11 +98,11 @@ export const AREAS: AreaSpec[] = [
     rule: { pt: 'Mosaico', en: 'Mosaic' }, glyph: 'mosaic',
     lit: '#4fd8e0', accent: '#d9a441', anchor: [141, 169], totem: true,
     groups: [
-      { key: 'gate', count: 3, role: 'before the gate: copy a plate, fill an outline, read the light of a pergola' },
-      { key: 'light', count: 4, role: 'pergolas: light on the floor; half buried (read the lattice from below); taps that also turn the neighbours' },
-      { key: 'tower', count: 4, role: 'flagstone fields read from a tower; an awning hides a corner; a hard outline; neighbours again' },
-      { key: 'roof', count: 4, role: 'tile boards below each edge of the sanctuary roof; taps turn neighbours (diagonals, cross, all eight)' },
-      { key: 'heart', count: 3, role: 'the hard ones: framed windows of the court mosaic, the panel lying on the floor before each' },
+      { key: 'gate', count: 12, role: 'the language, one idea at a time: the window counts itself, both sides, rivets lit and dark, zero, the second dimension, corners, the full window' },
+      { key: 'light', count: 4, role: 'pergolas: the light on the floor is the drawing; sand hides part (the windows fill it in, or read the lattice from below)' },
+      { key: 'tower', count: 3, role: 'flagstone fields read from a tower; an awning hides a corner; a dune buries part and the windows fill it in' },
+      { key: 'roof', count: 4, role: 'blank panels on the sanctuary roof; their numbers are inlaid in the floor below each edge' },
+      { key: 'heart', count: 3, role: 'the hard ones: big ornaments that take long chains of deduction' },
     ],
   },
   {

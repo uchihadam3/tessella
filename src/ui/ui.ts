@@ -257,6 +257,20 @@ export class UI {
     });
     // never let a missing/blocked audio device stall the intro
     await Promise.race([audio.unlock(), sleep(1500)]);
+    // came back from "new game" / "load" in a played page: straight into that slot
+    let resume: { slot: number; fresh: boolean } | null = null;
+    try {
+      const r = sessionStorage.getItem('tessella.resume');
+      sessionStorage.removeItem('tessella.resume');
+      if (r) resume = JSON.parse(r);
+    } catch {
+      resume = null;
+    }
+    if (resume && typeof resume.slot === 'number') {
+      if (resume.fresh) await this.startNew(resume.slot);
+      else await this.startFromSlot(resume.slot);
+      return;
+    }
     const skip = () => (this.skipIntro = true);
     // arm the skip only after the click that opened the gate has finished propagating
     setTimeout(() => {
@@ -380,6 +394,8 @@ export class UI {
           e.stopPropagation();
           this.confirm(`${this.t('delete')}?`, () => {
             deleteSlot(s.slot);
+            // (the game open right now was this one: it must not write itself back)
+            if (this.game.save?.slot === s.slot) this.game.saveDeleted = true;
             this.renderSlots(mode);
           });
         });
@@ -503,7 +519,30 @@ export class UI {
     });
   }
 
+  /** a game was already played in this page: the island carries its doors, totems, cables… */
+  private played = false;
+
+  /**
+   * Starting another game after one was played in this page: start from a fresh page instead
+   * (the island exactly as new — nothing of the previous game left open or lit), straight into
+   * the chosen slot after the tap that wakes the sound.
+   */
+  private restartInto(slot: number, fresh: boolean): boolean {
+    if (!this.played) return false;
+    this.game.saveNow(); // (the game being left is saved first — unless it was just deleted)
+    this.game.state = 'menu'; // (nothing writes it again while the page reloads)
+    try {
+      sessionStorage.setItem('tessella.resume', JSON.stringify({ slot, fresh }));
+    } catch {
+      return false;
+    }
+    void this.fadeTo(1, 600).then(() => location.reload());
+    return true;
+  }
+
   private async startNew(slot: number) {
+    if (this.restartInto(slot, true)) return;
+    this.played = true;
     await this.fadeTo(1, 900);
     this.hideAll();
     this.game.newGame(slot);
@@ -513,6 +552,8 @@ export class UI {
   private async startFromSlot(slot: number) {
     const d = loadSlot(slot);
     if (!d) return;
+    if (this.restartInto(slot, false)) return;
+    this.played = true;
     await this.fadeTo(1, 900);
     this.hideAll();
     this.game.applySave(d);

@@ -205,6 +205,7 @@ export class Game {
   /** Apply a save to the world (panels, totems, doors, flags, sky, player). */
   applySave(data: SaveData) {
     this.save = data;
+    this.saveDeleted = false;
     for (const p of this.pm.panels) {
       const rec = data.panels[p.id];
       this.pm.restore(p, rec?.s, !!rec?.done);
@@ -249,8 +250,11 @@ export class Game {
     });
   }
 
+  /** the slot of the game being played was deleted: never write it back */
+  saveDeleted = false;
+
   saveNow(manual = false): boolean {
-    if (!this.player) return false;
+    if (!this.player || this.saveDeleted) return false;
     const p = this.player.pos;
     this.save.player = { x: p.x, y: p.y, z: p.z, yaw: this.player.yaw, pitch: this.player.pitch };
     for (const panel of this.pm.panels) {

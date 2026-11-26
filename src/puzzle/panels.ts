@@ -14,6 +14,8 @@ export class Panel {
   readonly view: PanelView;
   state: Uint8Array;
   solved = false;
+  /** a solved panel being drawn again (as in The Witness: what it opened stays open) */
+  replaying = false;
   powered = false;
   /** panels (or predicates) that must be solved for this one to have power */
   sources: Panel[] = [];
@@ -72,6 +74,19 @@ export class Panel {
     return true;
   }
 
+  /** start drawing a solved panel again */
+  beginReplay() {
+    if (!this.solved || this.replaying) return;
+    this.replaying = true;
+    this.undo = [];
+    this.view.setSolved(false, false);
+  }
+
+  /** can its tiles be changed now? */
+  get editable() {
+    return !this.solved || this.replaying;
+  }
+
   reset() {
     this.pushUndo();
     this.state = initialState(this.def);
@@ -87,6 +102,7 @@ export class Panel {
       }
     }
     this.solved = solved;
+    this.replaying = false;
     this.view.setState(this.state, true);
     this.view.setSolved(solved, false);
   }
@@ -420,7 +436,8 @@ export class PanelManager {
       this.submit();
       return;
     }
-    if (p.solved) return;
+    // a solved panel can be drawn again: touching it starts over
+    if (p.solved) p.beginReplay();
     const pressed = p.press(hit.index);
     if (!pressed.length) return;
     p.view.clearBlink();
@@ -442,10 +459,20 @@ export class PanelManager {
 
   submit() {
     const p = this.engaged;
-    if (!p || p.solved || this.leaving) return;
+    if (!p || !p.editable || this.leaving) return;
     p.view.pressFlash = 1;
     const res = check(p.def, p.state);
-    if (res.ok) {
+    if (res.ok && p.replaying) {
+      // solved again: only the panel itself shows it (what it opened stays as it is)
+      p.replaying = false;
+      p.view.setSolved(true);
+      p.view.clearBlink();
+      audio.panelSolved(p.area, Math.min(1, (p.def.difficulty ?? 3) / 10));
+      this.events.changed?.(p);
+      setTimeout(() => {
+        if (this.engaged === p && !this.leaving) this.leave();
+      }, 1100);
+    } else if (res.ok) {
       p.solved = true;
       p.view.setSolved(true);
       p.view.clearBlink();
@@ -477,7 +504,7 @@ export class PanelManager {
 
   undo() {
     const p = this.engaged;
-    if (p && !p.solved && p.undoLast()) {
+    if (p && p.editable && p.undoLast()) {
       audio.uiBack();
       this.events.changed?.(p);
     }
@@ -485,7 +512,8 @@ export class PanelManager {
 
   reset() {
     const p = this.engaged;
-    if (p && !p.solved) {
+    if (p) {
+      p.beginReplay();
       p.reset();
       p.view.clearBlink();
       audio.uiBack();

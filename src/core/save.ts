@@ -4,7 +4,7 @@
  */
 import type { AreaId } from '../data/areas';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SLOT_COUNT = 3;
 const KEY = (slot: number) => `tessella.save.${slot}`;
 const LAST = 'tessella.lastSlot';
@@ -92,10 +92,24 @@ function sceneryV4(d: SaveData): SaveData {
   return { ...d, panels };
 }
 
+/**
+ * version 5: the desert's panels are all drawings now (a plate, an outline, or the place itself);
+ * nothing of the old ones carries over, except that a finished desert stays finished.
+ */
+const DESERT_V5 = { gate: 3, light: 4, tower: 4, roof: 4, heart: 3 };
+function drawingsV5(d: SaveData): SaveData {
+  const finished = !!d.panels['mosaic.heart.3']?.done;
+  const panels: SaveData['panels'] = {};
+  for (const [id, v] of Object.entries(d.panels)) if (!id.startsWith('mosaic.')) panels[id] = v;
+  if (finished) for (const [g, n] of Object.entries(DESERT_V5)) for (let i = 1; i <= n; i++) panels[`mosaic.${g}.${i}`] = { done: 1 };
+  return { ...d, panels };
+}
+
 function migrate(d: SaveData): SaveData {
   if (d.version < 2) d = { ...migrateV2(d), version: 2 };
   if (d.version < 3) d = { ...remap(d, INTRO_V3), version: 3 };
   if (d.version < 4) d = { ...sceneryV4(d), version: 4 };
+  if (d.version < 5) d = { ...drawingsV5(d), version: 5 };
   return d;
 }
 

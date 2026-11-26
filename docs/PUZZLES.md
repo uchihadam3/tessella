@@ -421,66 +421,50 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Templo das Areias — Mosaico (34)
+## O Templo das Areias — Mosaico (18)
 
-### intro
+### gate
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.intro.1 | 1×1 | Mosaico | 1 | 1 | Só ele mesmo. |
-| mosaic.intro.2 | 2×1 | Mosaico | 1 | 1 | Ele e o vizinho. |
-| mosaic.intro.3 | 2×1 | Mosaico | 1 | 1 | O vizinho do outro lado. |
-| mosaic.intro.4 | 3×1 | Mosaico | 1 | 1 | Os dois lados. |
-| mosaic.intro.5 | 2×1 | Mosaico | 1 | 1 | O rebite aceso conta. |
-| mosaic.intro.6 | 3×1 | Mosaico | 1 | 1 | O rebite longe não conta. |
-| mosaic.intro.7 | 3×1 | Mosaico | 1 | 1 | O rebite escuro não acende. |
-| mosaic.intro.8 | 3×1 | Mosaico | 1 | 1 | Duas janelas lado a lado. |
-| mosaic.intro.9 | 4×1 | Mosaico | 1 | 1 | O vizinho é dos dois. |
-| mosaic.intro.10 | 4×1 | Mosaico | 1 | 1 | Uma janela inteira acesa ao lado de outra. |
-| mosaic.intro.11 | 3×1 | Mosaico | 1 | 1 | Zero: a janela inteira apagada. |
-| mosaic.intro.12 | 2×2 | Mosaico | 1 | 1 | Também em cima e embaixo: no canto, quatro. |
-| mosaic.intro.13 | 2×2 | Mosaico | 1 | 1 | No canto, com um rebite escuro. |
-| mosaic.intro.14 | 3×2 | Mosaico | 1 | 1 | Na borda, seis. |
-| mosaic.intro.15 | 3×2 | Mosaico | 1 | 1 | Duas janelas que se cruzam. |
-| mosaic.intro.16 | 3×3 | Mosaico | 1 | 1 | Nove: a janela inteira acende. |
-| mosaic.intro.17 | 3×3 | Mosaico | 1 | 1 | Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos. |
-| mosaic.intro.18 | 4×4 | Mosaico | 1 | 1 | Zero apaga a janela inteira; o que sobra para os vizinhos fica contado. |
-| mosaic.intro.19 | 5×3 | Mosaico | 1 | 1 | Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê. |
-| mosaic.intro.20 | 4×4 | Mosaico | 1 | 3 | Portão: janelas quase cheias e um 1 solitário no canto. |
+| mosaic.gate.1 | 3×3 | Placa | 1 | 1 | A placa ao lado mostra o desenho: copiar. |
+| mosaic.gate.2 | 4×4 | Placa | 1 | 2 | A placa mostra só as bordas: um círculo de luz. |
+| mosaic.gate.3 | 3×3 | Placa | 1 | 1 | Pérgola: a treliça deixa passar o sol; os quadrados de luz no chão são o desenho. |
 
 ### light
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.light.1 | 3×3 | Placa | 1 | 1 | Pérgola: a treliça deixa passar o sol; os quadrados de luz no chão são o desenho. |
-| mosaic.light.2 | 4×4 | Placa | 1 | 1 | Pérgola maior: a faixa de luz atravessa o chão na diagonal. |
-| mosaic.light.3 | 4×4 | Mosaico + Placa | 1 | 3 | A areia cobriu um canto do chão: o que a luz não mostra, as janelas contam. |
-| mosaic.light.4 | 5×5 | Mosaico + Placa | 1 | 4 | Uma flor de luz com o miolo de baixo enterrado: quatro janelas desenterram o resto. |
+| mosaic.light.1 | 4×4 | Placa | 1 | 2 | Pérgola maior: a faixa de luz atravessa o chão na diagonal. |
+| mosaic.light.2 | 4×4 | Placa | 1 | 4 | A areia cobriu um canto do chão: o resto da luz se lê olhando a treliça por baixo. |
+| mosaic.light.3 | 3×3 | Placa + Eco | 1 | 3 | Cada ladrilho aceso vira também os vizinhos da mesma linha: achar a ordem certa. |
+| mosaic.light.4 | 4×4 | Placa + Eco | 1 | 5 | O desenho está no chão da pérgola; cada toque vira o ladrilho e seus quatro vizinhos. |
 
 ### tower
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.tower.1 | 3×3 | Placa | 1 | 1 | Do alto da torre: as lajes vitrificadas na areia são o desenho. |
-| mosaic.tower.2 | 4×4 | Placa | 1 | 2 | Um toldo esconde um canto das lajes visto do alto: é preciso descer e olhar por baixo. |
-| mosaic.tower.3 | 5×5 | Mosaico + Placa | 1 | 4 | Uma duna engoliu as lajes do canto: as janelas do painel completam o desenho. |
+| mosaic.tower.1 | 3×3 | Placa | 1 | 2 | Do alto da torre: as lajes vitrificadas na areia são o desenho. |
+| mosaic.tower.2 | 4×4 | Placa | 1 | 4 | Um toldo esconde um canto das lajes visto do alto: é preciso descer e olhar por baixo. |
+| mosaic.tower.3 | 5×5 | Placa | 1 | 5 | Só as bordas, com um buraco no meio: quatro cantos e quatro hastes. |
+| mosaic.tower.4 | 5×5 | Placa + Eco | 1 | 6 | O último campo: cada toque vira também os vizinhos de cima e de baixo. |
 
 ### roof
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.roof.1 | 3×3 | Mosaico | 1 | 3 | O painel está em branco: os números estão incrustados no chão do pátio, lá embaixo. |
-| mosaic.roof.2 | 4×4 | Mosaico | 1 | 4 | Quatro por quatro, lido do teto. |
-| mosaic.roof.3 | 6×5 | Mosaico | 1 | 5 | Seis por cinco, lido do teto: uma janela de zero no canto abre a conta. |
-| mosaic.roof.4 | 7×6 | Mosaico | 1 | 7 | O maior tabuleiro do pátio: as janelas só se resolvem umas pelas outras, em cadeia. |
+| mosaic.roof.1 | 4×4 | Placa | 1 | 3 | Da beirada do teto: o tabuleiro de ladrilhos lá embaixo é o desenho. |
+| mosaic.roof.2 | 5×5 | Placa + Eco | 1 | 6 | Cada toque vira os vizinhos nas diagonais. |
+| mosaic.roof.3 | 5×5 | Placa + Eco | 1 | 7 | Cada toque vira os quatro vizinhos: um anel com o centro aceso. |
+| mosaic.roof.4 | 6×6 | Placa + Eco | 1 | 8 | Cada toque vira os oito vizinhos. |
 
 ### heart
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.heart.1 | 8×8 | Mosaico | 1 | 8 | Coração do templo: um ornamento 8×8 sem atalhos. |
-| mosaic.heart.2 | 8×8 | Mosaico | 1 | 9 | Coração do templo: janelas de um e de zero espalhadas — cada vazio tem que ser provado. |
-| mosaic.heart.3 | 9×9 | Mosaico | 1 | 9 | Coração do templo: o grande ornamento 9×9. |
+| mosaic.heart.1 | 6×6 | Placa + Eco | 1 | 8 | Coração: a janela de ouro no mosaico do pátio; cada toque vira as diagonais. |
+| mosaic.heart.2 | 6×6 | Placa + Eco | 1 | 9 | Coração: a janela do meio; cada toque vira os quatro vizinhos. |
+| mosaic.heart.3 | 7×7 | Placa + Eco | 1 | 10 | Coração: a maior janela; cada toque vira os oito vizinhos. |
 
 ### secret
 

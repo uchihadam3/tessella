@@ -98,11 +98,11 @@ export const AREAS: AreaSpec[] = [
     rule: { pt: 'Mosaico', en: 'Mosaic' }, glyph: 'mosaic',
     lit: '#4fd8e0', accent: '#d9a441', anchor: [141, 169], totem: true,
     groups: [
-      { key: 'intro', count: 20, role: '3x3 windows count themselves; edges' },
-      { key: 'light', count: 4, role: 'pergolas: the light through a lattice draws the answer; sand hides part, windows fill it in' },
-      { key: 'tower', count: 3, role: 'flagstone fields read from a tower; an awning hides a corner (walk under it); a dune hides part' },
-      { key: 'roof', count: 4, role: 'blank panels on the sanctuary roof; their numbers are inlaid in the court floor below' },
-      { key: 'heart', count: 3, role: 'the hard ones: big ornaments that take long chains of deduction' },
+      { key: 'gate', count: 3, role: 'before the gate: copy a plate, fill an outline, read the light of a pergola' },
+      { key: 'light', count: 4, role: 'pergolas: light on the floor; half buried (read the lattice from below); taps that also turn the neighbours' },
+      { key: 'tower', count: 4, role: 'flagstone fields read from a tower; an awning hides a corner; a hard outline; neighbours again' },
+      { key: 'roof', count: 4, role: 'tile boards below each edge of the sanctuary roof; taps turn neighbours (diagonals, cross, all eight)' },
+      { key: 'heart', count: 3, role: 'the hard ones: framed windows of the court mosaic, the panel lying on the floor before each' },
     ],
   },
   {

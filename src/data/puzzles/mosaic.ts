@@ -1,171 +1,37 @@
-/** O Templo das Areias — Mosaico: N ladrilhos acesos na janela 3x3 centrada no glifo. */
+/**
+ * O Templo das Areias — desenhos para acender. Alguns estão numa placa ao lado do painel (inteiros
+ * ou só as bordas); outros, no próprio lugar: a luz que as pérgolas deixam passar, lajes vistas do
+ * alto da torre, tabuleiros no chão vistos do teto do santuário, janelas no mosaico do pátio. Os
+ * mais difíceis viram também os vizinhos a cada toque.
+ */
 import { puzzle } from '../../puzzle/board';
 import type { AreaPuzzles } from './types';
 
 const P: AreaPuzzles = {
-  // <hand>
-  intro: [
-    puzzle('mosaic.intro.1', {
+  gate: [
+    puzzle('mosaic.gate.1', {
       grid: `
-        x1
+        . . .
+        . . .
+        . . .
       `,
+      target: '110/010/011',
       difficulty: 1,
-      note: 'Só ele mesmo.',
+      note: 'A placa ao lado mostra o desenho: copiar.',
     }),
-    puzzle('mosaic.intro.2', {
+    puzzle('mosaic.gate.2', {
       grid: `
-        x2 .
+        . . . .
+        . . . .
+        . . . .
+        . . . .
       `,
-      difficulty: 1,
-      note: 'Ele e o vizinho.',
+      target: '0110/1111/1111/0110',
+      targetDisplay: 'outline',
+      difficulty: 2,
+      note: 'A placa mostra só as bordas: um círculo de luz.',
     }),
-    puzzle('mosaic.intro.3', {
-      grid: `
-        . x2
-      `,
-      difficulty: 1,
-      note: 'O vizinho do outro lado.',
-    }),
-    puzzle('mosaic.intro.4', {
-      grid: `
-        . x3 .
-      `,
-      difficulty: 1,
-      note: 'Os dois lados.',
-    }),
-    puzzle('mosaic.intro.5', {
-      grid: `
-        L x2
-      `,
-      difficulty: 1,
-      note: 'O rebite aceso conta.',
-    }),
-    puzzle('mosaic.intro.6', {
-      grid: `
-        L . x2
-      `,
-      difficulty: 1,
-      note: 'O rebite longe não conta.',
-    }),
-    puzzle('mosaic.intro.7', {
-      grid: `
-        D x2 .
-      `,
-      difficulty: 1,
-      note: 'O rebite escuro não acende.',
-    }),
-    puzzle('mosaic.intro.8', {
-      grid: `
-        x2 . x1
-      `,
-      difficulty: 1,
-      note: 'Duas janelas lado a lado.',
-    }),
-    puzzle('mosaic.intro.9', {
-      grid: `
-        x2 . x2 D
-      `,
-      difficulty: 1,
-      note: 'O vizinho é dos dois.',
-    }),
-    puzzle('mosaic.intro.10', {
-      grid: `
-        x2 . x3 .
-      `,
-      difficulty: 1,
-      note: 'Uma janela inteira acesa ao lado de outra.',
-    }),
-    puzzle('mosaic.intro.11', {
-      grid: `
-        x0 . x1
-      `,
-      difficulty: 1,
-      note: 'Zero: a janela inteira apagada.',
-    }),
-    puzzle('mosaic.intro.12', {
-      grid: `
-        x4 .
-        .  .
-      `,
-      difficulty: 1,
-      note: 'Também em cima e embaixo: no canto, quatro.',
-    }),
-    puzzle('mosaic.intro.13', {
-      grid: `
-        x3 .
-        D  .
-      `,
-      difficulty: 1,
-      note: 'No canto, com um rebite escuro.',
-    }),
-    puzzle('mosaic.intro.14', {
-      grid: `
-        D x5 .
-        .  . .
-      `,
-      difficulty: 1,
-      note: 'Na borda, seis.',
-    }),
-    puzzle('mosaic.intro.15', {
-      grid: `
-        x4 . .
-        .  . x2
-      `,
-      difficulty: 1,
-      note: 'Duas janelas que se cruzam.',
-    }),
-    puzzle('mosaic.intro.16', {
-      grid: `
-        . .  .
-        . x9 .
-        . .  .
-      `,
-      difficulty: 1,
-      note: 'Nove: a janela inteira acende.',
-    }),
-    puzzle('mosaic.intro.17', {
-      grid: `
-        x4 . x3
-        .  . .
-        x2 . x1
-      `,
-      difficulty: 1,
-      note: 'Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos.',
-    }),
-    puzzle('mosaic.intro.18', {
-      grid: `
-        .  x0 .  .
-        .  x2 x3 .
-        .  x3 .  x5
-        .  .  .  .
-      `,
-      difficulty: 1,
-      note: 'Zero apaga a janela inteira; o que sobra para os vizinhos fica contado.',
-    }),
-    puzzle('mosaic.intro.19', {
-      grid: `
-        .  .  .  x2 .
-        .  x0 x3 .  .
-        .  .  .  x2 .
-      `,
-      difficulty: 1,
-      note: 'Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê.',
-    }),
-    puzzle('mosaic.intro.20', {
-      grid: `
-        .  x6 .  .
-        .  .  x8 .
-        .  x8 .  .
-        .  .  .  x1
-      `,
-      difficulty: 3,
-      note: 'Portão: janelas quase cheias e um 1 solitário no canto.',
-    }),
-  ],
-  // </hand>
-  // Scenery: the answer (or its numbers) is in the place itself.
-  light: [
-    puzzle('mosaic.light.1', {
+    puzzle('mosaic.gate.3', {
       grid: `
         . . .
         . . .
@@ -176,7 +42,9 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Pérgola: a treliça deixa passar o sol; os quadrados de luz no chão são o desenho.',
     }),
-    puzzle('mosaic.light.2', {
+  ],
+  light: [
+    puzzle('mosaic.light.1', {
       grid: `
         . . . .
         . . . .
@@ -185,33 +53,42 @@ const P: AreaPuzzles = {
       `,
       target: '1100/1110/0111/0011',
       targetDisplay: 'world',
-      difficulty: 1,
+      difficulty: 2,
       note: 'Pérgola maior: a faixa de luz atravessa o chão na diagonal.',
+    }),
+    puzzle('mosaic.light.2', {
+      grid: `
+        . . . .
+        . . . .
+        . . . .
+        . . . .
+      `,
+      target: '0110/1101/1011/0110',
+      targetDisplay: 'world',
+      difficulty: 4,
+      note: 'A areia cobriu um canto do chão: o resto da luz se lê olhando a treliça por baixo.',
     }),
     puzzle('mosaic.light.3', {
       grid: `
-        . .  .  .
-        . .  x6 .
-        . x6 .  .
-        . .  x4 .
+        .{-} .{-} .{-}
+        .{-} .{-} .{-}
+        .{-} .{-} .{-}
       `,
-      target: '0110/1101/10??/01??',
-      targetDisplay: 'world',
+      target: '010/111/010',
       difficulty: 3,
-      note: 'A areia cobriu um canto do chão: o que a luz não mostra, as janelas contam.',
+      note: 'Cada ladrilho aceso vira também os vizinhos da mesma linha: achar a ordem certa.',
     }),
     puzzle('mosaic.light.4', {
       grid: `
-        .  .  .  . .
-        .  .  .  . .
-        .  .  x8 . .
-        x4 x6 x6 . .
-        .  .  .  . .
+        .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+}
       `,
-      target: '10101/01110/11011/0???0/1???1',
+      target: '1001/0110/0110/1001',
       targetDisplay: 'world',
-      difficulty: 4,
-      note: 'Uma flor de luz com o miolo de baixo enterrado: quatro janelas desenterram o resto.',
+      difficulty: 5,
+      note: 'O desenho está no chão da pérgola; cada toque vira o ladrilho e seus quatro vizinhos.',
     }),
   ],
   tower: [
@@ -223,7 +100,7 @@ const P: AreaPuzzles = {
       `,
       target: '110/101/011',
       targetDisplay: 'world',
-      difficulty: 1,
+      difficulty: 2,
       note: 'Do alto da torre: as lajes vitrificadas na areia são o desenho.',
     }),
     puzzle('mosaic.tower.2', {
@@ -235,118 +112,136 @@ const P: AreaPuzzles = {
       `,
       target: '1011/1101/0110/1001',
       targetDisplay: 'world',
-      difficulty: 2,
+      difficulty: 4,
       note: 'Um toldo esconde um canto das lajes visto do alto: é preciso descer e olhar por baixo.',
     }),
     puzzle('mosaic.tower.3', {
       grid: `
-        .  .  .  .  .
-        .  .  .  .  .
-        x4 .  x5 .  .
-        .  x5 .  .  x4
-        .  .  .  .  .
+        . . . . .
+        . . . . .
+        . . # . .
+        . . . . .
+        . . . . .
       `,
-      target: '11001/10011/01110/1????/1????',
+      target: '11011/10001/00#00/10001/11011',
+      targetDisplay: 'outline',
+      difficulty: 5,
+      note: 'Só as bordas, com um buraco no meio: quatro cantos e quatro hastes.',
+    }),
+    puzzle('mosaic.tower.4', {
+      grid: `
+        .{|} .{|} .{|} .{|} .{|}
+        .{|} .{|} .{|} .{|} .{|}
+        .{|} .{|} .{|} .{|} .{|}
+        .{|} .{|} .{|} .{|} .{|}
+        .{|} .{|} .{|} .{|} .{|}
+      `,
+      target: '11001/10011/01110/11001/10011',
       targetDisplay: 'world',
-      difficulty: 4,
-      note: 'Uma duna engoliu as lajes do canto: as janelas do painel completam o desenho.',
+      difficulty: 6,
+      note: 'O último campo: cada toque vira também os vizinhos de cima e de baixo.',
     }),
   ],
   roof: [
     puzzle('mosaic.roof.1', {
       grid: `
-        .  . x1
-        x5 . .
-        .  . x1
+        . . . .
+        . . . .
+        . . . .
+        . . . .
       `,
-      hideGlyphs: true,
+      target: '0110/1111/1001/0110',
+      targetDisplay: 'world',
       difficulty: 3,
-      note: 'O painel está em branco: os números estão incrustados no chão do pátio, lá embaixo.',
+      note: 'Da beirada do teto: o tabuleiro de ladrilhos lá embaixo é o desenho.',
     }),
     puzzle('mosaic.roof.2', {
       grid: `
-        x3 x3 .  .
-        .  x4 x5 .
-        x5 .  .  x1
-        .  .  x2 .
+        .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x}
       `,
-      hideGlyphs: true,
-      difficulty: 4,
-      note: 'Quatro por quatro, lido do teto.',
+      target: '10001/01010/00100/01010/10001',
+      targetDisplay: 'world',
+      difficulty: 6,
+      note: 'Cada toque vira os vizinhos nas diagonais.',
     }),
     puzzle('mosaic.roof.3', {
       grid: `
-        x2 x4 x4 .  .  .
-        x4 .  .  x5 .  x2
-        x3 .  x4 .  .  .
-        .  .  .  x5 .  x4
-        x0 .  x1 .  x5 .
+        .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+}
       `,
-      hideGlyphs: true,
-      difficulty: 5,
-      note: 'Seis por cinco, lido do teto: uma janela de zero no canto abre a conta.',
+      target: '01110/10001/10101/10001/01110',
+      targetDisplay: 'world',
+      difficulty: 7,
+      note: 'Cada toque vira os quatro vizinhos: um anel com o centro aceso.',
     }),
     puzzle('mosaic.roof.4', {
       grid: `
-        .  .  .  x5 x3 .  .
-        .  x3 .  .  .  .  x4
-        .  .  x4 .  .  x4 .
-        x3 .  .  x3 x5 x5 .
-        x3 x5 x2 .  .  x6 .
-        .  .  x1 .  .  .  .
+        .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*}
       `,
-      hideGlyphs: true,
-      difficulty: 7,
-      note: 'O maior tabuleiro do pátio: as janelas só se resolvem umas pelas outras, em cadeia.',
+      target: '110011/100001/001100/001100/100001/110011',
+      targetDisplay: 'world',
+      difficulty: 8,
+      note: 'Cada toque vira os oito vizinhos.',
     }),
   ],
   heart: [
     puzzle('mosaic.heart.1', {
       grid: `
-        .  .  .  .  .  .  .  x1
-        x2 .  x6 .  x7 x7 .  .
-        .  x3 .  .  .  x5 x4 .
-        .  x3 x1 .  .  x2 .  x2
-        .  x2 x2 .  .  .  .  x2
-        x3 .  .  .  .  .  x3 x1
-        .  .  .  .  .  x6 .  x2
-        x1 .  x5 .  .  x5 .  .
+        .{x} .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x} .{x}
+        .{x} .{x} .{x} .{x} .{x} .{x}
       `,
+      target: '110001/011001/001001/001001/001001/001001',
+      targetDisplay: 'world',
       difficulty: 8,
-      note: 'Coração do templo: um ornamento 8×8 sem atalhos.',
+      note: 'Coração: a janela de ouro no mosaico do pátio; cada toque vira as diagonais.',
     }),
     puzzle('mosaic.heart.2', {
       grid: `
-        .  .  .  .  x1 .  x3 .
-        x5 .  x2 .  x1 x3 .  .
-        .  .  .  x1 .  x4 .  x2
-        .  .  x1 .  .  .  .  x1
-        .  x1 .  .  .  x1 .  x1
-        x2 .  x4 .  .  .  .  .
-        x3 .  x3 x1 .  .  .  .
-        x2 x3 .  .  x0 .  .  x4
+        .{+} .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+} .{+}
+        .{+} .{+} .{+} .{+} .{+} .{+}
       `,
+      target: '111111/000000/000000/111110/100011/000001',
+      targetDisplay: 'world',
       difficulty: 9,
-      note: 'Coração do templo: janelas de um e de zero espalhadas — cada vazio tem que ser provado.',
+      note: 'Coração: a janela do meio; cada toque vira os quatro vizinhos.',
     }),
     puzzle('mosaic.heart.3', {
       grid: `
-        .  x2 .  x3 .  .  x2 .  x0
-        .  .  .  .  x2 .  .  .  .
-        x2 .  x2 .  .  x5 x2 x4 .
-        .  x4 x3 .  .  .  .  .  .
-        x2 .  x5 .  .  x8 .  .  .
-        .  .  .  .  .  .  .  .  x3
-        x5 .  x6 x7 .  .  x6 x8 .
-        .  x7 x4 .  .  .  x4 .  x5
-        .  .  .  x2 .  .  .  x4 .
+        .{*} .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*} .{*}
+        .{*} .{*} .{*} .{*} .{*} .{*} .{*}
       `,
-      difficulty: 9,
-      note: 'Coração do templo: o grande ornamento 9×9.',
+      target: '1000000/1000111/1001100/1001000/1001000/1001001/1001001',
+      targetDisplay: 'world',
+      difficulty: 10,
+      note: 'Coração: a maior janela; cada toque vira os oito vizinhos.',
     }),
   ],
   secret: [],
-  // </gen>
 };
 
 export default P;

@@ -277,7 +277,9 @@ export class AreaCtx implements AreaRuntime {
     for (const p of list) {
       if (prev) {
         const a = prev.view.root.position, b = p.view.root.position;
-        const back = (q: Panel) => new THREE.Vector3(-Math.sin(q.view.root.rotation.y) * 0.35, 0, -Math.cos(q.view.root.rotation.y) * 0.35);
+        // (a panel lying on the floor: from beyond its far edge, so the cable never crosses its face)
+        const off = (q: Panel) => (q.view.mount === 'floor' ? q.view.faceH / 2 + 0.35 : 0.35);
+        const back = (q: Panel) => new THREE.Vector3(-Math.sin(q.view.root.rotation.y) * off(q), 0, -Math.cos(q.view.root.rotation.y) * off(q));
         const ba = back(prev), bb = back(p);
         const pts = this.groundRoute(a.x + ba.x, a.z + ba.z, b.x + bb.x, b.z + bb.z, 0.03, a.y + 0.03, b.y + 0.03);
         this.pm.link(prev, p, pts, this.spec.lit);

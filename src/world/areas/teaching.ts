@@ -402,10 +402,8 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const ax = axes('mosaic');
   const gp = ax.at(-40, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.4, 6.6, sand, M.woodDark());
-  const ip = ax.at(-48, 0);
-  const intro = introRows(a, ax, ip);
-  // temple court: raised square platform with a colonnade; the front half keeps its old mosaic
-  // floor, the back half holds four inlaid boards of numbers that are read from the sanctuary roof
+  // temple court: raised square platform with a colonnade; the front half keeps its old ring
+  // mosaic (three windows of it, framed in gold, are the heart's drawings)
   const C = ax.at(0, 0);
   const cy = a.y(C.x, C.z) + 0.8;
   const rot = -ax.ang;
@@ -440,26 +438,26 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const land = L(22.6, -10.35);
   solidBox(b, sandS, land.x, cy, land.z, 1.4, roofY - cy, 2.6, rot);
 
+  // ── 0. before the gate: a plate to copy, a plate of outlines, and the first pergola ──
+  const gateDefs = a.group('gate');
+  const gateG = gateDefs.map((def, i) => {
+    if (i < 2) {
+      const P = L(-55, i === 0 ? -3.4 : 3.4);
+      return a.panel(def, { x: P.x, z: P.z, yaw: yawToward(P.x, P.z, P.x - ax.f.x, P.z - ax.f.z) }, 'gate');
+    }
+    return pergolaStation(a, def, 'gate', L(-48, 3.4), { x: ax.r.x, z: ax.r.z }, sand, sandS);
+  });
+
   // ── 1. light: stone pergolas along the avenue; their lattice draws the answer on the floor ──
+  const buried: Record<string, string> = { 'mosaic.light.2': '..../..../..??/..??' };
   const light = a.group('light').map((def, i) => {
     const fw = i < 2 ? -34 : -25;
     const sd = i % 2 === 0 ? 1 : -1;
-    // you stand at V looking out along v: the light on the floor is straight ahead, the panel
-    // stands to the left of it, turned towards you
-    const V = L(fw, sd * 3.6);
-    const v = { x: ax.r.x * sd, z: ax.r.z * sd };
-    const u = { x: -v.z, z: v.x };
-    const half = (def.w * 0.9) / 2;
-    const pc = { x: V.x + v.x * (1.8 + half), z: V.z + v.z * (1.8 + half) };
-    const P = { x: V.x + v.x * 1.5 - u.x * (half + 1.3), z: V.z + v.z * 1.5 - u.z * (half + 1.3) };
-    const panel = a.panel(def, { x: P.x, z: P.z, yaw: yawToward(P.x, P.z, V.x, V.z) }, 'light');
-    lightPergola(a, def, pc, v, 0.9, sand, sandS);
-    // a gold line inlaid in the floor from the panel's foot to the edge of the light
-    const e = { x: pc.x - v.x * half - u.x * half, z: pc.z - v.z * half - u.z * half };
-    const len = Math.hypot(e.x - P.x, e.z - P.z);
-    b.batch.add(G.box(0.07, 0.03, len), M.gold(), mtx((P.x + e.x) / 2, panel.view.root.position.y + 0.005, (P.z + e.z) / 2, Math.atan2(e.x - P.x, e.z - P.z)));
-    panel.view.root.userData.clue = { x: V.x, z: V.z, tx: pc.x, tz: pc.z };
-    return panel;
+    if (def.targetDisplay !== 'world') {
+      const P = L(fw, sd * 4);
+      return a.panel(def, { x: P.x, z: P.z, yaw: yawToward(P.x, P.z, P.x - ax.f.x, P.z - ax.f.z) }, 'light');
+    }
+    return pergolaStation(a, def, 'light', L(fw, sd * 3.6), { x: ax.r.x * sd, z: ax.r.z * sd }, sand, sandS, buried[def.id]);
   });
 
   // ── 2. the watchtower in the dunes: fields of glazed flagstones seen from its top ──
@@ -478,13 +476,15 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const tLand = { x: T.x + ax.r.x * 4.75 - ax.f.x * 3.6, z: T.z + ax.r.z * 4.75 - ax.f.z * 3.6 };
   solidBox(b, sandS, tLand.x, ty, tLand.z, 1.6, TH, 2.5, rot);
   a.exclude(T.x, T.z, 10);
-  const towerDirs = [{ x: -ax.r.x, z: -ax.r.z }, { x: -ax.f.x, z: -ax.f.z }, { x: ax.f.x, z: ax.f.z }];
+  // three fields around it, and on the stairs' side a plate of outlines
+  const towerDirs = [{ x: -ax.r.x, z: -ax.r.z }, { x: -ax.f.x, z: -ax.f.z }, { x: ax.r.x, z: ax.r.z }, { x: ax.f.x, z: ax.f.z }];
   const tower = a.group('tower').map((def, i) => {
     const v = towerDirs[i];
     const u = { x: -v.z, z: v.x };
     // the panel at the left end of its edge, turned towards the middle of the top
     const P = { x: T.x + v.x * 2.3 - u.x * 2.15, z: T.z + v.z * 2.3 - u.z * 2.15 };
     const panel = a.panel(def, { x: P.x, z: P.z, y: topY, yaw: yawToward(P.x, P.z, T.x + v.x * 1.2, T.z + v.z * 1.2) }, 'tower');
+    if (def.targetDisplay !== 'world') return panel;
     const cell = 1.8;
     const F = { x: T.x + v.x * (9.6 + (def.h * cell) / 2), z: T.z + v.z * (9.6 + (def.h * cell) / 2) };
     flagField(a, def, F, v, cell, sand, i === 1);
@@ -492,7 +492,7 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
     return panel;
   });
 
-  // ── 3. the roof: blank panels; their numbers are inlaid in the court floor below ──
+  // ── 3. the roof: boards of glazed tiles below each edge, seen from the brink ──
   const roofDefs = a.group('roof');
   // one board below each edge of the roof — the left one (where the stairs arrive), the court in
   // front, the right, the back — and one panel at that edge: you stand at the brink looking down
@@ -521,8 +521,23 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
     panel.view.root.userData.clue = { x: V.x, z: V.z, tx: B.x, tz: B.z };
     return panel;
   });
-  // the heart: three big ornaments in a half ring on the old mosaic floor of the court
-  const heart = arc(a, a.group('heart'), 'heart', C.x, C.z, 8.0, ax.ang + Math.PI * 0.62, ax.ang + Math.PI * 1.38, true, undefined, () => cy);
+  // ── 4. the heart: three windows of the court's ring mosaic, framed in gold (turquoise is lit),
+  // each with its panel lying on the floor just before it ──
+  const windowCols = [-6.5, -0.5, 6];
+  const heart = a.group('heart').map((def, i) => {
+    const jc = windowCols[i];
+    const h = def.h, w = def.w;
+    const rim = M.gold();
+    const f0 = -h * 1.2 - 0.6, f1 = -0.6, s0 = (jc - (w - 1) / 2 - 0.5) * 1.2, s1 = (jc + (w - 1) / 2 + 0.5) * 1.2;
+    const mid = L((f0 + f1) / 2, (s0 + s1) / 2);
+    for (const fw of [f0, f1]) { const q = L(fw, (s0 + s1) / 2); b.batch.add(G.box(0.14, 0.08, s1 - s0 + 0.14), rim, mtx(q.x, cy + 0.03, q.z, rot)); }
+    for (const sdv of [s0, s1]) { const q = L((f0 + f1) / 2, sdv); b.batch.add(G.box(f1 - f0 + 0.14, 0.08, 0.14), rim, mtx(q.x, cy + 0.03, q.z, rot)); }
+    const P = L(1.7, jc * 1.2);
+    const panel = a.panel(def, { x: P.x, z: P.z, y: cy + 0.02, yaw: yawToward(P.x, P.z, P.x + ax.f.x, P.z + ax.f.z), mount: 'floor' }, 'heart');
+    const V = L(3.6, jc * 1.2);
+    panel.view.root.userData.clue = { x: V.x, z: V.z, tx: mid.x, tz: mid.z };
+    return panel;
+  });
   a.addTotem(S.x, S.z, roofY + 4.8);
   a.exclude(C.x, C.z, 26);
   a.exclude(S.x, S.z, 12);
@@ -534,10 +549,32 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
     b.batch.add(G.cone(0.32, 1.0, 4), M.gold(), mtx(p.x, y + 9.5, p.z, Math.PI / 4));
     a.world.collision.addBlocker({ x: p.x, z: p.z, r: 1, y0: y, y1: y + 10 });
   }
-  finishChain(a, [intro, light, tower, roof, heart], gate);
+  finishChain(a, [gateG, light, tower, roof, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 60, 16, ['#f4dca8'], 'dust');
   desertRuins(a, sand);
   return a;
+}
+
+/**
+ * A pergola and its panel: you stand at V looking out along v — the light on the floor is straight
+ * ahead, the panel stands on the pergola's floor to the left of it, turned towards you, with a gold
+ * line inlaid from its foot to the light.
+ */
+function pergolaStation(a: AreaCtx, def: PuzzleDef, group: string, V: { x: number; z: number }, v: { x: number; z: number }, stone: THREE.Material, stoneS: THREE.Material, bury?: string): Panel {
+  const u = { x: -v.z, z: v.x };
+  const half = (def.w * 0.9) / 2;
+  const pc = { x: V.x + v.x * (1.8 + half), z: V.z + v.z * (1.8 + half) };
+  const P = { x: V.x + v.x * 1.5 - u.x * (half + 1.3), z: V.z + v.z * 1.5 - u.z * (half + 1.3) };
+  // (the pergola first: the panel stands on its floor, never sunk in it)
+  lightPergola(a, def, pc, v, 0.9, stone, stoneS, bury);
+  let py = -Infinity;
+  for (const dx of [-0.9, 0, 0.9]) for (const dz of [-0.9, 0, 0.9]) py = Math.max(py, a.world.collision.groundAt(P.x + dx, P.z + dz, 9999)[0]);
+  const panel = a.panel(def, { x: P.x, z: P.z, y: py + 0.02, yaw: yawToward(P.x, P.z, V.x, V.z) }, group);
+  const e = { x: pc.x - v.x * half - u.x * half, z: pc.z - v.z * half - u.z * half };
+  const len = Math.hypot(e.x - P.x, e.z - P.z);
+  a.build.batch.add(G.box(0.07, 0.03, len), M.gold(), mtx((P.x + e.x) / 2, panel.view.root.position.y + 0.005, (P.z + e.z) / 2, Math.atan2(e.x - P.x, e.z - P.z)));
+  panel.view.root.userData.clue = { x: V.x, z: V.z, tx: pc.x, tz: pc.z };
+  return panel;
 }
 
 /** Which way the light comes from, for the pergolas (a fixed high afternoon sun from the south-west). */
@@ -546,13 +583,14 @@ const PERGOLA_SUN = new THREE.Vector3(-0.42, 0.82, 0.39).normalize();
 /**
  * A stone pergola: four posts and a lattice roof. The open cells of the lattice are the panel's
  * pattern; the light through them falls as bright squares on a flagstone floor (a fixed afternoon
- * sun), seen from the panel just beyond it — top row farthest, left on the left. Cells the panel
- * marks '?' are under a drift of sand.
+ * sun), seen from the panel just beyond it — top row farthest, left on the left. Cells marked '?'
+ * in `bury` are under a drift of sand: there the lattice itself has to be read, from below.
  */
-function lightPergola(a: AreaCtx, def: PuzzleDef, pc: { x: number; z: number }, v: { x: number; z: number }, cs: number, stone: THREE.Material, stoneS: THREE.Material) {
+function lightPergola(a: AreaCtx, def: PuzzleDef, pc: { x: number; z: number }, v: { x: number; z: number }, cs: number, stone: THREE.Material, stoneS: THREE.Material, bury?: string) {
   const b = a.build;
   const w = def.w, h = def.h;
   const t = def.target ?? '';
+  const hid = (bury ?? '').replace(/\//g, '');
   const u = { x: -v.z, z: v.x };
   const H = 2.7;
   const shift = { x: (PERGOLA_SUN.x / PERGOLA_SUN.y) * H, z: (PERGOLA_SUN.z / PERGOLA_SUN.y) * H };
@@ -605,7 +643,7 @@ function lightPergola(a: AreaCtx, def: PuzzleDef, pc: { x: number; z: number }, 
   a.dynamic.add(shade);
   const lightMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.78, 0.45), transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
   for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
-    const ch = t[r * w + c];
+    const ch = hid[r * w + c] === '?' ? '?' : t[r * w + c];
     const q = at(pc, r, c);
     if (ch === '1') {
       const sq = new THREE.Mesh(new THREE.PlaneGeometry(cs * 0.9, cs * 0.9), lightMat);
@@ -615,7 +653,7 @@ function lightPergola(a: AreaCtx, def: PuzzleDef, pc: { x: number; z: number }, 
       a.dynamic.add(sq);
     }
   }
-  sandDrift(a, t, w, h, (r, c) => at(pc, r, c), cs, fy, ry);
+  if (hid) sandDrift(a, hid, w, h, (r, c) => at(pc, r, c), cs, fy, ry);
 }
 
 /**
@@ -677,7 +715,8 @@ function flagField(a: AreaCtx, def: PuzzleDef, fc: { x: number; z: number }, v: 
   }
 }
 
-/** A board of numbers inlaid in the court floor (the glyphs of a panel that shows none). */
+/** A board inlaid in the floor: glazed turquoise tiles are the lit ones (or, for a panel that shows
+ *  no symbols, its symbols). */
 function floorBoard(a: AreaCtx, def: PuzzleDef, bc: { x: number; z: number }, v: { x: number; z: number }, cs: number, y: number) {
   const w = def.w, h = def.h;
   const px = 128;
@@ -690,8 +729,14 @@ function floorBoard(a: AreaCtx, def: PuzzleDef, bc: { x: number; z: number }, v:
   for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
     const g = def.cells[r * w + c].glyph;
     const x0 = c * px, y0 = r * px;
-    ctx.fillStyle = g ? '#24575c' : (r + c) % 2 ? '#e9dcc0' : '#efe4cc';
+    const lit = def.target?.[r * w + c] === '1';
+    ctx.fillStyle = lit ? '#37c3c9' : g ? '#24575c' : (r + c) % 2 ? '#e9dcc0' : '#efe4cc';
     ctx.fillRect(x0 + 5, y0 + 5, px - 10, px - 10);
+    if (lit) {
+      // glazed: a lighter sheen in one corner
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.fillRect(x0 + 10, y0 + 10, px * 0.35, px * 0.12);
+    }
     if (g?.kind === 'mosaic') {
       // the panel's window sign, drawn big enough to read from the roof: its frame and its number
       ctx.strokeStyle = '#f3e7c8';

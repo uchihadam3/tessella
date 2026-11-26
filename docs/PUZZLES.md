@@ -421,7 +421,7 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Templo das Areias — Mosaico (58)
+## O Templo das Areias — Mosaico (34)
 
 ### intro
 
@@ -448,63 +448,39 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | mosaic.intro.19 | 5×3 | Mosaico | 1 | 1 | Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê. |
 | mosaic.intro.20 | 4×4 | Mosaico | 1 | 3 | Portão: janelas quase cheias e um 1 solitário no canto. |
 
-### practice
+### light
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.practice.1 | 5×5 | Mosaico | 1 | 3 | seq A1/4 — janelas de canto e de borda são menores. Um ornamento 5×5 com 7 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.2 | 5×5 | Mosaico | 1 | 3 | seq A2/4 — janelas de canto e de borda são menores. Um ornamento 5×5 com 7 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.3 | 5×5 | Mosaico | 1 | 3 | seq A3/4 — janelas de canto e de borda são menores. Um ornamento 5×5 com 7 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.4 | 5×5 | Mosaico | 1 | 5 | seq A4/4 — janelas de canto e de borda são menores. Um ornamento 5×5 com 8 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (um "e se?" no caminho). |
-| mosaic.practice.5 | 6×5 | Mosaico | 1 | 3 | seq B1/4 — zeros apagam, cheios acendem. Um ornamento 6×5 com 8 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.6 | 6×5 | Mosaico | 1 | 4 | seq B2/4 — zeros apagam, cheios acendem. Um ornamento 6×5 com 8 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.7 | 6×5 | Mosaico | 1 | 4 | seq B3/4 — zeros apagam, cheios acendem. Um ornamento 6×5 com 13 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.8 | 6×5 | Mosaico | 1 | 4 | seq B4/4 — zeros apagam, cheios acendem. Um ornamento 6×5 com 8 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.9 | 6×5 | Mosaico | 1 | 3 | seq C1/4 — duas janelas vizinhas: a diferença é uma faixa. Um ornamento 6×5 com 10 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.10 | 6×5 | Mosaico | 1 | 4 | seq C2/4 — duas janelas vizinhas: a diferença é uma faixa. Um ornamento 6×5 com 8 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.11 | 6×5 | Mosaico | 1 | 4 | seq C3/4 — duas janelas vizinhas: a diferença é uma faixa. Um ornamento 6×5 com 12 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.practice.12 | 6×5 | Mosaico | 1 | 6 | seq C4/4 — duas janelas vizinhas: a diferença é uma faixa. Um ornamento 6×5 com 13 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
+| mosaic.light.1 | 3×3 | Placa | 1 | 1 | Pérgola: a treliça deixa passar o sol; os quadrados de luz no chão são o desenho. |
+| mosaic.light.2 | 4×4 | Placa | 1 | 1 | Pérgola maior: a faixa de luz atravessa o chão na diagonal. |
+| mosaic.light.3 | 4×4 | Mosaico + Placa | 1 | 3 | A areia cobriu um canto do chão: o que a luz não mostra, as janelas contam. |
+| mosaic.light.4 | 5×5 | Mosaico + Placa | 1 | 4 | Uma flor de luz com o miolo de baixo enterrado: quatro janelas desenterram o resto. |
 
-### trial
+### tower
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.trial.1 | 7×6 | Mosaico | 1 | 5 | seq D1/4 — subtrações em cadeia. Um ornamento 7×6 com 12 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.trial.2 | 7×6 | Mosaico | 1 | 5 | seq D2/4 — subtrações em cadeia. Um ornamento 7×6 com 10 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.trial.3 | 7×6 | Mosaico | 1 | 6 | seq D3/4 — subtrações em cadeia. Um ornamento 7×6 com 15 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.trial.4 | 7×6 | Mosaico | 1 | 7 | seq D4/4 — subtrações em cadeia. Um ornamento 7×6 com 15 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.trial.5 | 7×7 | Mosaico | 1 | 5 | seq E1/4 — o ornamento simétrico. Um ornamento 7×7 com 18 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.trial.6 | 7×7 | Mosaico | 1 | 6 | seq E2/4 — o ornamento simétrico. Um ornamento 7×7 com 16 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.trial.7 | 7×7 | Mosaico | 1 | 7 | seq E3/4 — o ornamento simétrico. Um ornamento 7×7 com 18 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.trial.8 | 7×7 | Mosaico | 1 | 7 | seq E4/4 — o ornamento simétrico. Um ornamento 7×7 com 19 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (4 "e se?" no caminho). |
-| mosaic.trial.9 | 7×7 | Mosaico | 1 | 5 | seq F1/4 — "e se?": uma janela passaria da conta. Um ornamento 7×7 com 14 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (um "e se?" no caminho). |
-| mosaic.trial.10 | 7×7 | Mosaico | 1 | 6 | seq F2/4 — "e se?": uma janela passaria da conta. Um ornamento 7×7 com 16 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (um "e se?" no caminho). |
-| mosaic.trial.11 | 7×7 | Mosaico | 1 | 7 | seq F3/4 — "e se?": uma janela passaria da conta. Um ornamento 7×7 com 16 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (3 "e se?" no caminho). |
-| mosaic.trial.12 | 7×7 | Mosaico | 1 | 8 | seq F4/4 — "e se?": uma janela passaria da conta. Um ornamento 7×7 com 17 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (4 "e se?" no caminho). |
+| mosaic.tower.1 | 3×3 | Placa | 1 | 1 | Do alto da torre: as lajes vitrificadas na areia são o desenho. |
+| mosaic.tower.2 | 4×4 | Placa | 1 | 2 | Um toldo esconde um canto das lajes visto do alto: é preciso descer e olhar por baixo. |
+| mosaic.tower.3 | 5×5 | Mosaico + Placa | 1 | 4 | Uma duna engoliu as lajes do canto: as janelas do painel completam o desenho. |
 
-### mastery
+### roof
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.mastery.1 | 8×8 | Mosaico | 1 | 6 | seq G1/4 — a rosácea girada. Um ornamento 8×8 com 21 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.mastery.2 | 8×8 | Mosaico | 1 | 7 | seq G2/4 — a rosácea girada. Um ornamento 8×8 com 22 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.mastery.3 | 8×8 | Mosaico | 1 | 7 | seq G3/4 — a rosácea girada. Um ornamento 8×8 com 22 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.mastery.4 | 8×8 | Mosaico | 1 | 9 | seq G4/4 — a rosácea girada. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (6 "e se?" no caminho). |
-| mosaic.mastery.5 | 9×9 | Mosaico | 1 | 7 | seq H1/4 — o grande piso do templo. Um ornamento 9×9 com 25 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.mastery.6 | 9×9 | Mosaico | 1 | 7 | seq H2/4 — o grande piso do templo. Um ornamento 9×9 com 27 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.mastery.7 | 9×9 | Mosaico | 1 | 8 | seq H3/4 — o grande piso do templo. Um ornamento 9×9 com 26 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.mastery.8 | 9×9 | Mosaico | 1 | 9 | seq H4/4 — o grande piso do templo. Um ornamento 9×9 com 27 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (6 "e se?" no caminho). |
+| mosaic.roof.1 | 3×3 | Mosaico | 1 | 3 | O painel está em branco: os números estão incrustados no chão do pátio, lá embaixo. |
+| mosaic.roof.2 | 4×4 | Mosaico | 1 | 4 | Quatro por quatro, lido do teto. |
+| mosaic.roof.3 | 6×5 | Mosaico | 1 | 5 | Seis por cinco, lido do teto: uma janela de zero no canto abre a conta. |
+| mosaic.roof.4 | 7×6 | Mosaico | 1 | 7 | O maior tabuleiro do pátio: as janelas só se resolvem umas pelas outras, em cadeia. |
 
 ### heart
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.heart.1 | 8×8 | Mosaico | 1 | 8 | Obra-prima 1/6. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (2 "e se?" no caminho). |
-| mosaic.heart.2 | 8×8 | Mosaico | 1 | 7 | Obra-prima 2/6. Um ornamento 8×8 com 21 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.heart.3 | 8×8 | Mosaico | 1 | 8 | Obra-prima 3/6. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.heart.4 | 8×8 | Mosaico | 1 | 8 | Obra-prima 4/6. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.heart.5 | 8×8 | Mosaico | 1 | 8 | Obra-prima 5/6. Um ornamento 8×8 com 23 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga. |
-| mosaic.heart.6 | 8×8 | Mosaico | 1 | 8 | Obra-prima 6/6. Um ornamento 8×8 com 22 janelas. Ahá: duas janelas vizinhas: a diferença mora na faixa que só uma delas enxerga; (6 "e se?" no caminho). |
+| mosaic.heart.1 | 8×8 | Mosaico | 1 | 8 | Coração do templo: um ornamento 8×8 sem atalhos. |
+| mosaic.heart.2 | 8×8 | Mosaico | 1 | 9 | Coração do templo: janelas de um e de zero espalhadas — cada vazio tem que ser provado. |
+| mosaic.heart.3 | 9×9 | Mosaico | 1 | 9 | Coração do templo: o grande ornamento 9×9. |
 
 ### secret
 

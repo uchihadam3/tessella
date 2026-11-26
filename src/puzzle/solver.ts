@@ -225,7 +225,7 @@ export function compile(p: PuzzleDef): Model {
 
   // target plate fixes everything
   if (p.target) {
-    for (let i = 0; i < n; i++) if (!hole[i]) {
+    for (let i = 0; i < n; i++) if (!hole[i] && p.target[i] !== '?') {
       const v = p.target[i] === '1' ? 1 : 0;
       if (base[i] !== U && base[i] !== v) base[i] = 2 as unknown as number; // impossible marker
       else base[i] = v;

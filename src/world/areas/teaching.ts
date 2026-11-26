@@ -13,6 +13,7 @@ import type { PuzzleDef } from '../../puzzle/types';
 import type { AreaId } from '../../data/areas';
 import { rng } from '../noise';
 import { audio } from '../../audio';
+import { drawGlyph } from '../../puzzle/glyphs';
 
 // ───────────────────────── station helpers ─────────────────────────
 
@@ -403,63 +404,309 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.4, 6.6, sand, M.woodDark());
   const ip = ax.at(-48, 0);
   const intro = introRows(a, ax, ip);
-  // temple court: raised square platform with a colonnade and a mosaic floor
+  // temple court: raised square platform with a colonnade; the front half keeps its old mosaic
+  // floor, the back half holds four inlaid boards of numbers that are read from the sanctuary roof
   const C = ax.at(0, 0);
   const cy = a.y(C.x, C.z) + 0.8;
   const rot = -ax.ang;
   floorSlab(b, sand, C.x, cy, C.z, 40, 40, rot, 2.5);
-  // mosaic floor tiles (turquoise / gold / white) in a pattern
   const tileMats = [mat('mosT', { color: '#3fb6b8', roughness: 0.4, detail: 0.08, scale: 3 }), mat('mosG', { color: '#d9a441', roughness: 0.4, detail: 0.08, scale: 3 }), mat('mosW', { color: '#efe4cc', roughness: 0.5, detail: 0.08, scale: 3 })];
-  for (let i = -9; i <= 9; i++) {
+  const L = (fw: number, side: number) => ax.at(fw, side);
+  for (let i = -9; i <= -1; i++) {
     for (let j = -9; j <= 9; j++) {
       const d = Math.max(Math.abs(i), Math.abs(j));
       const k = (d + (Math.abs(i) === Math.abs(j) ? 1 : 0)) % 3;
-      const lx = i * 1.2, lz = j * 1.2;
-      const x = C.x + lx * Math.cos(rot) + lz * Math.sin(rot);
-      const z = C.z - lx * Math.sin(rot) + lz * Math.cos(rot);
-      b.batch.add(G.box(1.12, 0.06, 1.12), tileMats[k], mtx(x, cy + 0.0, z, rot));
+      const q = L(i * 1.2, j * 1.2);
+      b.batch.add(G.box(1.12, 0.06, 1.12), tileMats[k], mtx(q.x, cy + 0.0, q.z, rot));
     }
   }
   for (let i = 0; i < 16; i++) {
     const side = Math.floor(i / 4), k = i % 4;
     const t = -15 + k * 10;
     const local: [number, number] = side === 0 ? [t, -17] : side === 1 ? [17, t] : side === 2 ? [-t, 17] : [-17, -t];
-    const x = C.x + local[0] * Math.cos(rot) + local[1] * Math.sin(rot);
-    const z = C.z - local[0] * Math.sin(rot) + local[1] * Math.cos(rot);
-    column(b, sand, x, cy, z, 6.5, 0.5);
+    const q = L(local[0], local[1]);
+    column(b, sand, q.x, cy, q.z, 6.5, 0.5);
   }
-  // sanctuary at the far side with a stepped roof
+  // the sanctuary at the far side, tall enough to look down on the court from its roof
   const S = ax.at(28, 0);
   const sy = a.y(S.x, S.z) + 0.8;
-  solidBox(b, sand, S.x, sy - 1, S.z, 18, 7, 18, rot);
-  for (let k = 0; k < 4; k++) solidBox(b, sandS, S.x, sy + 6 + k * 1.2, S.z, 6 - k * 1.3, 1.2, 6 - k * 1.3, rot);
-  // stairs up to the sanctuary roof terrace (heart)
-  const stBase = ax.at(19 - 14 * 0.55 - 0.1, -5.5);
-  const top = stairs(b, sandS, stBase.x, cy, stBase.z, Math.atan2(-ax.f.x, -ax.f.z), 3, (sy + 6 - cy) / 14, 0.55, 14);
-  void top;
-  const trp = ax.at(10, 0);
-  const practice = arc(a, a.group('practice'), 'practice', C.x, C.z, 9, ax.ang + Math.PI * 0.6, ax.ang + Math.PI * 1.4, true, undefined, () => cy);
-  const trial = row(a, a.group('trial'), 'trial', trp.x, trp.z, ax.ang + Math.PI / 2, 3.6, trp.x - ax.f.x * 5, trp.z - ax.f.z * 5);
-  trial.forEach((p) => p.view.root.position.setY(cy));
-  // heart on the roof terrace
-  const roofY = sy + 6;
-  const heart = arc(a, a.group('heart'), 'heart', S.x, S.z, 6.2, ax.ang + Math.PI * 0.35, ax.ang + Math.PI * 1.65, true, undefined, () => roofY, 6.6);
+  const roofY = sy + 9;
+  solidBox(b, sand, S.x, sy - 1, S.z, 18, 10, 18, rot);
+  for (let k = 0; k < 4; k++) solidBox(b, sandS, S.x, roofY + k * 1.2, S.z, 6 - k * 1.3, 1.2, 6 - k * 1.3, rot);
+  // stairs up along its flank
+  const steps = 20, run = 0.6;
+  const stBase = L(22 - steps * run, -10.35);
+  stairs(b, sandS, stBase.x, cy, stBase.z, Math.atan2(-ax.f.x, -ax.f.z), 2.6, (roofY - cy) / steps, run, steps);
+  const land = L(22.6, -10.35);
+  solidBox(b, sandS, land.x, cy, land.z, 1.4, roofY - cy, 2.6, rot);
+
+  // ── 1. light: stone pergolas along the avenue; their lattice draws the answer on the floor ──
+  const light = a.group('light').map((def, i) => {
+    const fw = i < 2 ? -34 : -25;
+    const sd = i % 2 === 0 ? 1 : -1;
+    // you stand at V looking out along v: the light on the floor is straight ahead, the panel
+    // stands to the left of it, turned towards you
+    const V = L(fw, sd * 3.6);
+    const v = { x: ax.r.x * sd, z: ax.r.z * sd };
+    const u = { x: -v.z, z: v.x };
+    const half = (def.w * 0.9) / 2;
+    const pc = { x: V.x + v.x * (1.8 + half), z: V.z + v.z * (1.8 + half) };
+    const P = { x: V.x + v.x * 1.5 - u.x * (half + 1.3), z: V.z + v.z * 1.5 - u.z * (half + 1.3) };
+    const panel = a.panel(def, { x: P.x, z: P.z, yaw: yawToward(P.x, P.z, V.x, V.z) }, 'light');
+    lightPergola(a, def, pc, v, 0.9, sand, sandS);
+    panel.view.root.userData.clue = { x: V.x, z: V.z, tx: pc.x, tz: pc.z };
+    return panel;
+  });
+
+  // ── 2. the watchtower in the dunes: fields of glazed flagstones seen from its top ──
+  const T = L(4, -36);
+  const ty = a.y(T.x, T.z) - 0.3;
+  const TH = 7.4, topY = ty + TH;
+  solidBox(b, sand, T.x, ty, T.z, 5.2, TH, 5.2, rot);
+  for (const [cx, cz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+    const q = { x: T.x + ax.f.x * cx * 2.45 + ax.r.x * cz * 2.45, z: T.z + ax.f.z * cx * 2.45 + ax.r.z * cz * 2.45 };
+    solidBox(b, sandS, q.x, topY, q.z, 0.6, 0.9, 0.6, rot, { walk: false });
+  }
+  // stairs along the tower's court-facing side, rising towards the hub
+  const tSteps = 17, tRun = 0.55;
+  const tBase = { x: T.x + ax.r.x * 3.85 + ax.f.x * (tSteps * tRun - 2.0), z: T.z + ax.r.z * 3.85 + ax.f.z * (tSteps * tRun - 2.0) };
+  stairs(b, sandS, tBase.x, ty, tBase.z, Math.atan2(ax.f.x, ax.f.z), 2.5, TH / tSteps, tRun, tSteps);
+  const tLand = { x: T.x + ax.r.x * 3.85 - ax.f.x * 2.7, z: T.z + ax.r.z * 3.85 - ax.f.z * 2.7 };
+  solidBox(b, sandS, tLand.x, ty, tLand.z, 1.6, TH, 2.5, rot);
+  a.exclude(T.x, T.z, 9);
+  const towerDirs = [{ x: -ax.r.x, z: -ax.r.z }, { x: -ax.f.x, z: -ax.f.z }, { x: ax.f.x, z: ax.f.z }];
+  const tower = a.group('tower').map((def, i) => {
+    const v = towerDirs[i];
+    const u = { x: -v.z, z: v.x };
+    // the panel at the left end of its edge, turned towards the middle of the top
+    const P = { x: T.x + v.x * 1.7 - u.x * 1.55, z: T.z + v.z * 1.7 - u.z * 1.55 };
+    const panel = a.panel(def, { x: P.x, z: P.z, y: topY, yaw: yawToward(P.x, P.z, T.x + v.x * 0.3, T.z + v.z * 0.3) }, 'tower');
+    const cell = 1.8;
+    const F = { x: T.x + v.x * (8.6 + (def.h * cell) / 2), z: T.z + v.z * (8.6 + (def.h * cell) / 2) };
+    flagField(a, def, F, v, cell, sand, i === 1);
+    panel.view.root.userData.clue = { x: T.x + v.x * 2.2, z: T.z + v.z * 2.2, tx: F.x, tz: F.z };
+    return panel;
+  });
+
+  // ── 3. the roof: blank panels; their numbers are inlaid in the court floor below ──
+  const roofDefs = a.group('roof');
+  // you stand at the roof's edge looking down at a board; its panel stands just to your left,
+  // turned towards you
+  const viewSides = [-7.2, -2.4, 2.4, 7.2];
+  const boardSides = [-11.6, -4.4, 3.4, 12.2];
+  const roof = roofDefs.map((def, i) => {
+    const V = L(19.6, viewSides[i]);
+    const B = L(5.2 + (def.h * 1.1) / 2, boardSides[i]);
+    const d = Math.hypot(B.x - V.x, B.z - V.z);
+    const v = { x: (B.x - V.x) / d, z: (B.z - V.z) / d };
+    const u = { x: -v.z, z: v.x };
+    const P = { x: V.x - u.x * 1.25 + ax.f.x * 1.1, z: V.z - u.z * 1.25 + ax.f.z * 1.1 };
+    const panel = a.panel(def, { x: P.x, z: P.z, y: roofY, yaw: yawToward(P.x, P.z, V.x + ax.f.x * 0.6, V.z + ax.f.z * 0.6) }, 'roof');
+    floorBoard(a, def, B, { x: -ax.f.x, z: -ax.f.z }, 1.1, cy + 0.075);
+    panel.view.root.userData.clue = { x: V.x, z: V.z, tx: B.x, tz: B.z };
+    return panel;
+  });
+  // the heart: three big ornaments around the stepped crown of the roof, on its far side
+  const heart = arc(a, a.group('heart'), 'heart', S.x, S.z, 6.0, ax.ang - Math.PI * 0.42, ax.ang + Math.PI * 0.42, true, undefined, () => roofY, 6.6);
   a.addTotem(S.x, S.z, roofY + 4.8);
   a.exclude(C.x, C.z, 26);
-  a.exclude(S.x, S.z, 10);
+  a.exclude(S.x, S.z, 12);
   // obelisks at the entrance
   for (const sd of [-1, 1]) {
-    const p = ax.at(-24, sd * 8);
+    const p = ax.at(-24, sd * 11);
     const y = a.y(p.x, p.z);
     b.batch.add(G.cyl(0.25, 0.9, 9, 4), sand, mtx(p.x, y + 4.5, p.z, Math.PI / 4));
     b.batch.add(G.cone(0.32, 1.0, 4), M.gold(), mtx(p.x, y + 9.5, p.z, Math.PI / 4));
     a.world.collision.addBlocker({ x: p.x, z: p.z, r: 1, y0: y, y1: y + 10 });
   }
-  const mastery = masteryArc(a, ax, 0, -30);
-  finishChain(a, [intro, practice, trial, mastery, heart], gate);
+  finishChain(a, [intro, light, tower, roof, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 60, 16, ['#f4dca8'], 'dust');
   desertRuins(a, sand);
   return a;
+}
+
+/** Which way the light comes from, for the pergolas (a fixed high afternoon sun from the south-west). */
+const PERGOLA_SUN = new THREE.Vector3(-0.42, 0.82, 0.39).normalize();
+
+/**
+ * A stone pergola: four posts and a lattice roof. The open cells of the lattice are the panel's
+ * pattern; the light through them falls as bright squares on a flagstone floor (a fixed afternoon
+ * sun), seen from the panel just beyond it — top row farthest, left on the left. Cells the panel
+ * marks '?' are under a drift of sand.
+ */
+function lightPergola(a: AreaCtx, def: PuzzleDef, pc: { x: number; z: number }, v: { x: number; z: number }, cs: number, stone: THREE.Material, stoneS: THREE.Material) {
+  const b = a.build;
+  const w = def.w, h = def.h;
+  const t = def.target ?? '';
+  const u = { x: -v.z, z: v.x };
+  const H = 2.7;
+  const shift = { x: (PERGOLA_SUN.x / PERGOLA_SUN.y) * H, z: (PERGOLA_SUN.z / PERGOLA_SUN.y) * H };
+  const lc = { x: pc.x + shift.x, z: pc.z + shift.z };
+  const at = (o: { x: number; z: number }, r: number, c: number, s = cs) => ({ x: o.x + u.x * (c - (w - 1) / 2) * s + v.x * ((h - 1) / 2 - r) * s, z: o.z + u.z * (c - (w - 1) / 2) * s + v.z * ((h - 1) / 2 - r) * s });
+  const ry = Math.atan2(-v.x, -v.z); // box local x along u, local z along v
+  const span = Math.max(w, h) * cs;
+  // flagstone floor big enough for the lattice and its light
+  const mid = { x: (pc.x + lc.x) / 2, z: (pc.z + lc.z) / 2 };
+  let fy = -Infinity;
+  for (const dx of [-1, 0, 1]) for (const dz of [-1, 0, 1]) fy = Math.max(fy, a.y(mid.x + dx * (span / 2 + 1.5), mid.z + dz * (span / 2 + 1.5)));
+  fy += 0.12;
+  const fsz = span + Math.hypot(shift.x, shift.z) + 2.6;
+  floorSlab(b, stoneS, mid.x, fy, mid.z, fsz, fsz, ry, 1.2);
+  a.exclude(mid.x, mid.z, fsz / 2 + 1);
+  // posts and the lattice (the lattice casts no real shadow: its light is drawn, so it stays readable)
+  const half = span / 2 + 0.25;
+  for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+    const q = { x: lc.x + u.x * sx * half + v.x * sz * half, z: lc.z + u.z * sx * half + v.z * sz * half };
+    column(b, stone, q.x, fy, q.z, H + 0.35, 0.2);
+  }
+  const lat = new THREE.Group();
+  const latMat = stone;
+  const add = (geo: THREE.BufferGeometry, x: number, y: number, z: number) => {
+    const m = new THREE.Mesh(geo, latMat);
+    m.position.set(x, y, z);
+    m.rotation.y = ry;
+    m.receiveShadow = true;
+    lat.add(m);
+  };
+  const ly = fy + H + 0.35;
+  // frame
+  for (const s of [-1, 1]) {
+    add(new THREE.BoxGeometry(span + 0.7, 0.3, 0.3), lc.x + v.x * s * (span / 2 + 0.15), ly, lc.z + v.z * s * (span / 2 + 0.15));
+    add(new THREE.BoxGeometry(0.3, 0.3, span + 0.7), lc.x + u.x * s * (span / 2 + 0.15), ly, lc.z + u.z * s * (span / 2 + 0.15));
+  }
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const q = at(lc, r, c);
+    if (t[r * w + c] !== '1') add(new THREE.BoxGeometry(cs * 0.98, 0.22, cs * 0.98), q.x, ly, q.z);
+  }
+  // mullions between all cells
+  for (let k = 1; k < w; k++) { const q = at(lc, (h - 1) / 2, k - 0.5); add(new THREE.BoxGeometry(0.08, 0.24, span), q.x, ly, q.z); }
+  for (let k = 1; k < h; k++) { const q = at(lc, k - 0.5, (w - 1) / 2); add(new THREE.BoxGeometry(span, 0.24, 0.08), q.x, ly, q.z); }
+  a.dynamic.add(lat);
+  // the shade of the roof and the squares of light on the floor
+  const shade = new THREE.Mesh(new THREE.PlaneGeometry(span + 0.6, span + 0.6), new THREE.MeshBasicMaterial({ color: '#2a1a0c', transparent: true, opacity: 0.38, depthWrite: false }));
+  shade.rotation.x = -Math.PI / 2;
+  shade.rotation.z = ry;
+  shade.position.set(pc.x, fy + 0.015, pc.z);
+  a.dynamic.add(shade);
+  const lightMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.78, 0.45), transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const ch = t[r * w + c];
+    const q = at(pc, r, c);
+    if (ch === '1') {
+      const sq = new THREE.Mesh(new THREE.PlaneGeometry(cs * 0.9, cs * 0.9), lightMat);
+      sq.rotation.x = -Math.PI / 2;
+      sq.rotation.z = ry;
+      sq.position.set(q.x, fy + 0.025, q.z);
+      a.dynamic.add(sq);
+    }
+  }
+  sandDrift(a, t, w, h, (r, c) => at(pc, r, c), cs, fy, ry);
+}
+
+/**
+ * A drift of sand over the cells marked '?': one long smooth heap over them (they always form a
+ * block), with a lower skirt blown a little further, as if the wind had piled it there.
+ */
+function sandDrift(a: AreaCtx, t: string, w: number, h: number, at: (r: number, c: number) => { x: number; z: number }, cs: number, y: number | null, ry: number) {
+  let r0 = h, r1 = -1, c0 = w, c1 = -1;
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) if (t[r * w + c] === '?') {
+    r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c);
+  }
+  if (r1 < 0) return;
+  const q = at((r0 + r1) / 2, (c0 + c1) / 2);
+  const gy = y ?? a.y(q.x, q.z);
+  const ext = { u: ((c1 - c0 + 1) * cs) / 2, v: ((r1 - r0 + 1) * cs) / 2 };
+  const sandM = M.sandSmooth();
+  // (local x of the heap along the columns, local z along the rows)
+  a.build.batch.add(G.sphere(1, 20), sandM, mtx(q.x, gy - 0.18, q.z, ry, ext.u * 1.28, 0.62, ext.v * 1.32));
+  a.build.batch.add(G.sphere(1, 20), sandM, mtx(q.x, gy - 0.1, q.z, ry, ext.u * 1.6, 0.3, ext.v * 1.55));
+}
+
+/**
+ * A field of flagstones in the sand: glazed turquoise ones are lit, plain ones dark. Seen from the
+ * tower top just beyond its panel (top row farthest). '?' stones are under a dune. With `awning`,
+ * a cloth awning on poles hides a corner of the field from above — walk under it to see.
+ */
+function flagField(a: AreaCtx, def: PuzzleDef, fc: { x: number; z: number }, v: { x: number; z: number }, cs: number, stone: THREE.Material, awning: boolean) {
+  const b = a.build;
+  const w = def.w, h = def.h, t = def.target ?? '';
+  const u = { x: -v.z, z: v.x };
+  const ry = Math.atan2(-v.x, -v.z);
+  const at = (r: number, c: number) => ({ x: fc.x + u.x * (c - (w - 1) / 2) * cs + v.x * ((h - 1) / 2 - r) * cs, z: fc.z + u.z * (c - (w - 1) / 2) * cs + v.z * ((h - 1) / 2 - r) * cs });
+  const glaze = mat('mosGlaze', { color: '#37c3c9', roughness: 0.25, detail: 0.1, scale: 3 });
+  const rim = M.gold();
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const q = at(r, c);
+    const y = a.y(q.x, q.z);
+    const ch = t[r * w + c];
+    b.batch.add(G.box(cs * 0.94, 0.5, cs * 0.94, 0.04), stone, mtx(q.x, y - 0.12, q.z, ry));
+    if (ch === '1') {
+      b.batch.add(G.box(cs * 0.94, 0.06, cs * 0.94), rim, mtx(q.x, y + 0.14, q.z, ry));
+      b.batch.add(G.box(cs * 0.78, 0.08, cs * 0.78), glaze, mtx(q.x, y + 0.16, q.z, ry));
+    }
+  }
+  sandDrift(a, t, w, h, at, cs, null, ry);
+  a.exclude(fc.x, fc.z, (Math.max(w, h) * cs) / 2 + 1);
+  if (awning) {
+    // over the corner cells nearest the tower on the right (bottom-right 2x2)
+    const q0 = at(h - 2, w - 2), q1 = at(h - 1, w - 1);
+    const mc = { x: (q0.x + q1.x) / 2, z: (q0.z + q1.z) / 2 };
+    const y = a.y(mc.x, mc.z);
+    const hs = cs * 1.15;
+    for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+      const p = { x: mc.x + u.x * sx * hs + v.x * sz * hs, z: mc.z + u.z * sx * hs + v.z * sz * hs };
+      b.batch.add(G.cyl(0.06, 0.07, 2.6, 6), M.woodDark(), mtx(p.x, a.y(p.x, p.z) + 1.3, p.z));
+      a.world.collision.addBlocker({ x: p.x, z: p.z, r: 0.1, y0: y - 1, y1: y + 2.6 });
+    }
+    b.batch.add(G.box(hs * 2.3, 0.05, hs * 2.3), M.cloth('#c8553d'), mtx(mc.x, y + 2.62, mc.z, ry, 1, 1, 1, 0, 0.05));
+  }
+}
+
+/** A board of numbers inlaid in the court floor (the glyphs of a panel that shows none). */
+function floorBoard(a: AreaCtx, def: PuzzleDef, bc: { x: number; z: number }, v: { x: number; z: number }, cs: number, y: number) {
+  const w = def.w, h = def.h;
+  const px = 128;
+  const cv = document.createElement('canvas');
+  cv.width = w * px;
+  cv.height = h * px;
+  const ctx = cv.getContext('2d')!;
+  ctx.fillStyle = '#2f7f84';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const g = def.cells[r * w + c].glyph;
+    const x0 = c * px, y0 = r * px;
+    ctx.fillStyle = g ? '#24575c' : (r + c) % 2 ? '#e9dcc0' : '#efe4cc';
+    ctx.fillRect(x0 + 5, y0 + 5, px - 10, px - 10);
+    if (g?.kind === 'mosaic') {
+      // the panel's window sign, drawn big enough to read from the roof: its frame and its number
+      ctx.strokeStyle = '#f3e7c8';
+      ctx.lineWidth = px * 0.06;
+      ctx.strokeRect(x0 + px * 0.16, y0 + px * 0.16, px * 0.68, px * 0.68);
+      ctx.fillStyle = '#f6efd9';
+      ctx.font = `bold ${Math.round(px * 0.56)}px Georgia, 'Times New Roman', serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(g.n), x0 + px / 2, y0 + px * 0.53);
+    } else if (g) drawGlyph(ctx, g, x0 + px / 2, y0 + px / 2, px * 0.9, false);
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w * cs, h * cs), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.55 }));
+  // plane: local +x along u (columns), local +y (texture top) along v (far rows)
+  const u = new THREE.Vector3(-v.z, 0, v.x), vv = new THREE.Vector3(v.x, 0, v.z), up = new THREE.Vector3(0, 1, 0);
+  m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(u, vv, up));
+  m.position.set(bc.x, y, bc.z);
+  m.receiveShadow = true;
+  a.dynamic.add(m);
+  // a gold frame
+  const rim = M.gold();
+  const ry = Math.atan2(-v.x, -v.z);
+  const W = w * cs, Hh = h * cs;
+  for (const s of [-1, 1]) {
+    a.build.batch.add(G.box(W + 0.32, 0.05, 0.16), rim, mtx(bc.x + v.x * s * (Hh / 2 + 0.08), y - 0.01, bc.z + v.z * s * (Hh / 2 + 0.08), ry));
+    a.build.batch.add(G.box(0.16, 0.05, Hh + 0.32), rim, mtx(bc.x + u.x * s * (W / 2 + 0.08), y - 0.01, bc.z + u.z * s * (W / 2 + 0.08), ry));
+  }
 }
 
 /**

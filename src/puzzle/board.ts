@@ -227,6 +227,7 @@ export interface CompactPuzzle {
   cols?: string;
   target?: string;
   targetDisplay?: 'plate' | 'outline' | 'world';
+  hideGlyphs?: boolean;
   init?: string;
   wrap?: boolean;
   mirror?: 'v' | 'h' | 'rot';
@@ -342,6 +343,7 @@ export function puzzle(id: string, src: CompactPuzzle): PuzzleDef {
   if (src.cols !== undefined) def.colClues = parseClues(src.cols, w, `${id}.cols`);
   if (src.target !== undefined) def.target = parsePattern(src.target, w, h, `${id}.target`);
   if (src.targetDisplay) def.targetDisplay = src.targetDisplay;
+  if (src.hideGlyphs) def.hideGlyphs = true;
   if (src.init !== undefined) def.init = parsePattern(src.init, w, h, `${id}.init`);
   if (src.wrap) def.wrap = true;
   if (src.mirror) def.mirror = src.mirror;
@@ -409,6 +411,8 @@ export function toCompact(p: PuzzleDef): CompactPuzzle {
     return rows.join('/');
   };
   if (p.target) out.target = pat(p.target);
+  if (p.targetDisplay) out.targetDisplay = p.targetDisplay;
+  if (p.hideGlyphs) out.hideGlyphs = true;
   if (p.init) out.init = pat(p.init);
   if (p.wrap) out.wrap = true;
   if (p.mirror) out.mirror = p.mirror;

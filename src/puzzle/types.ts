@@ -78,11 +78,14 @@ export interface PuzzleDef {
   rowClues?: (WeaveClue | null)[];
   /** Weave clues per column. */
   colClues?: (WeaveClue | null)[];
-  /** Target plate: exact pattern the board must match ('1' lit, '0' dark, '#' hole), row-major. */
+  /** Target plate: exact pattern the board must match ('1' lit, '0' dark, '#' hole, '?' free —
+   *  only for patterns read from the world, where part of it is hidden), row-major. */
   target?: string;
   /** How the target is shown: a plate next to the panel (default), only the glowing
    *  outline of the pattern on the plate ('outline'), or hidden in the world ('world'). */
   targetDisplay?: 'plate' | 'outline' | 'world';
+  /** The symbols are not drawn on the panel: they are found in the world (they still count). */
+  hideGlyphs?: boolean;
   /** Initial state ('1'/'0', row-major). Default: all dark (locked tiles at their lock). */
   init?: string;
   /** Drum panel: left and right edges are adjacent. */

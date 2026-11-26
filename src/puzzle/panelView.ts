@@ -538,7 +538,7 @@ export class PanelView {
         if (on && cell.echo?.length) drawEcho(ctx, x, y, S, cell.echo, a > 0.5);
         if (cell.glyph) {
           ctx.globalAlpha = on ? 1 : 0.28;
-          drawGlyph(ctx, cell.glyph, x + S / 2, y + S / 2, S * 0.92, a > 0.5);
+          if (!this.def.hideGlyphs) drawGlyph(ctx, cell.glyph, x + S / 2, y + S / 2, S * 0.92, a > 0.5);
           ctx.globalAlpha = 1;
         }
         // error blink

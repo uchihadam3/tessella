@@ -122,7 +122,7 @@ export function check(p: PuzzleDef, state: ArrayLike<number>): CheckResult {
   if (p.target) {
     const bad: number[] = [];
     for (let i = 0; i < n; i++) {
-      if (p.cells[i].hole) continue;
+      if (p.cells[i].hole || p.target[i] === '?') continue;
       const want = p.target[i] === '1' ? 1 : 0;
       if (state[i] !== want) bad.push(i);
     }

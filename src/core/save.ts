@@ -4,7 +4,7 @@
  */
 import type { AreaId } from '../data/areas';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const SLOT_COUNT = 3;
 const KEY = (slot: number) => `tessella.save.${slot}`;
 const LAST = 'tessella.lastSlot';
@@ -74,9 +74,28 @@ function remap(d: SaveData, table: Record<string, number[]>): SaveData {
   return { ...d, panels };
 }
 
+/**
+ * version 4: the desert's long generated series (practice, trial, mastery, heart) gave way to a few
+ * puzzles made with its scenery (light, tower, roof). A desert finished before stays finished.
+ */
+const SCENERY_V4: Record<string, { old: string[]; last: string; now: Record<string, number> }> = {
+  mosaic: { old: ['practice', 'trial', 'mastery', 'heart'], last: 'heart.6', now: { light: 4, tower: 3, roof: 4, heart: 3 } },
+};
+
+function sceneryV4(d: SaveData): SaveData {
+  const panels = { ...d.panels };
+  for (const [area, m] of Object.entries(SCENERY_V4)) {
+    const finished = !!d.panels[`${area}.${m.last}`]?.done;
+    for (const id of Object.keys(panels)) if (m.old.some((g) => id.startsWith(`${area}.${g}.`))) delete panels[id];
+    if (finished) for (const [g, n] of Object.entries(m.now)) for (let i = 1; i <= n; i++) panels[`${area}.${g}.${i}`] = { done: 1 };
+  }
+  return { ...d, panels };
+}
+
 function migrate(d: SaveData): SaveData {
   if (d.version < 2) d = { ...migrateV2(d), version: 2 };
   if (d.version < 3) d = { ...remap(d, INTRO_V3), version: 3 };
+  if (d.version < 4) d = { ...sceneryV4(d), version: 4 };
   return d;
 }
 

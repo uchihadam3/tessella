@@ -97,7 +97,13 @@ export const AREAS: AreaSpec[] = [
     id: 'mosaic', number: 5, name: { pt: 'O Templo das Areias', en: 'The Sand Temple' },
     rule: { pt: 'Mosaico', en: 'Mosaic' }, glyph: 'mosaic',
     lit: '#4fd8e0', accent: '#d9a441', anchor: [141, 169], totem: true,
-    groups: OPEN_GROUPS('3x3 windows count themselves; edges', 'overlaps', 'pictures', 'mastery'),
+    groups: [
+      { key: 'intro', count: 20, role: '3x3 windows count themselves; edges' },
+      { key: 'light', count: 4, role: 'pergolas: the light through a lattice draws the answer; sand hides part, windows fill it in' },
+      { key: 'tower', count: 3, role: 'flagstone fields read from a tower; an awning hides a corner (walk under it); a dune hides part' },
+      { key: 'roof', count: 4, role: 'blank panels on the sanctuary roof; their numbers are inlaid in the court floor below' },
+      { key: 'heart', count: 3, role: 'the hard ones: big ornaments that take long chains of deduction' },
+    ],
   },
   {
     id: 'beacon', number: 6, name: { pt: 'Os Penhascos dos Faróis', en: 'The Lighthouse Cliffs' },

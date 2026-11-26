@@ -47,7 +47,13 @@ export type Glyph =
   /** Twins: the two tiles carrying the same symbol lie in two DIFFERENT regions with the
    *  same shape (translation only). mirror=true on ONE of the pair means the regions are
    *  left-right mirror images of each other. */
-  | { kind: 'twin'; symbol: TwinSymbol; mirror?: boolean };
+  | { kind: 'twin'; symbol: TwinSymbol; mirror?: boolean }
+  /** Path (the desert): the two wells of one colour are joined by a path of lit tiles — one tile
+   *  wide, never branching, never touching itself or another path. Every lit tile belongs to a
+   *  path; a well is lit and ends its path. */
+  | { kind: 'well'; color: GemColor }
+  /** Path: a waymark — the path must pass over this tile (it is lit). */
+  | { kind: 'dot' };
 
 export type GlyphKind = Glyph['kind'];
 
@@ -100,7 +106,7 @@ export interface PuzzleDef {
 
 /** A violation found when the player submits. Used for the red blinking feedback. */
 export interface Violation {
-  rule: GlyphKind | 'target' | 'weave' | 'lock';
+  rule: GlyphKind | 'target' | 'weave' | 'lock' | 'path';
   /** Tiles to blink (indices). */
   tiles: number[];
   /** Weave clue lines to blink. */

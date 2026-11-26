@@ -527,7 +527,7 @@ export class PanelView {
           ctx.restore();
         }
         // rivets for locked tiles
-        if (cell.lock !== undefined && cell.glyph?.kind !== 'beacon') {
+        if (cell.lock !== undefined && cell.glyph?.kind !== 'beacon' && cell.glyph?.kind !== 'well') {
           ctx.fillStyle = a > 0.5 ? 'rgba(60,40,20,0.75)' : 'rgba(200,200,210,0.55)';
           for (const [ox, oy] of [[0.2, 0.2], [0.8, 0.2], [0.2, 0.8], [0.8, 0.8]]) {
             ctx.beginPath();

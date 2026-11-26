@@ -1,8 +1,9 @@
 /**
- * O Templo das Areias — Mosaico: o número conta os ladrilhos acesos na janela 3×3 em volta dele
- * (ele incluído). O portão ensina o idioma passo a passo; as pérgolas, a torre e o teto do
- * santuário o usam com o lugar (a luz no chão, lajes vistas do alto, números incrustados no pátio);
- * o coração exige o idioma inteiro.
+ * O Templo das Areias — Caminho: os dois poços de cada cor se ligam por um caminho de luz, um
+ * ladrilho de largura, sem ramos, sem encostar em si mesmo nem em outro caminho; o caminho passa
+ * pelos marcos; pedras e rebites escuros o bloqueiam. O portão ensina; as pérgolas, a torre e o
+ * teto do santuário mostram parte dos caminhos no lugar; o coração pede tudo.
+ * (gerado por tools/build-desert.ts)
  */
 import { puzzle } from '../../puzzle/board';
 import type { AreaPuzzles } from './types';
@@ -11,277 +12,285 @@ const P: AreaPuzzles = {
   gate: [
     puzzle('mosaic.gate.1', {
       grid: `
-        x1
+        wa .  wa
       `,
       difficulty: 1,
-      note: 'Só ele mesmo.',
+      note: 'Ligar os dois poços com luz.',
     }),
     puzzle('mosaic.gate.2', {
       grid: `
-        x2 .
+        wa .  .  .  wa
       `,
       difficulty: 1,
-      note: 'Ele e o vizinho.',
+      note: 'Um caminho mais longo.',
     }),
     puzzle('mosaic.gate.3', {
       grid: `
-        . x3 .
+        wa .  o  .  wa
       `,
       difficulty: 1,
-      note: 'Os dois lados.',
+      note: 'O marco fica no caminho.',
     }),
     puzzle('mosaic.gate.4', {
       grid: `
-        L x2
+        wa #  wa
+        .  .  .
       `,
       difficulty: 1,
-      note: 'O rebite aceso conta.',
+      note: 'A pedra obriga a dar a volta.',
     }),
     puzzle('mosaic.gate.5', {
       grid: `
-        D x2 .
+        wa D  wa
+        .  .  .
       `,
       difficulty: 1,
-      note: 'O rebite escuro não acende.',
+      note: 'O rebite escuro também bloqueia.',
     }),
     puzzle('mosaic.gate.6', {
       grid: `
-        x2 . x1
+        wa .  o
+        .  #  .
+        .  .  wa
       `,
-      difficulty: 1,
-      note: 'Duas janelas lado a lado.',
+      difficulty: 2,
+      note: 'O marco escolhe o lado da pedra.',
     }),
     puzzle('mosaic.gate.7', {
       grid: `
-        x0 . x1
+        wa .  o
+        .  .  .
+        .  .  wa
       `,
-      difficulty: 1,
-      note: 'Zero: a janela inteira apagada.',
+      difficulty: 2,
+      note: 'O marco no canto puxa o caminho para a borda.',
     }),
     puzzle('mosaic.gate.8', {
       grid: `
-        x4 .
-        .  .
+        wa .  .
+        D  D  .
+        wa .  .
       `,
-      difficulty: 1,
-      note: 'Também em cima e embaixo: no canto, quatro.',
+      difficulty: 2,
+      note: 'Contornar a parede de rebites.',
     }),
     puzzle('mosaic.gate.9', {
       grid: `
-        D x5 .
-        .  . .
+        wa .  .  .
+        #  #  #  .
+        wa .  .  .
       `,
-      difficulty: 1,
-      note: 'Na borda, seis.',
+      difficulty: 2,
+      note: 'O caminho não encosta nele mesmo: dá a volta inteira.',
     }),
     puzzle('mosaic.gate.10', {
       grid: `
-        . .  .
-        . x9 .
-        . .  .
+        wa .  wb
+        .  .  .
+        wa .  wb
       `,
-      difficulty: 1,
-      note: 'Nove: a janela inteira acende.',
+      difficulty: 2,
+      note: 'Duas cores, dois caminhos, que não se tocam.',
     }),
     puzzle('mosaic.gate.11', {
       grid: `
-        x4 . x3
-        .  . .
-        x2 . x1
+        wa .  .  wa
+        .  .  .  .
+        wb .  .  wb
       `,
-      difficulty: 1,
-      note: 'Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos.',
+      difficulty: 3,
+      note: 'Dois caminhos paralelos.',
     }),
     puzzle('mosaic.gate.12', {
       grid: `
-        .  x6 .  .
-        .  .  x8 .
-        .  x8 .  .
-        .  .  .  x1
+        .  wa .  .  .
+        o  .  .  .  o
+        .  .  .  .  .
+        .  o  .  #  .
+        D  .  .  wa .
       `,
-      difficulty: 3,
-      note: 'Portão: janelas quase cheias e um 1 solitário no canto.',
+      difficulty: 4,
+      note: 'Portão: três marcos, uma pedra e um rebite.',
     }),
   ],
   light: [
     puzzle('mosaic.light.1', {
       grid: `
-        . . .
-        . . .
-        . . .
+        .  .  .  .
+        .  .  wa .
+        .  .  .  .
+        #  wa .  .
       `,
-      target: '101/010/101',
+      target: '1110/1010/1100/#100',
       targetDisplay: 'world',
-      difficulty: 1,
-      note: 'Pérgola: a treliça deixa passar o sol; os quadrados de luz no chão são o desenho.',
+      difficulty: 2,
+      note: 'Pérgola: a luz que passa pela treliça desenha o caminho no chão.',
     }),
     puzzle('mosaic.light.2', {
       grid: `
-        . .  .  .
-        . .  x6 .
-        . x6 .  .
-        . .  x4 .
+        .  .  .  .
+        wa .  .  .
+        .  wa .  .
+        .  #  .  .
       `,
-      target: '0110/1101/1011/0110',
+      target: '1111/10??/01??/0#00',
       targetDisplay: 'world',
       difficulty: 3,
-      note: 'A areia cobriu um canto do chão: o que a luz não mostra, as janelas contam.',
+      note: 'A areia cobriu um canto: o resto do caminho se deduz.',
     }),
     puzzle('mosaic.light.3', {
       grid: `
-        . . . .
-        . . . .
-        . . . .
-        . . . .
+        .  wa .  .  .
+        .  .  .  .  .
+        .  .  .  .  .
+        .  .  .  #  .
+        D  .  .  wa .
       `,
-      target: '1011/0110/1101/1001',
+      target: '11000/10111/10101/111#1/00011',
       targetDisplay: 'world',
       difficulty: 4,
-      note: 'A areia cobriu metade do chão: a outra metade da luz se lê olhando a treliça por baixo.',
+      note: 'Metade do chão soterrada: a treliça, vista por baixo, mostra o resto.',
     }),
     puzzle('mosaic.light.4', {
       grid: `
-        .  .  .  . .
-        .  .  .  . .
-        .  .  x8 . .
-        x4 x6 x6 . .
-        .  .  .  . .
+        o  .  .  .  wb
+        wa .  .  .  .
+        .  .  .  .  wb
+        .  .  D  .  .
+        .  .  .  wa .
       `,
-      target: '10101/01110/11011/0???0/1???1',
+      target: '11101/10101/?????/?????/?????',
       targetDisplay: 'world',
-      difficulty: 4,
-      note: 'Uma flor de luz com o miolo de baixo enterrado: quatro janelas desenterram o resto.',
+      difficulty: 5,
+      note: 'Dois caminhos, a parte de baixo enterrada.',
     }),
   ],
   tower: [
     puzzle('mosaic.tower.1', {
       grid: `
-        . . .
-        . . .
-        . . .
+        .  .  .  .
+        .  .  wa .
+        .  wa .  .
+        .  .  D  .
       `,
-      target: '110/101/011',
+      target: '1110/1010/1100/0000',
       targetDisplay: 'world',
-      difficulty: 1,
-      note: 'Do alto da torre: as lajes vitrificadas na areia são o desenho.',
+      difficulty: 2,
+      note: 'Do alto da torre: as lajes vitrificadas são o caminho.',
     }),
     puzzle('mosaic.tower.2', {
       grid: `
-        . . . .
-        . . . .
-        . . . .
-        . . . .
+        .  .  .  wa .  .
+        .  .  .  .  D  .
+        .  .  #  .  .  .
+        .  .  .  .  .  wa
+        wb .  .  .  wb .
+        .  .  .  .  .  .
       `,
-      target: '1011/1101/0110/1001',
+      target: '001100/011000/01#111/011101/100010/111110',
       targetDisplay: 'world',
-      difficulty: 2,
-      note: 'Um toldo esconde um canto das lajes visto do alto: é preciso descer e olhar por baixo.',
+      difficulty: 4,
+      note: 'Um toldo esconde um canto visto do alto: descer e olhar por baixo.',
     }),
     puzzle('mosaic.tower.3', {
       grid: `
+        .  o  .  .  wb
         .  .  .  .  .
+        wa #  .  .  .
         .  .  .  .  .
-        x4 .  x5 .  .
-        .  x5 .  .  x4
-        .  .  .  .  .
+        .  wa .  wb .
       `,
-      target: '11001/10011/01110/1????/1????',
+      target: '11101/10101/1#101/0????/0????',
       targetDisplay: 'world',
-      difficulty: 4,
-      note: 'Uma duna engoliu as lajes do canto: as janelas do painel completam o desenho.',
+      difficulty: 5,
+      note: 'Uma duna engoliu um canto: o caminho que falta se deduz.',
     }),
   ],
   roof: [
     puzzle('mosaic.roof.1', {
       grid: `
-        .  . x1
-        x5 . .
-        .  . x1
+        .  o  .  .
+        .  .  wa .
+        .  .  .  .
+        #  wa .  .
       `,
       hideGlyphs: true,
       difficulty: 3,
-      note: 'O painel está em branco: os números estão incrustados no chão do pátio, lá embaixo.',
+      note: 'O painel está quase em branco: os marcos estão no chão, lá embaixo.',
     }),
     puzzle('mosaic.roof.2', {
       grid: `
-        x3 x3 .  .
-        .  x4 x5 .
-        x5 .  .  x1
-        .  .  x2 .
+        .  .  wa o  .
+        .  .  .  .  D
+        .  .  .  o  o
+        .  #  .  .  .
+        .  wa .  .  .
       `,
       hideGlyphs: true,
       difficulty: 4,
-      note: 'Quatro por quatro, lido do teto.',
+      note: 'Cinco por cinco, lido do teto.',
     }),
     puzzle('mosaic.roof.3', {
       grid: `
-        x2 x4 x4 .  .  .
-        x4 .  .  x5 .  x2
-        x3 .  x4 .  .  .
-        .  .  .  x5 .  x4
-        x0 .  x1 .  x5 .
+        .  o  wa D  .
+        .  .  .  .  .
+        #  .  .  .  .
+        wa .  .  .  o
+        o  .  .  .  .
       `,
       hideGlyphs: true,
       difficulty: 5,
-      note: 'Seis por cinco, lido do teto: uma janela de zero no canto abre a conta.',
+      note: 'Marcos nos cantos.',
     }),
     puzzle('mosaic.roof.4', {
       grid: `
-        .  .  .  x5 x3 .  .
-        .  x3 .  .  .  .  x4
-        .  .  x4 .  .  x4 .
-        x3 .  .  x3 x5 x5 .
-        x3 x5 x2 .  .  x6 .
-        .  .  x1 .  .  .  .
+        .  .  .  wb .  wa
+        #  D  .  o  .  .
+        .  .  .  .  .  .
+        .  wb .  .  .  .
+        .  .  .  .  .  .
+        .  .  o  .  wa .
       `,
       hideGlyphs: true,
-      difficulty: 7,
-      note: 'O maior tabuleiro do pátio: as janelas só se resolvem umas pelas outras, em cadeia.',
+      difficulty: 6,
+      note: 'Dois caminhos no maior tabuleiro do pátio.',
     }),
   ],
   heart: [
     puzzle('mosaic.heart.1', {
       grid: `
-        .  .  .  .  .  .  .  x1
-        x2 .  x6 .  x7 x7 .  .
-        .  x3 .  .  .  x5 x4 .
-        .  x3 x1 .  .  x2 .  x2
-        .  x2 x2 .  .  .  .  x2
-        x3 .  .  .  .  .  x3 x1
-        .  .  .  .  .  x6 .  x2
-        x1 .  x5 .  .  x5 .  .
+        .  .  .  .  .
+        .  .  .  .  .
+        .  wa o  o  .
+        #  .  .  .  o
+        #  wa .  .  .
       `,
-      difficulty: 8,
-      note: 'Coração do templo: um ornamento 8×8 sem atalhos.',
+      difficulty: 7,
+      note: 'Coração: três marcos que parecem estar no caminho errado.',
     }),
     puzzle('mosaic.heart.2', {
       grid: `
-        .  .  .  .  x1 .  x3 .
-        x5 .  x2 .  x1 x3 .  .
-        .  .  .  x1 .  x4 .  x2
-        .  .  x1 .  .  .  .  x1
-        .  x1 .  .  .  x1 .  x1
-        x2 .  x4 .  .  .  .  .
-        x3 .  x3 x1 .  .  .  .
-        x2 x3 .  .  x0 .  .  x4
+        .  o  .  .  .  .
+        D  .  #  .  .  .
+        .  .  .  o  .  .
+        .  .  o  #  wa .
+        wa .  .  .  .  .
+        .  .  .  .  .  .
       `,
-      difficulty: 9,
-      note: 'Coração do templo: janelas de um e de zero espalhadas — cada vazio tem que ser provado.',
+      difficulty: 8,
+      note: 'Coração: o caminho longo entre pedras.',
     }),
     puzzle('mosaic.heart.3', {
       grid: `
-        .  x2 .  x3 .  .  x2 .  x0
-        .  .  .  .  x2 .  .  .  .
-        x2 .  x2 .  .  x5 x2 x4 .
-        .  x4 x3 .  .  .  .  .  .
-        x2 .  x5 .  .  x8 .  .  .
-        .  .  .  .  .  .  .  .  x3
-        x5 .  x6 x7 .  .  x6 x8 .
-        .  x7 x4 .  .  .  x4 .  x5
-        .  .  .  x2 .  .  .  x4 .
+        .  o  .  .  .  wb
+        .  .  .  .  .  #
+        .  .  .  .  .  o
+        .  .  .  .  .  .
+        wb .  .  .  .  .
+        .  wa wa .  .  D
       `,
-      difficulty: 9,
-      note: 'Coração do templo: o grande ornamento 9×9.',
+      difficulty: 8,
+      note: 'Coração: dois poços colados e um caminho que dá a volta no tabuleiro.',
     }),
   ],
   secret: [],

@@ -95,14 +95,14 @@ export const AREAS: AreaSpec[] = [
   },
   {
     id: 'mosaic', number: 5, name: { pt: 'O Templo das Areias', en: 'The Sand Temple' },
-    rule: { pt: 'Mosaico', en: 'Mosaic' }, glyph: 'mosaic',
+    rule: { pt: 'Caminho', en: 'Path' }, glyph: 'mosaic',
     lit: '#4fd8e0', accent: '#d9a441', anchor: [141, 169], totem: true,
     groups: [
-      { key: 'gate', count: 12, role: 'the language, one idea at a time: the window counts itself, both sides, rivets lit and dark, zero, the second dimension, corners, the full window' },
-      { key: 'light', count: 4, role: 'pergolas: the light on the floor is the drawing; sand hides part (the windows fill it in, or read the lattice from below)' },
-      { key: 'tower', count: 3, role: 'flagstone fields read from a tower; an awning hides a corner; a dune buries part and the windows fill it in' },
-      { key: 'roof', count: 4, role: 'blank panels on the sanctuary roof; their numbers are inlaid in the floor below each edge' },
-      { key: 'heart', count: 3, role: 'the hard ones: big ornaments that take long chains of deduction' },
+      { key: 'gate', count: 12, role: 'the language, one idea at a time: join the wells with light; waymarks on the way; rocks and dark rivets block; a path never touches itself; two colours never touch' },
+      { key: 'light', count: 4, role: 'pergolas: the light on the floor shows the path; sand hides part (deduce it, or read the lattice from below)' },
+      { key: 'tower', count: 3, role: 'glazed flagstones seen from a tower are the path; an awning hides a corner (walk under it); a dune buries part' },
+      { key: 'roof', count: 4, role: 'panels on the sanctuary roof that show no waymarks: they are inlaid in the floor below each edge' },
+      { key: 'heart', count: 3, role: 'the hard ones: long paths between rocks, waymarks and a second colour' },
     ],
   },
   {

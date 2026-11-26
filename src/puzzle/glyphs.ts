@@ -350,6 +350,40 @@ export function drawTwin(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
   }
 }
 
+const WELL_COLORS: Record<string, string> = { amber: '#f2b13b', azure: '#46b8f0', crimson: '#e0485a', jade: '#3fcf8e', ivory: '#f3ecd9', violet: '#a77cf0' };
+
+/** A well (an end of a path): a ring with a coloured pool. */
+export function drawWell(ctx: CanvasRenderingContext2D, cx: number, cy: number, s: number, color: string, lit: boolean) {
+  ctx.save();
+  const c = WELL_COLORS[color] ?? '#f3ecd9';
+  ctx.beginPath();
+  ctx.arc(cx, cy, s * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = c;
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.5, s * 0.07);
+  ctx.strokeStyle = lit ? 'rgba(30,25,20,0.85)' : 'rgba(250,245,230,0.9)';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, s * 0.12, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fill();
+  ctx.restore();
+}
+
+/** A waymark the path has to pass over: a small diamond. */
+export function drawDot(ctx: CanvasRenderingContext2D, cx: number, cy: number, s: number, ink: InkStyle) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s * 0.15);
+  ctx.lineTo(cx + s * 0.15, cy);
+  ctx.lineTo(cx, cy + s * 0.15);
+  ctx.lineTo(cx - s * 0.15, cy);
+  ctx.closePath();
+  ctx.fillStyle = ink.fill;
+  ctx.fill();
+  ctx.restore();
+}
+
 export function drawGlyph(ctx: CanvasRenderingContext2D, g: Glyph, cx: number, cy: number, s: number, lit: boolean) {
   const ink = lit ? INK_ON_LIT : INK_ON_DARK;
   switch (g.kind) {
@@ -360,6 +394,8 @@ export function drawGlyph(ctx: CanvasRenderingContext2D, g: Glyph, cx: number, c
     case 'mosaic': return drawMosaic(ctx, cx, cy, s, g.n, ink);
     case 'beacon': return drawBeacon(ctx, cx, cy, s, g.n, ink);
     case 'twin': return drawTwin(ctx, cx, cy, s, g.symbol, g.mirror, ink);
+    case 'well': return drawWell(ctx, cx, cy, s, g.color, lit);
+    case 'dot': return drawDot(ctx, cx, cy, s, ink);
   }
 }
 

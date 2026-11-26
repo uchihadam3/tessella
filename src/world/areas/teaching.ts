@@ -14,6 +14,7 @@ import type { AreaId } from '../../data/areas';
 import { rng } from '../noise';
 import { audio } from '../../audio';
 import { drawGlyph } from '../../puzzle/glyphs';
+import { solve } from '../../puzzle/solver';
 
 // ───────────────────────── station helpers ─────────────────────────
 
@@ -442,7 +443,7 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const gateG = introRows(a, ax, ax.at(-48, 0), 'gate');
 
   // ── 1. light: stone pergolas along the avenue; their lattice draws the answer on the floor ──
-  const buried: Record<string, string> = { 'mosaic.light.2': '..../..../..??/..??', 'mosaic.light.3': '..../..../????/????' };
+  const buried: Record<string, string> = { 'mosaic.light.3': '...../...../?????/?????/?????' };
   const light = a.group('light').map((def, i) => {
     const fw = i < 2 ? -34 : -25;
     const sd = i % 2 === 0 ? 1 : -1;
@@ -567,8 +568,11 @@ const PERGOLA_SUN = new THREE.Vector3(-0.42, 0.82, 0.39).normalize();
 function lightPergola(a: AreaCtx, def: PuzzleDef, pc: { x: number; z: number }, v: { x: number; z: number }, cs: number, stone: THREE.Material, stoneS: THREE.Material, bury?: string) {
   const b = a.build;
   const w = def.w, h = def.h;
-  const t = def.target ?? '';
-  const hid = (bury ?? '').replace(/\//g, '');
+  // the lattice is the whole answer (what the sand hides on the floor is still in the lattice)
+  const answer = solve(def, { maxSolutions: 1 }).solutions[0];
+  const t = answer ? Array.from(answer, (x, i) => (def.cells[i].hole ? '#' : String(x))).join('') : def.target ?? '';
+  const b0 = (bury ?? '').replace(/\//g, '');
+  const hid = Array.from(def.target ?? '', (ch, i) => (ch === '?' || b0[i] === '?' ? '?' : '.')).join('');
   const u = { x: -v.z, z: v.x };
   const H = 2.7;
   const shift = { x: (PERGOLA_SUN.x / PERGOLA_SUN.y) * H, z: (PERGOLA_SUN.z / PERGOLA_SUN.y) * H };
@@ -631,7 +635,7 @@ function lightPergola(a: AreaCtx, def: PuzzleDef, pc: { x: number; z: number }, 
       a.dynamic.add(sq);
     }
   }
-  if (hid) sandDrift(a, hid, w, h, (r, c) => at(pc, r, c), cs, fy, ry);
+  if (hid.includes('?')) sandDrift(a, hid, w, h, (r, c) => at(pc, r, c), cs, fy, ry);
 }
 
 /**
@@ -708,8 +712,13 @@ function floorBoard(a: AreaCtx, def: PuzzleDef, bc: { x: number; z: number }, v:
     const g = def.cells[r * w + c].glyph;
     const x0 = c * px, y0 = r * px;
     const lit = def.target?.[r * w + c] === '1';
-    ctx.fillStyle = lit ? '#37c3c9' : g ? '#24575c' : (r + c) % 2 ? '#e9dcc0' : '#efe4cc';
+    const cell = def.cells[r * w + c];
+    ctx.fillStyle = cell.hole ? '#3a2f25' : cell.lock === 0 ? '#3b3a38' : lit ? '#37c3c9' : g ? '#24575c' : (r + c) % 2 ? '#e9dcc0' : '#efe4cc';
     ctx.fillRect(x0 + 5, y0 + 5, px - 10, px - 10);
+    if (cell.lock === 0) {
+      ctx.fillStyle = '#c9c3b5';
+      for (const [ox, oy] of [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]]) { ctx.beginPath(); ctx.arc(x0 + ox * px, y0 + oy * px, px * 0.05, 0, Math.PI * 2); ctx.fill(); }
+    }
     if (lit) {
       // glazed: a lighter sheen in one corner
       ctx.fillStyle = 'rgba(255,255,255,0.22)';

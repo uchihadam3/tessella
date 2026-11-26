@@ -304,6 +304,11 @@ export function parseCell(tok: string, shapes: Record<string, string> | undefine
   } else if (ch === 'b' && /^\d+$/.test(rest)) {
     glyph = { kind: 'beacon', n: Number(rest) };
     cell.lock = 1;
+  } else if (ch === 'w' && GEM_LETTER[rest]) {
+    glyph = { kind: 'well', color: GEM_LETTER[rest] };
+    cell.lock = 1; // a well is always lit: the paths start from it
+  } else if (t === 'o') {
+    glyph = { kind: 'dot' };
   } else if (ch === 'f') {
     const free = rest.endsWith('*');
     const name = free ? rest.slice(0, -1) : rest;

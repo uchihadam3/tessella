@@ -421,58 +421,58 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Templo das Areias — Mosaico (26)
+## O Templo das Areias — Caminho (26)
 
 ### gate
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.gate.1 | 1×1 | Mosaico | 1 | 1 | Só ele mesmo. |
-| mosaic.gate.2 | 2×1 | Mosaico | 1 | 1 | Ele e o vizinho. |
-| mosaic.gate.3 | 3×1 | Mosaico | 1 | 1 | Os dois lados. |
-| mosaic.gate.4 | 2×1 | Mosaico | 1 | 1 | O rebite aceso conta. |
-| mosaic.gate.5 | 3×1 | Mosaico | 1 | 1 | O rebite escuro não acende. |
-| mosaic.gate.6 | 3×1 | Mosaico | 1 | 1 | Duas janelas lado a lado. |
-| mosaic.gate.7 | 3×1 | Mosaico | 1 | 1 | Zero: a janela inteira apagada. |
-| mosaic.gate.8 | 2×2 | Mosaico | 1 | 1 | Também em cima e embaixo: no canto, quatro. |
-| mosaic.gate.9 | 3×2 | Mosaico | 1 | 1 | Na borda, seis. |
-| mosaic.gate.10 | 3×3 | Mosaico | 1 | 1 | Nove: a janela inteira acende. |
-| mosaic.gate.11 | 3×3 | Mosaico | 1 | 1 | Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos. |
-| mosaic.gate.12 | 4×4 | Mosaico | 1 | 3 | Portão: janelas quase cheias e um 1 solitário no canto. |
+| mosaic.gate.1 | 3×1 | well | 1 | 1 | Ligar os dois poços com luz. |
+| mosaic.gate.2 | 5×1 | well | 1 | 1 | Um caminho mais longo. |
+| mosaic.gate.3 | 5×1 | well + dot | 1 | 1 | O marco fica no caminho. |
+| mosaic.gate.4 | 3×2 | well | 1 | 1 | A pedra obriga a dar a volta. |
+| mosaic.gate.5 | 3×2 | well | 1 | 1 | O rebite escuro também bloqueia. |
+| mosaic.gate.6 | 3×3 | well + dot | 1 | 2 | O marco escolhe o lado da pedra. |
+| mosaic.gate.7 | 3×3 | well + dot | 1 | 2 | O marco no canto puxa o caminho para a borda. |
+| mosaic.gate.8 | 3×3 | well | 1 | 2 | Contornar a parede de rebites. |
+| mosaic.gate.9 | 4×3 | well | 1 | 2 | O caminho não encosta nele mesmo: dá a volta inteira. |
+| mosaic.gate.10 | 3×3 | well | 1 | 2 | Duas cores, dois caminhos, que não se tocam. |
+| mosaic.gate.11 | 4×3 | well | 1 | 3 | Dois caminhos paralelos. |
+| mosaic.gate.12 | 5×5 | well + dot | 1 | 4 | Portão: três marcos, uma pedra e um rebite. |
 
 ### light
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.light.1 | 3×3 | Placa | 1 | 1 | Pérgola: a treliça deixa passar o sol; os quadrados de luz no chão são o desenho. |
-| mosaic.light.2 | 4×4 | Mosaico + Placa | 1 | 3 | A areia cobriu um canto do chão: o que a luz não mostra, as janelas contam. |
-| mosaic.light.3 | 4×4 | Placa | 1 | 4 | A areia cobriu metade do chão: a outra metade da luz se lê olhando a treliça por baixo. |
-| mosaic.light.4 | 5×5 | Mosaico + Placa | 1 | 4 | Uma flor de luz com o miolo de baixo enterrado: quatro janelas desenterram o resto. |
+| mosaic.light.1 | 4×4 | well + Placa | 1 | 2 | Pérgola: a luz que passa pela treliça desenha o caminho no chão. |
+| mosaic.light.2 | 4×4 | well + Placa | 1 | 3 | A areia cobriu um canto: o resto do caminho se deduz. |
+| mosaic.light.3 | 5×5 | well + Placa | 1 | 4 | Metade do chão soterrada: a treliça, vista por baixo, mostra o resto. |
+| mosaic.light.4 | 5×5 | dot + well + Placa | 1 | 5 | Dois caminhos, a parte de baixo enterrada. |
 
 ### tower
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.tower.1 | 3×3 | Placa | 1 | 1 | Do alto da torre: as lajes vitrificadas na areia são o desenho. |
-| mosaic.tower.2 | 4×4 | Placa | 1 | 2 | Um toldo esconde um canto das lajes visto do alto: é preciso descer e olhar por baixo. |
-| mosaic.tower.3 | 5×5 | Mosaico + Placa | 1 | 4 | Uma duna engoliu as lajes do canto: as janelas do painel completam o desenho. |
+| mosaic.tower.1 | 4×4 | well + Placa | 1 | 2 | Do alto da torre: as lajes vitrificadas são o caminho. |
+| mosaic.tower.2 | 6×6 | well + Placa | 1 | 4 | Um toldo esconde um canto visto do alto: descer e olhar por baixo. |
+| mosaic.tower.3 | 5×5 | dot + well + Placa | 1 | 5 | Uma duna engoliu um canto: o caminho que falta se deduz. |
 
 ### roof
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.roof.1 | 3×3 | Mosaico | 1 | 3 | O painel está em branco: os números estão incrustados no chão do pátio, lá embaixo. |
-| mosaic.roof.2 | 4×4 | Mosaico | 1 | 4 | Quatro por quatro, lido do teto. |
-| mosaic.roof.3 | 6×5 | Mosaico | 1 | 5 | Seis por cinco, lido do teto: uma janela de zero no canto abre a conta. |
-| mosaic.roof.4 | 7×6 | Mosaico | 1 | 7 | O maior tabuleiro do pátio: as janelas só se resolvem umas pelas outras, em cadeia. |
+| mosaic.roof.1 | 4×4 | dot + well | 1 | 3 | O painel está quase em branco: os marcos estão no chão, lá embaixo. |
+| mosaic.roof.2 | 5×5 | well + dot | 1 | 4 | Cinco por cinco, lido do teto. |
+| mosaic.roof.3 | 5×5 | dot + well | 1 | 5 | Marcos nos cantos. |
+| mosaic.roof.4 | 6×6 | well + dot | 1 | 6 | Dois caminhos no maior tabuleiro do pátio. |
 
 ### heart
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.heart.1 | 8×8 | Mosaico | 1 | 8 | Coração do templo: um ornamento 8×8 sem atalhos. |
-| mosaic.heart.2 | 8×8 | Mosaico | 1 | 9 | Coração do templo: janelas de um e de zero espalhadas — cada vazio tem que ser provado. |
-| mosaic.heart.3 | 9×9 | Mosaico | 1 | 9 | Coração do templo: o grande ornamento 9×9. |
+| mosaic.heart.1 | 5×5 | well + dot | 1 | 7 | Coração: três marcos que parecem estar no caminho errado. |
+| mosaic.heart.2 | 6×6 | dot + well | 1 | 8 | Coração: o caminho longo entre pedras. |
+| mosaic.heart.3 | 6×6 | dot + well | 1 | 8 | Coração: dois poços colados e um caminho que dá a volta no tabuleiro. |
 
 ### secret
 

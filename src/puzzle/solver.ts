@@ -9,6 +9,7 @@
  * Echo / mirror / mute: the reachable states form an affine subspace init + span(pressSets)
  * over GF(2). We convert it to parity checks (the orthogonal complement) and propagate them.
  */
+import { isPathPuzzle, solvePaths } from './pathsolver';
 import { allOrientations, initialState, isPressable, mirrorShape, pressSet, regionShape, shapeKey, type Geometry, type Shape } from './board';
 import { check, colTiles, geometryOf, rowTiles } from './rules';
 import type { PuzzleDef } from './types';
@@ -31,6 +32,7 @@ export interface SolveOptions {
 
 /** True when inverting every tile maps solutions to solutions (only region languages, no rivets). */
 export function isInversionSymmetric(p: PuzzleDef): boolean {
+  if (isPathPuzzle(p)) return false;
   if (p.target || p.rowClues || p.colClues || p.mirror) return false;
   for (const c of p.cells) {
     if (c.hole) continue;
@@ -1060,6 +1062,8 @@ export interface InsightPath {
  * to basic deductions. The resulting list of insights is the puzzle's "ahá" path.
  */
 export function insightPath(p: PuzzleDef, maxLookahead = 30): InsightPath {
+  // (path panels are read as a whole, not by these deductions)
+  if (isPathPuzzle(p)) return { solved: true, basicRoot: 0, steps: [], determined: 1 };
   const m = compile(p);
   const val = Int8Array.from(m.base);
   if (isInversionSymmetric(p) && m.order.length) val[m.order[0]] = 1;
@@ -1166,6 +1170,10 @@ function pickVar(m: Model, val: Int8Array): number {
 }
 
 export function solve(p: PuzzleDef, opts: SolveOptions = {}): SolveResult {
+  if (isPathPuzzle(p)) {
+    const r = solvePaths(p, opts.maxSolutions ?? 2, Math.max(opts.maxNodes ?? 400_000, 2_000_000), opts.timeLimitMs ?? 20_000);
+    return { solutions: r.solutions, complete: r.complete, nodes: r.nodes, propagationOnly: false, rootDetermined: 0 };
+  }
   const maxSolutions = opts.maxSolutions ?? 2;
   const maxNodes = opts.maxNodes ?? 400_000;
   const deadline = Date.now() + (opts.timeLimitMs ?? 20_000);

@@ -1,11 +1,13 @@
-const grid = (w: number, h: number, tok: string) => Array.from({ length: h }, () => Array(w).fill(tok).join(' ')).join('\n');
 export const CANDIDATES: Record<string, Record<string, unknown>> = {
-  'g2out': { grid: grid(4, 4, '.'), target: '0110/1111/1111/0110', targetDisplay: 'outline', note: '' },
-  't3out': { grid: '. . . . .\n. . . . .\n. . # . .\n. . . . .\n. . . . .', target: '11011/10001/00#00/10001/11011', targetDisplay: 'outline', note: '' },
-  't4|': { grid: grid(5, 5, '.{|}'), target: '11001/10011/01110/11001/10011', note: '' },
-  't4-': { grid: grid(5, 5, '.{-}'), target: '11001/10011/01110/11001/10011', note: '' },
-  'l3-': { grid: grid(3, 3, '.{-}'), target: '010/111/010', note: '' },
-  'h1x': { grid: grid(6, 6, '.{x}'), target: '110001/011001/001001/001001/001001/001001', note: '' },
-  'h2+': { grid: grid(6, 6, '.{+}'), target: '111111/000000/000000/111110/100011/000001', note: '' },
-  'h3*': { grid: grid(7, 7, '.{*}'), target: '1000000/1000111/1001100/1001000/1001000/1001001/1001001', note: '' },
+  // pergolas: the light shows the route
+  L1: { grid: 'wa . .\n. . .\n. . wa', target: '110/011/001', targetDisplay: 'world', note: '' },
+  L2: { grid: 'wa . . .\n. . . .\n. . . .\n. . . wa', target: '1110/0010/1110/1???', targetDisplay: 'world', note: '' },
+  L2b: { grid: 'wa . . .\n. . . .\n. . . .\nwa . . .', target: '1111/0001/1111/1???', targetDisplay: 'world', note: '' },
+  L3: { grid: 'wa . . .\n. . . .\n. . . .\n. . . wa', target: '1000/1011/1101/0111', targetDisplay: 'world', note: '' },
+  L4: { grid: 'wa . . . .\n. . . . .\n. . o . .\n. . . . .\n. . . . wa', target: '11100/00100/0????/0????/0????', targetDisplay: 'world', note: '' },
+  L4b: { grid: 'wa . . . wb\n. . . . .\n. . . . .\n. . . . .\nwb . . . wa', target: '1????/1????/1????/1????/1????', targetDisplay: 'world', note: '' },
+  // tower fields
+  T1: { grid: 'wa . . .\n. . . .\n. . . .\n. . . wa', target: '1100/0110/0011/0001', targetDisplay: 'world', note: '' },
+  T2: { grid: 'wa . . . .\n. . . . .\n. . . . .\n. . . . .\n. . . . wa', target: '10000/11110/00010/01110/01111', targetDisplay: 'world', note: '' },
+  T3: { grid: 'wa . . . wb\n. . . . .\n. o . . .\n. . . . .\nwb . . . wa', target: '1????/1????/1????/?????/?????', targetDisplay: 'world', note: '' },
 };

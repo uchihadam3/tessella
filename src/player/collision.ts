@@ -38,6 +38,8 @@ export interface Floor {
 }
 
 const CELL = 16;
+/** how high a ledge you clamber onto by walking into it (higher ones stop you) */
+const CLIMB = 1.3;
 
 export class CollisionWorld {
   private blockers: Blocker[] = [];
@@ -137,6 +139,35 @@ export class CollisionWorld {
     return [best, surf];
   }
 
+  /** the highest floor at (x,z) whose top is above y0 while its body reaches below y1 (one you would be inside) */
+  private solidTopAt(x: number, z: number, y0: number, y1: number): { top: number; surface: Surface } | null {
+    const b = this.grid.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`);
+    if (!b) return null;
+    let best: { top: number; surface: Surface } | null = null;
+    for (const f of b.f) {
+      if (!f.enabled) continue;
+      let u: number, v: number;
+      if (f.r !== undefined) {
+        const dx = x - f.x, dz = z - f.z;
+        if (dx * dx + dz * dz > f.r * f.r) continue;
+        u = dx / f.r;
+        v = dz / f.r;
+      } else {
+        const [lx, lz] = this.local(x, z, f.x, f.z, f.rot);
+        if (Math.abs(lx) > f.hw! || Math.abs(lz) > f.hd!) continue;
+        u = lx / f.hw!;
+        v = lz / f.hd!;
+      }
+      const top = typeof f.top === 'number' ? f.top : f.top(u, v);
+      // (a floor "reaching down to the bottom of the world" only means nobody stands under it —
+      // floating steps — not a block to climb: it counts as thin)
+      const bottom = f.bottom === undefined || top - f.bottom > 8 ? top - 0.6 : f.bottom;
+      if (top <= y0 || bottom >= y1) continue;
+      if (!best || top > best.top) best = { top, surface: f.surface ?? 'stone' };
+    }
+    return best;
+  }
+
   /** Is there a ceiling (floor bottom) between y0 and y1 at x,z? */
   ceilingAt(x: number, z: number, y0: number, y1: number): boolean {
     const b = this.grid.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`);
@@ -168,7 +199,15 @@ export class CollisionWorld {
   tryMove(fx: number, fz: number, fy: number, tx: number, tz: number, radius: number, step: number, height: number): { x: number; z: number; y: number; surface: Surface | null } | null {
     const p = { x: tx, z: tz };
     this.resolve(p, radius, fy + step * 0.9, fy + height);
-    const [g, surf] = this.groundAt(p.x, p.z, fy + step);
+    let [g, surf] = this.groundAt(p.x, p.z, fy + step);
+    // a raised floor in the way (a platform, a ledge, a step too tall to just walk up): low enough
+    // and you climb onto it; higher, and it stops you like a wall — never walking on inside it
+    const solid = this.solidTopAt(p.x, p.z, fy + step, fy + height);
+    if (solid) {
+      if (solid.top > fy + CLIMB) return null;
+      g = solid.top;
+      surf = solid.surface;
+    }
     if (g === -Infinity) return null;
     if (surf === null) {
       if (g > fy + 0.005) {

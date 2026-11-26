@@ -10,37 +10,111 @@ const P: AreaPuzzles = {
         x1
       `,
       difficulty: 1,
-      note: 'O número conta a si mesmo.',
+      note: 'Só ele mesmo.',
     }),
     puzzle('mosaic.intro.2', {
       grid: `
-        x2 L
+        x2 .
       `,
       difficulty: 1,
-      note: 'O rebite aceso também conta: falta só a própria luz.',
+      note: 'Ele e o vizinho.',
     }),
     puzzle('mosaic.intro.3', {
+      grid: `
+        . x2
+      `,
+      difficulty: 1,
+      note: 'O vizinho do outro lado.',
+    }),
+    puzzle('mosaic.intro.4', {
       grid: `
         . x3 .
       `,
       difficulty: 1,
-      note: 'A janela alcança os vizinhos.',
+      note: 'Os dois lados.',
     }),
-    puzzle('mosaic.intro.4', {
+    puzzle('mosaic.intro.5', {
+      grid: `
+        L x2
+      `,
+      difficulty: 1,
+      note: 'O rebite aceso conta.',
+    }),
+    puzzle('mosaic.intro.6', {
+      grid: `
+        L . x2
+      `,
+      difficulty: 1,
+      note: 'O rebite longe não conta.',
+    }),
+    puzzle('mosaic.intro.7', {
       grid: `
         D x2 .
       `,
       difficulty: 1,
-      note: 'O rebite escuro não acende: a luz vai para o outro vizinho.',
+      note: 'O rebite escuro não acende.',
     }),
-    puzzle('mosaic.intro.5', {
+    puzzle('mosaic.intro.8', {
       grid: `
         x2 . x1
       `,
       difficulty: 1,
-      note: 'Duas janelas lado a lado: o 2 acende os dois; o 1 já está contado, então a ponta fica apagada.',
+      note: 'Duas janelas lado a lado.',
     }),
-    puzzle('mosaic.intro.6', {
+    puzzle('mosaic.intro.9', {
+      grid: `
+        x2 . x2 D
+      `,
+      difficulty: 1,
+      note: 'O vizinho é dos dois.',
+    }),
+    puzzle('mosaic.intro.10', {
+      grid: `
+        x2 . x3 .
+      `,
+      difficulty: 1,
+      note: 'Uma janela inteira acesa ao lado de outra.',
+    }),
+    puzzle('mosaic.intro.11', {
+      grid: `
+        x0 . x1
+      `,
+      difficulty: 1,
+      note: 'Zero: a janela inteira apagada.',
+    }),
+    puzzle('mosaic.intro.12', {
+      grid: `
+        x4 .
+        .  .
+      `,
+      difficulty: 1,
+      note: 'Também em cima e embaixo: no canto, quatro.',
+    }),
+    puzzle('mosaic.intro.13', {
+      grid: `
+        x3 .
+        D  .
+      `,
+      difficulty: 1,
+      note: 'No canto, com um rebite escuro.',
+    }),
+    puzzle('mosaic.intro.14', {
+      grid: `
+        D x5 .
+        .  . .
+      `,
+      difficulty: 1,
+      note: 'Na borda, seis.',
+    }),
+    puzzle('mosaic.intro.15', {
+      grid: `
+        x4 . .
+        .  . x2
+      `,
+      difficulty: 1,
+      note: 'Duas janelas que se cruzam.',
+    }),
+    puzzle('mosaic.intro.16', {
       grid: `
         . .  .
         . x9 .
@@ -49,7 +123,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Nove: a janela inteira acende.',
     }),
-    puzzle('mosaic.intro.7', {
+    puzzle('mosaic.intro.17', {
       grid: `
         x4 . x3
         .  . .
@@ -58,14 +132,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos.',
     }),
-    puzzle('mosaic.intro.8', {
-      grid: `
-        x0 . x1
-      `,
-      difficulty: 1,
-      note: 'Zero: a janela inteira apagada — a luz do 1 só pode ficar do outro lado.',
-    }),
-    puzzle('mosaic.intro.9', {
+    puzzle('mosaic.intro.18', {
       grid: `
         .  x0 .  .
         .  x2 x3 .
@@ -75,7 +142,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Zero apaga a janela inteira; o que sobra para os vizinhos fica contado.',
     }),
-    puzzle('mosaic.intro.10', {
+    puzzle('mosaic.intro.19', {
       grid: `
         .  .  .  x2 .
         .  x0 x3 .  .
@@ -84,7 +151,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê.',
     }),
-    puzzle('mosaic.intro.11', {
+    puzzle('mosaic.intro.20', {
       grid: `
         .  x6 .  .
         .  .  x8 .

@@ -134,13 +134,16 @@ difícil), **Maestria (8)** que combina as percepções e **Coração (6)**, as 
 
 Cada linguagem tem um glifo com silhueta e cor próprias, para que painéis mistos sejam legíveis de relance.
 
-**Introduções com 11 painéis.** Além dos 7 passos de cada sequência abaixo, cada introdução tem 4 painéis
-ainda menores entre eles (1×2, 1×3, 2×2), cada um com **uma ideia só e uma única resposta** (ou uma só a
-menos de trocar luz e sombra), nenhum já resolvido no começo — por exemplo, no Mosaico: "o rebite aceso
-também conta" (`x2 L`), "o rebite escuro não acende" (`D x2 .`), "duas janelas lado a lado" (`x2 . x1`) e
-"zero apaga a janela" (`x0 . x1`); no Farol: "um feixe para cada lado", "o escuro interrompe o feixe",
-"também em pé"; na Trama: "zero é linha sem fio", "fios separados por escuro". Todos são verificados pelo
-resolvedor (`npm run verify:puzzles`).
+**Introduções com 20 painéis — ensinar, não contar.** Como em The Witness, nenhuma introdução explica nada
+em texto e nenhum painel acende dicas: o jogador aprende resolvendo painéis minúsculos (1×1, 1×2, 1×3, 2×2)
+que acrescentam **uma ideia de cada vez**, quase sempre com uma única resposta (ou uma só a menos de trocar
+luz e sombra), nenhum já resolvido no começo. Cada área apresenta, nesta ordem, a regra sozinha, a regra nos
+dois sentidos, o rebite aceso e o rebite escuro (ladrilhos fixos, desenhados com quatro pontos), a segunda
+dimensão, os buracos e, por fim, as combinações que a prática usa — e nenhuma introdução pede mais de duas
+percepções (`tools/intro-steps.ts`; candidatos testados com `tools/try-intros.ts`). As vinte ficam em duas
+fileiras de dez, a primeira mais perto da entrada; o plano das áreas (menos o Mosaico, escrito à mão) está em `tools/intro-plan.json`
+(`tools/rewrite-intros.cjs` o aplica) e o save antigo é convertido painel a painel (`INTRO_V3` em
+`src/core/save.ts`).
 
 ### 4.1 Afinidade — gemas (Bosque Outonal)
 

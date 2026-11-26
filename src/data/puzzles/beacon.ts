@@ -14,17 +14,17 @@ const P: AreaPuzzles = {
     }),
     puzzle('beacon.intro.2', {
       grid: `
-        b3 . .
-      `,
-      difficulty: 1,
-      note: 'O farol enxerga em linha: três luzes, ele incluído.',
-    }),
-    puzzle('beacon.intro.3', {
-      grid: `
         b2 . .
       `,
       difficulty: 1,
       note: 'Dois: a luz do fim faria o farol ver três.',
+    }),
+    puzzle('beacon.intro.3', {
+      grid: `
+        b3 . .
+      `,
+      difficulty: 1,
+      note: 'O farol enxerga em linha: três luzes, ele incluído.',
     }),
     puzzle('beacon.intro.4', {
       grid: `
@@ -35,44 +35,38 @@ const P: AreaPuzzles = {
     }),
     puzzle('beacon.intro.5', {
       grid: `
+        b4 .  .  .
+      `,
+      difficulty: 1,
+      note: 'Quatro: a fileira inteira.',
+    }),
+    puzzle('beacon.intro.6', {
+      grid: `
+        .  .  b4 .
+      `,
+      difficulty: 1,
+      note: 'Quatro, olhando para os dois lados.',
+    }),
+    puzzle('beacon.intro.7', {
+      grid: `
         D b2 .
       `,
       difficulty: 1,
       note: 'O escuro interrompe o feixe: a luz vai para o outro lado.',
     }),
-    puzzle('beacon.intro.6', {
-      grid: `
-        b3 . L
-      `,
-      difficulty: 1,
-      note: 'Toda luz precisa ser vista por um farol: o rebite exige o caminho aceso.',
-    }),
-    puzzle('beacon.intro.7', {
-      grid: `
-        b3
-        .
-        .
-      `,
-      difficulty: 1,
-      note: 'Também para cima e para baixo.',
-    }),
     puzzle('beacon.intro.8', {
       grid: `
-        . .  .
-        . b5 .
-        . .  .
+        D  .  b3 .
       `,
       difficulty: 1,
-      note: 'O farol enxerga nas quatro direções retas: a cruz. Os cantos ficam no escuro.',
+      note: 'O escuro corta o feixe: três sem ele.',
     }),
     puzzle('beacon.intro.9', {
       grid: `
-        . .  .
-        . b4 .
-        . #  .
+        b2 .  .  b1
       `,
       difficulty: 1,
-      note: 'Uma rocha bloqueia o feixe.',
+      note: 'Dois faróis: o de um fica sozinho.',
     }),
     puzzle('beacon.intro.10', {
       grid: `
@@ -82,6 +76,78 @@ const P: AreaPuzzles = {
       note: 'Faróis também são luz: um enxerga o outro.',
     }),
     puzzle('beacon.intro.11', {
+      grid: `
+        b3 . L
+      `,
+      difficulty: 1,
+      note: 'Toda luz precisa ser vista por um farol: o rebite exige o caminho aceso.',
+    }),
+    puzzle('beacon.intro.12', {
+      grid: `
+        L  .  b3
+      `,
+      difficulty: 1,
+      note: 'O rebite precisa ser visto: o caminho até ele acende.',
+    }),
+    puzzle('beacon.intro.13', {
+      grid: `
+        b3
+        .
+        .
+      `,
+      difficulty: 1,
+      note: 'Também para cima e para baixo.',
+    }),
+    puzzle('beacon.intro.14', {
+      grid: `
+        b3 .
+        .  .
+      `,
+      difficulty: 1,
+      note: 'No quadrado: para o lado e para baixo.',
+    }),
+    puzzle('beacon.intro.15', {
+      grid: `
+        .  b3
+        .  .
+      `,
+      difficulty: 1,
+      note: 'Do outro canto.',
+    }),
+    puzzle('beacon.intro.16', {
+      grid: `
+        b3 .  .
+        .  .  b1
+      `,
+      difficulty: 1,
+      note: 'Um farol que se vê sozinho no canto.',
+    }),
+    puzzle('beacon.intro.17', {
+      grid: `
+        .  b2 #  .
+      `,
+      difficulty: 1,
+      note: 'A rocha corta o feixe: depois dela fica escuro.',
+    }),
+    puzzle('beacon.intro.18', {
+      grid: `
+        . .  .
+        . b5 .
+        . .  .
+      `,
+      difficulty: 1,
+      note: 'O farol enxerga nas quatro direções retas: a cruz. Os cantos ficam no escuro.',
+    }),
+    puzzle('beacon.intro.19', {
+      grid: `
+        . .  .
+        . b4 .
+        . #  .
+      `,
+      difficulty: 1,
+      note: 'Uma rocha bloqueia o feixe.',
+    }),
+    puzzle('beacon.intro.20', {
       grid: `
         .  .  .  .
         .  .  b7 .

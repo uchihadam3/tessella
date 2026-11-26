@@ -71,7 +71,7 @@ test('solver agrees with brute force on random tiny puzzles', () => {
 });
 
 test('solver finds the intro solutions quickly', () => {
-  const p = PUZZLES.kinship.intro[9]; // the chain: rivet → amber light → crimson shadow → blue light
+  const p = PUZZLES.kinship.intro[18]; // the chain: rivet → amber light → crimson shadow → blue light
   const res = solve(p, { maxSolutions: 2 });
   assert.equal(res.solutions.length, 1);
   assert.equal(bruteForce(p).length, 1);

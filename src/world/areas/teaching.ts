@@ -26,6 +26,21 @@ function row(a: AreaCtx, defs: PuzzleDef[], group: string, cx: number, cz: numbe
   });
 }
 
+/**
+ * The introduction: one row across the way in, or — when it is long — two rows, the first farther
+ * out (you meet it first), the second nearer the gateway, all facing the way you come from.
+ */
+function introRows(a: AreaCtx, ax: { ang: number; f: { x: number; z: number } }, ip: { x: number; z: number }): Panel[] {
+  const defs = a.group('intro');
+  const ang = ax.ang + Math.PI / 2;
+  if (defs.length <= 11) return row(a, defs, 'intro', ip.x, ip.z, ang, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const half = Math.ceil(defs.length / 2);
+  const ox = ip.x - ax.f.x * 7, oz = ip.z - ax.f.z * 7;
+  const first = row(a, defs.slice(0, half), 'intro', ox, oz, ang, 3.1, ox - ax.f.x * 6, oz - ax.f.z * 6);
+  const second = row(a, defs.slice(half), 'intro', ip.x, ip.z, ang, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  return [...first, ...second];
+}
+
 /** Panels on an arc around (cx,cz), facing the centre (inward) or outward. */
 function arc(a: AreaCtx, defs: PuzzleDef[], group: string, cx: number, cz: number, r: number, a0: number, a1: number, inward = true, frame?: THREE.Material, yFn?: (x: number, z: number) => number, maxR?: number): Panel[] {
   const n = defs.length;
@@ -108,7 +123,7 @@ export function buildKinship(world: World, pm: PanelManager): AreaCtx {
   const gp = ax.at(-46, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.4, 6.2, stone, M.woodDark());
   const ip = ax.at(-55, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // low mossy wall behind the intro row
   const w0 = ax.at(-51.5, -13), w1 = ax.at(-51.5, 13);
   wall(b, moss, w0.x, w0.z, ax.at(-51.5, -3).x, ax.at(-51.5, -3).z, a.y(w0.x, w0.z) - 0.5, 1.6, 0.7, { cap: stone });
@@ -180,7 +195,7 @@ export function buildMeasure(world: World, pm: PanelManager): AreaCtx {
   const gp = ax.at(-48, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.4, 6.4, stone, M.wood());
   const ip = ax.at(-56, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // paddies: shallow water planes on several terrace steps
   const rnd = rng(41);
   for (let i = 0; i < 26; i++) {
@@ -247,7 +262,7 @@ export function buildMold(world: World, pm: PanelManager): AreaCtx {
   const gp = ax.at(-40, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.6, 6.4, marble, M.woodDark());
   const ip = ax.at(-48, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // giant polyomino blocks on the quarry floor
   const rnd = rng(77);
   for (let i = 0; i < 14; i++) {
@@ -321,7 +336,7 @@ export function buildContour(world: World, pm: PanelManager): AreaCtx {
   hw(-34, -3.2, -44);
   hw(3.2, 34, -44);
   const ip = ax.at(-52, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // gravel avenue + parterres (low hedges in a geometric pattern)
   const g0 = ax.at(-10, 0);
   floorSlab(b, white, g0.x, a.y(g0.x, g0.z) + 0.05, g0.z, 8, 64, -ax.ang + Math.PI / 2, 0.3, 'gravel');
@@ -387,7 +402,7 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const gp = ax.at(-40, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.4, 6.6, sand, M.woodDark());
   const ip = ax.at(-48, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // temple court: raised square platform with a colonnade and a mosaic floor
   const C = ax.at(0, 0);
   const cy = a.y(C.x, C.z) + 0.8;
@@ -526,7 +541,7 @@ export function buildBeacon(world: World, pm: PanelManager): AreaCtx {
   const gp = ax.at(-30, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.2, 6.2, stone, M.woodDark());
   const ip = ax.at(-38, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // the main lighthouse on the cliff edge + two small ones on sea stacks
   const L1 = ax.at(24, 6);
   const lamps = [lighthouse(a, L1.x, L1.z, 22, a.y(L1.x, L1.z) - 0.5)];
@@ -612,7 +627,7 @@ export function buildWeave(world: World, pm: PanelManager): AreaCtx {
   const gp = ax.at(-40, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.2, 6.0, mat('weaveStone', { color: '#c8bfa8', roughness: 0.9, detail: 0.25, scale: 1.2, pattern: 'blocks' }), wood);
   const ip = ax.at(-48, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // windmills
   windmill(a, ax.at(-12, -26).x, ax.at(-12, -26).z, ax.ang + Math.PI, 1);
   windmill(a, ax.at(10, 30).x, ax.at(10, 30).z, ax.ang + Math.PI, 0.9);
@@ -719,7 +734,7 @@ export function buildTwins(world: World, pm: PanelManager): AreaCtx {
   const gp = ax.at(-60, 0);
   const gate = gateway(a, gp.x, gp.z, ax.ang, 4.2, 6.0, mat('twinStone', { color: '#d6ccbe', roughness: 0.85, detail: 0.2, scale: 1.3, pattern: 'blocks' }), M.woodRed());
   const ip = ax.at(-68, 0);
-  const intro = row(a, a.group('intro'), 'intro', ip.x, ip.z, ax.ang + Math.PI / 2, 3.1, ip.x - ax.f.x * 6, ip.z - ax.f.z * 6);
+  const intro = introRows(a, ax, ip);
   // long bridge across the lake through the island
   const b0 = ax.at(-50, 0), b1 = ax.at(50, 0);
   const len = Math.hypot(b1.x - b0.x, b1.z - b0.z);

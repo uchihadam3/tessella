@@ -4,7 +4,7 @@
  */
 import type { AreaId } from '../data/areas';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const SLOT_COUNT = 3;
 const KEY = (slot: number) => `tessella.save.${slot}`;
 const LAST = 'tessella.lastSlot';
@@ -43,7 +43,44 @@ const INTRO_V2: Record<string, number[]> = {
   twins: [0, 1, 0, 0, 2, 0, 3, 4, 5, 6, 7],
 };
 
+/** version 3: every introduction, 11 → 20 panels (what each new position held in version 2) */
+const INTRO_V3: Record<string, number[]> = {
+  kinship: [1, 4, 0, 0, 0, 2, 3, 0, 0, 5, 0, 0, 0, 6, 0, 0, 7, 9, 10, 11],
+  measure: [1, 3, 0, 0, 2, 5, 4, 0, 7, 0, 0, 0, 0, 0, 0, 6, 8, 9, 10, 11],
+  mold: [1, 2, 0, 3, 5, 0, 4, 0, 6, 0, 0, 7, 8, 0, 0, 0, 9, 0, 10, 11],
+  contour: [1, 2, 5, 0, 4, 3, 0, 0, 6, 7, 0, 0, 0, 0, 0, 0, 8, 9, 10, 11],
+  mosaic: [1, 0, 0, 3, 0, 0, 4, 5, 0, 0, 8, 0, 0, 0, 0, 6, 7, 9, 10, 11],
+  beacon: [1, 3, 2, 4, 0, 0, 5, 0, 0, 10, 6, 0, 7, 0, 0, 0, 0, 8, 9, 11],
+  weave: [0, 0, 0, 1, 2, 3, 0, 4, 0, 6, 0, 5, 0, 7, 0, 8, 0, 9, 10, 11],
+  twins: [0, 3, 2, 1, 4, 0, 0, 6, 0, 0, 5, 7, 0, 0, 8, 0, 9, 0, 10, 11],
+};
+
+function remap(d: SaveData, table: Record<string, number[]>): SaveData {
+  const panels = { ...d.panels };
+  for (const [area, from] of Object.entries(table)) {
+    const old = (n: number) => d.panels[`${area}.intro.${n}`];
+    for (let i = 0; i < Math.max(from.length, 40); i++) delete panels[`${area}.intro.${i + 1}`];
+    from.forEach((n, i) => {
+      const id = `${area}.intro.${i + 1}`;
+      if (n > 0) {
+        if (old(n)) panels[id] = old(n);
+      } else {
+        // a new panel: solved if the next old one after it was solved
+        const next = from.slice(i + 1).find((m) => m > 0);
+        if (next && old(next)?.done) panels[id] = { done: 1 };
+      }
+    });
+  }
+  return { ...d, panels };
+}
+
 function migrate(d: SaveData): SaveData {
+  if (d.version < 2) d = { ...migrateV2(d), version: 2 };
+  if (d.version < 3) d = { ...remap(d, INTRO_V3), version: 3 };
+  return d;
+}
+
+function migrateV2(d: SaveData): SaveData {
   if (d.version >= 2) return d;
   const panels = { ...d.panels };
   for (const [area, from] of Object.entries(INTRO_V2)) {

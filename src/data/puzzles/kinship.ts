@@ -17,26 +17,61 @@ const P: AreaPuzzles = {
     }),
     puzzle('kinship.intro.2', {
       grid: `
+        @a @a @b
+      `,
+      difficulty: 1,
+      note: 'Duas âmbar juntas e uma azul: a azul fica do outro lado (luz e sombra).',
+    }),
+    puzzle('kinship.intro.3', {
+      grid: `
+        @a @b @b
+      `,
+      difficulty: 1,
+      note: 'A azul tem companhia; a âmbar fica do outro lado.',
+    }),
+    puzzle('kinship.intro.4', {
+      grid: `
+        @a .  @a @b
+      `,
+      difficulty: 1,
+      note: 'O meio une as âmbar; a azul fica de fora.',
+    }),
+    puzzle('kinship.intro.5', {
+      grid: `
+        @b @a .  @a
+      `,
+      difficulty: 1,
+      note: 'Do outro lado: o meio une as âmbar.',
+    }),
+    puzzle('kinship.intro.6', {
+      grid: `
         @a L @a
       `,
       difficulty: 3,
       note: 'Cores iguais precisam estar juntas: unir pela luz.',
     }),
-    puzzle('kinship.intro.3', {
+    puzzle('kinship.intro.7', {
       grid: `
         L@a . @a
       `,
       difficulty: 1,
       note: 'O rebite acende a âmbar: a família inteira vem para a luz, pelo meio.',
     }),
-    puzzle('kinship.intro.4', {
+    puzzle('kinship.intro.8', {
       grid: `
-        @a @a @b
+        @a D  @a @b
       `,
       difficulty: 1,
-      note: 'Duas âmbar juntas e uma azul: a azul fica do outro lado (luz e sombra).',
+      note: 'O rebite escuro une as âmbar na sombra; a azul vai para a luz.',
     }),
-    puzzle('kinship.intro.5', {
+    puzzle('kinship.intro.9', {
+      grid: `
+        @a  .   @a  D@b
+      `,
+      difficulty: 1,
+      note: 'A azul presa na sombra: as âmbar vão juntas para a luz.',
+    }),
+    puzzle('kinship.intro.10', {
       grid: `
         @a @a
         @b @b
@@ -44,7 +79,31 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Cada fileira é uma família: uma na luz, outra na sombra.',
     }),
-    puzzle('kinship.intro.6', {
+    puzzle('kinship.intro.11', {
+      grid: `
+        @a @b
+        @a @b
+      `,
+      difficulty: 1,
+      note: 'Cada coluna é uma família.',
+    }),
+    puzzle('kinship.intro.12', {
+      grid: `
+        @a .
+        @b @a
+      `,
+      difficulty: 1,
+      note: 'As âmbar se unem dando a volta pelo canto livre.',
+    }),
+    puzzle('kinship.intro.13', {
+      grid: `
+        @a @b @a
+        L  L  L
+      `,
+      difficulty: 1,
+      note: 'A azul está no caminho: as âmbar se unem pela fileira acesa de baixo.',
+    }),
+    puzzle('kinship.intro.14', {
       grid: `
         @a . @a
         @b . @b
@@ -52,23 +111,29 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Uma família na luz, a outra na sombra.',
     }),
-    puzzle('kinship.intro.7', {
+    puzzle('kinship.intro.15', {
+      grid: `
+        @a #  @a
+        L  L  L
+      `,
+      difficulty: 1,
+      note: 'O buraco não deixa passar: as âmbar se unem por baixo.',
+    }),
+    puzzle('kinship.intro.16', {
+      grid: `
+        @a @b @c
+      `,
+      difficulty: 1,
+      note: 'Três cores: as pontas acesas são regiões diferentes, porque não se tocam.',
+    }),
+    puzzle('kinship.intro.17', {
       grid: `
         L@a . @a . L@b
       `,
       difficulty: 1,
       note: 'A âmbar se une pela luz; entre ela e a azul abre-se um fosso de sombra.',
     }),
-    puzzle('kinship.intro.8', {
-      grid: `
-        .  @a .
-        @a @b @a
-        .  @a .
-      `,
-      difficulty: 2,
-      note: 'Uma família pode abraçar outra pelos cantos.',
-    }),
-    puzzle('kinship.intro.9', {
+    puzzle('kinship.intro.18', {
       grid: `
         @a .  @b
         L  @c L
@@ -77,7 +142,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Duas famílias acesas não podem se tocar: entre elas abre-se um fosso de sombra — e é ali que mora a terceira.',
     }),
-    puzzle('kinship.intro.10', {
+    puzzle('kinship.intro.19', {
       grid: `
         L@a .  @a
         @c  .  .
@@ -86,7 +151,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Uma corrente: o rebite acende a âmbar; a carmim encosta nela e vira sombra; a azul encosta na carmim e só pode ser luz — e o meio vira fosso.',
     }),
-    puzzle('kinship.intro.11', {
+    puzzle('kinship.intro.20', {
       grid: `
         .   @c  @c  .
         .   .   @a  .

@@ -1,0 +1,542 @@
+{
+ "kinship": [
+  {
+   "old": 1
+  },
+  {
+   "old": 4
+  },
+  {
+   "grid": "@a @b @b",
+   "note": "A azul tem companhia; a âmbar fica do outro lado."
+  },
+  {
+   "grid": "@a . @a @b",
+   "note": "O meio une as âmbar; a azul fica de fora."
+  },
+  {
+   "grid": "@b @a . @a",
+   "note": "Do outro lado: o meio une as âmbar."
+  },
+  {
+   "old": 2
+  },
+  {
+   "old": 3
+  },
+  {
+   "grid": "@a D @a @b",
+   "note": "O rebite escuro une as âmbar na sombra; a azul vai para a luz."
+  },
+  {
+   "grid": "@a . @a D@b",
+   "note": "A azul presa na sombra: as âmbar vão juntas para a luz."
+  },
+  {
+   "old": 5
+  },
+  {
+   "grid": "@a @b\n@a @b",
+   "note": "Cada coluna é uma família."
+  },
+  {
+   "grid": "@a .\n@b @a",
+   "note": "As âmbar se unem dando a volta pelo canto livre."
+  },
+  {
+   "grid": "@a @b @a\nL L L",
+   "note": "A azul está no caminho: as âmbar se unem pela fileira acesa de baixo."
+  },
+  {
+   "old": 6
+  },
+  {
+   "grid": "@a # @a\nL L L",
+   "note": "O buraco não deixa passar: as âmbar se unem por baixo."
+  },
+  {
+   "grid": "@a @b @c",
+   "note": "Três cores: as pontas acesas são regiões diferentes, porque não se tocam."
+  },
+  {
+   "old": 7
+  },
+  {
+   "old": 9
+  },
+  {
+   "old": 10
+  },
+  {
+   "old": 11
+  }
+ ],
+ "measure": [
+  {
+   "old": 1
+  },
+  {
+   "old": 3
+  },
+  {
+   "grid": "m1 m2 .",
+   "note": "Um sozinho, e um par ao lado."
+  },
+  {
+   "grid": "m3 . . .",
+   "note": "Três juntos; o quarto do outro lado."
+  },
+  {
+   "old": 2
+  },
+  {
+   "old": 5
+  },
+  {
+   "old": 4
+  },
+  {
+   "grid": "Dm2 . .",
+   "note": "O rebite escuro mede a sombra: dois apagados, o terceiro aceso."
+  },
+  {
+   "old": 7
+  },
+  {
+   "grid": "m3 .\n. m1",
+   "note": "No quadrado: três em L, e o canto sozinho."
+  },
+  {
+   "grid": "m1 .\n. m1",
+   "note": "Na diagonal os ladrilhos não se tocam."
+  },
+  {
+   "grid": "m2 . m2\nL . L",
+   "note": "Dois pares em pé, separados pelo meio apagado."
+  },
+  {
+   "grid": "m5 . .\n. . m1",
+   "note": "Cinco juntos; o canto sozinho."
+  },
+  {
+   "grid": "m2 # m2\nL . L",
+   "note": "O buraco separa como a sombra: dois pares em pé."
+  },
+  {
+   "grid": "m3 # m1\n. . .",
+   "note": "Três dobram o canto; o um fica do outro lado do buraco."
+  },
+  {
+   "old": 6
+  },
+  {
+   "old": 8
+  },
+  {
+   "old": 9
+  },
+  {
+   "old": 10
+  },
+  {
+   "old": 11
+  }
+ ],
+ "mold": [
+  {
+   "old": 1
+  },
+  {
+   "old": 2
+  },
+  {
+   "grid": "fA . . fA",
+   "shapes": {
+    "A": "xx"
+   },
+   "note": "Dois moldes iguais: dois dominós, um na luz, outro na sombra."
+  },
+  {
+   "old": 3
+  },
+  {
+   "old": 5
+  },
+  {
+   "grid": ". fV .\n. . .",
+   "shapes": {
+    "V": "x/x"
+   },
+   "note": "O dominó em pé no meio; os lados do outro lado."
+  },
+  {
+   "old": 4
+  },
+  {
+   "grid": "fB .\n. .",
+   "shapes": {
+    "B": "xx/x."
+   },
+   "note": "O mesmo L, virado de outro jeito: a forma desenhada manda."
+  },
+  {
+   "old": 6
+  },
+  {
+   "grid": "fA .\n. fA",
+   "shapes": {
+    "A": "x"
+   },
+   "note": "Dois quadradinhos sozinhos, em cantos opostos."
+  },
+  {
+   "grid": "fA . .\n. . .",
+   "shapes": {
+    "A": "xx/xx"
+   },
+   "note": "Um quadrado de quatro; a coluna que sobra fica do outro lado."
+  },
+  {
+   "old": 7
+  },
+  {
+   "old": 8
+  },
+  {
+   "grid": "fA # fA\nL . L",
+   "shapes": {
+    "A": "x/x"
+   },
+   "note": "O buraco separa: cada dominó em pé do seu lado."
+  },
+  {
+   "grid": "fA . #\n. . .",
+   "shapes": {
+    "A": "xx/.x"
+   },
+   "note": "O gancho dobra junto ao buraco."
+  },
+  {
+   "grid": "fA . fB\n. . .",
+   "shapes": {
+    "A": "x/x",
+    "B": "xx/x."
+   },
+   "note": "Duas formas diferentes dividem o painel."
+  },
+  {
+   "old": 9
+  },
+  {
+   "grid": "fA* .\nD L",
+   "shapes": {
+    "A": "xx"
+   },
+   "note": "O anel em volta deixa girar: o dominó deitado cabe em pé."
+  },
+  {
+   "old": 10
+  },
+  {
+   "old": 11
+  }
+ ],
+ "contour": [
+  {
+   "old": 1
+  },
+  {
+   "old": 2
+  },
+  {
+   "old": 5
+  },
+  {
+   "grid": ". c3",
+   "note": "Três lados: os dois acesos, do outro lado também."
+  },
+  {
+   "old": 4
+  },
+  {
+   "old": 3
+  },
+  {
+   "grid": "c3 . c3",
+   "note": "As pontas com três lados: tudo aceso."
+  },
+  {
+   "grid": "c3 c2 c3",
+   "note": "No meio de três acesos, só sobram dois lados de borda."
+  },
+  {
+   "old": 6
+  },
+  {
+   "old": 7
+  },
+  {
+   "grid": "D c4 .",
+   "note": "Entre o rebite escuro e o vizinho apagado: uma ilha de luz."
+  },
+  {
+   "grid": "c4 # c4",
+   "note": "O buraco conta como escuro: duas ilhas."
+  },
+  {
+   "grid": "c4 .\n. c4",
+   "note": "Duas ilhas em cantos opostos."
+  },
+  {
+   "grid": "c3 c3\n. .",
+   "note": "Os de cima acesos; os de baixo apagados."
+  },
+  {
+   "grid": "c2 .\nc2 .",
+   "note": "A coluna da esquerda pede luz no painel todo."
+  },
+  {
+   "grid": "c2 c2\nc2 c2",
+   "note": "Cada canto com dois lados para fora: todos acesos."
+  },
+  {
+   "old": 8
+  },
+  {
+   "old": 9
+  },
+  {
+   "old": 10
+  },
+  {
+   "old": 11
+  }
+ ],
+ "beacon": [
+  {
+   "old": 1
+  },
+  {
+   "old": 3
+  },
+  {
+   "old": 2
+  },
+  {
+   "old": 4
+  },
+  {
+   "grid": "b4 . . .",
+   "note": "Quatro: a fileira inteira."
+  },
+  {
+   "grid": ". . b4 .",
+   "note": "Quatro, olhando para os dois lados."
+  },
+  {
+   "old": 5
+  },
+  {
+   "grid": "D . b3 .",
+   "note": "O escuro corta o feixe: três sem ele."
+  },
+  {
+   "grid": "b2 . . b1",
+   "note": "Dois faróis: o de um fica sozinho."
+  },
+  {
+   "old": 10
+  },
+  {
+   "old": 6
+  },
+  {
+   "grid": "L . b3",
+   "note": "O rebite precisa ser visto: o caminho até ele acende."
+  },
+  {
+   "old": 7
+  },
+  {
+   "grid": "b3 .\n. .",
+   "note": "No quadrado: para o lado e para baixo."
+  },
+  {
+   "grid": ". b3\n. .",
+   "note": "Do outro canto."
+  },
+  {
+   "grid": "b3 . .\n. . b1",
+   "note": "Um farol que se vê sozinho no canto."
+  },
+  {
+   "grid": ". b2 # .",
+   "note": "A rocha corta o feixe: depois dela fica escuro."
+  },
+  {
+   "old": 8
+  },
+  {
+   "old": 9
+  },
+  {
+   "old": 11
+  }
+ ],
+ "weave": [
+  {
+   "grid": ".",
+   "rows": "1",
+   "note": "Um fio de um: acender."
+  },
+  {
+   "grid": ". .",
+   "rows": "2",
+   "note": "Um fio de dois: os dois acesos."
+  },
+  {
+   "grid": ". .",
+   "rows": "1",
+   "cols": "1|0",
+   "note": "Um fio só, na coluna que pede um."
+  },
+  {
+   "old": 1
+  },
+  {
+   "old": 2
+  },
+  {
+   "old": 3
+  },
+  {
+   "grid": ". . .",
+   "rows": "1 1",
+   "note": "Dois fios de um: o meio separa."
+  },
+  {
+   "old": 4
+  },
+  {
+   "grid": ". # .",
+   "rows": "1 1",
+   "note": "O buraco corta o fio."
+  },
+  {
+   "old": 6
+  },
+  {
+   "grid": ". .\n. .",
+   "rows": "1|1",
+   "cols": "2|0",
+   "note": "Uma coluna cheia, a outra vazia."
+  },
+  {
+   "old": 5
+  },
+  {
+   "grid": ". . .\n. . .",
+   "rows": "3|1",
+   "cols": "1|2|1",
+   "note": "Uma barra e um pé no meio."
+  },
+  {
+   "old": 7
+  },
+  {
+   "grid": ". . .\n. . .",
+   "rows": "-|3",
+   "cols": "1|2|1",
+   "note": "Uma linha sem número: ela se lê pelas colunas."
+  },
+  {
+   "old": 8
+  },
+  {
+   "grid": ". # .\n. . .\n. # .",
+   "rows": "1 1|3|1 1",
+   "cols": "3|1|3",
+   "note": "Buracos no tear: um H."
+  },
+  {
+   "old": 9
+  },
+  {
+   "old": 10
+  },
+  {
+   "old": 11
+  }
+ ],
+ "twins": [
+  {
+   "grid": "ts ts",
+   "note": "Duas gêmeas sozinhas: uma acesa, outra apagada."
+  },
+  {
+   "old": 3
+  },
+  {
+   "old": 2
+  },
+  {
+   "old": 1
+  },
+  {
+   "old": 4
+  },
+  {
+   "grid": "Ltm L L # tm . . D",
+   "note": "Copiar a barra de três do outro lado da água."
+  },
+  {
+   "grid": "Ltm L # . tm\nD D # D .",
+   "note": "A gêmea pode estar na outra ponta da forma."
+  },
+  {
+   "old": 6
+  },
+  {
+   "grid": "Ltm # tm\nL # .\nL # L",
+   "note": "A barra em pé, copiada em pé."
+  },
+  {
+   "grid": "Ltm # tm .\nL # . .\nD # D D",
+   "note": "O canto copiado no quadrado."
+  },
+  {
+   "old": 5
+  },
+  {
+   "old": 7
+  },
+  {
+   "grid": "Ltl L # tl . .\nD L # . . .",
+   "note": "Um símbolo novo, a mesma regra: copiar o L."
+  },
+  {
+   "grid": "Lts # ts\nD # D\nLtm # tm\nL # .",
+   "note": "Dois pares diferentes, cada um com a sua forma."
+  },
+  {
+   "old": 8
+  },
+  {
+   "grid": "Ltm L # tm' .\nD L # D .",
+   "note": "Espelhada: o L do outro lado vira ao contrário."
+  },
+  {
+   "old": 9
+  },
+  {
+   "grid": "Ltm # . tm\nL # . .\nD # D D",
+   "note": "O canto copiado, com a gêmea no outro canto."
+  },
+  {
+   "old": 10
+  },
+  {
+   "old": 11
+  }
+ ]
+}

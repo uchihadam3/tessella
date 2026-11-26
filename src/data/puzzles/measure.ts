@@ -14,33 +14,109 @@ const P: AreaPuzzles = {
     }),
     puzzle('measure.intro.2', {
       grid: `
-        m1 . m1
-      `,
-      difficulty: 1,
-      note: 'Dois sozinhos: o meio fica do outro lado para separá-los.',
-    }),
-    puzzle('measure.intro.3', {
-      grid: `
         m2 . .
       `,
       difficulty: 3,
       note: 'Uma região de dois — e o terceiro do outro lado.',
     }),
-    puzzle('measure.intro.4', {
+    puzzle('measure.intro.3', {
       grid: `
-        Lm3 . . .
+        m1 m2 .
       `,
       difficulty: 1,
-      note: 'Três acesos juntos; o quarto, apagado, fecha a conta.',
+      note: 'Um sozinho, e um par ao lado.',
+    }),
+    puzzle('measure.intro.4', {
+      grid: `
+        m3 .  .  .
+      `,
+      difficulty: 1,
+      note: 'Três juntos; o quarto do outro lado.',
     }),
     puzzle('measure.intro.5', {
+      grid: `
+        m1 . m1
+      `,
+      difficulty: 1,
+      note: 'Dois sozinhos: o meio fica do outro lado para separá-los.',
+    }),
+    puzzle('measure.intro.6', {
       grid: `
         m2 . m2 .
       `,
       difficulty: 1,
       note: 'Duas regiões de dois, lado a lado: uma na luz, outra na sombra.',
     }),
-    puzzle('measure.intro.6', {
+    puzzle('measure.intro.7', {
+      grid: `
+        Lm3 . . .
+      `,
+      difficulty: 1,
+      note: 'Três acesos juntos; o quarto, apagado, fecha a conta.',
+    }),
+    puzzle('measure.intro.8', {
+      grid: `
+        Dm2 .   .
+      `,
+      difficulty: 1,
+      note: 'O rebite escuro mede a sombra: dois apagados, o terceiro aceso.',
+    }),
+    puzzle('measure.intro.9', {
+      grid: `
+        Lm1 . . m2
+      `,
+      difficulty: 1,
+      note: 'O 1 se isola com a sombra; o 2 forma um par aceso do outro lado.',
+    }),
+    puzzle('measure.intro.10', {
+      grid: `
+        m3 .
+        .  m1
+      `,
+      difficulty: 1,
+      note: 'No quadrado: três em L, e o canto sozinho.',
+    }),
+    puzzle('measure.intro.11', {
+      grid: `
+        m1 .
+        .  m1
+      `,
+      difficulty: 1,
+      note: 'Na diagonal os ladrilhos não se tocam.',
+    }),
+    puzzle('measure.intro.12', {
+      grid: `
+        m2 .  m2
+        L  .  L
+      `,
+      difficulty: 1,
+      note: 'Dois pares em pé, separados pelo meio apagado.',
+    }),
+    puzzle('measure.intro.13', {
+      grid: `
+        m5 .  .
+        .  .  m1
+      `,
+      difficulty: 1,
+      note: 'Cinco juntos; o canto sozinho.',
+    }),
+    puzzle('measure.intro.14', {
+      grid: `
+        m2 #  m2
+        L  .  L
+      `,
+      difficulty: 1,
+      note: 'O buraco separa como a sombra: dois pares em pé.',
+    }),
+    puzzle('measure.intro.15', {
+      grid: `
+        m3 #  m1
+        .  .  .
+      `,
+      difficulty: 1,
+      note: 'Três dobram o canto; o um fica do outro lado do buraco.',
+    }),
+    puzzle('measure.intro.16', {
       grid: `
         m3 . .
         .  . m3
@@ -48,14 +124,7 @@ const P: AreaPuzzles = {
       difficulty: 2,
       note: 'Duas regiões de três dividem o painel.',
     }),
-    puzzle('measure.intro.7', {
-      grid: `
-        Lm1 . . m2
-      `,
-      difficulty: 1,
-      note: 'O 1 se isola com a sombra; o 2 forma um par aceso do outro lado.',
-    }),
-    puzzle('measure.intro.8', {
+    puzzle('measure.intro.17', {
       grid: `
         . .  .
         . m1 .
@@ -64,7 +133,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'O centro sozinho... e o anel ao redor também é uma região: a escuridão conta.',
     }),
-    puzzle('measure.intro.9', {
+    puzzle('measure.intro.18', {
       grid: `
         Lm2 . .
         .   . m4
@@ -72,7 +141,7 @@ const P: AreaPuzzles = {
       difficulty: 2,
       note: 'O número pode morar num ladrilho apagado: ele mede a sombra.',
     }),
-    puzzle('measure.intro.10', {
+    puzzle('measure.intro.19', {
       grid: `
         m2 .  .
         m2 m7 .
@@ -81,7 +150,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Números iguais podem dividir a região; o 7 ao lado mede todo o resto, do outro lado da luz.',
     }),
-    puzzle('measure.intro.11', {
+    puzzle('measure.intro.20', {
       grid: `
         .   .   m12 .
         .   m1  .   .

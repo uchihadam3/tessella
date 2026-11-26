@@ -7,13 +7,38 @@ const P: AreaPuzzles = {
   intro: [
     puzzle('weave.intro.1', {
       grid: `
+        .
+      `,
+      rows: '1',
+      difficulty: 1,
+      note: 'Um fio de um: acender.',
+    }),
+    puzzle('weave.intro.2', {
+      grid: `
+        . .
+      `,
+      rows: '2',
+      difficulty: 1,
+      note: 'Um fio de dois: os dois acesos.',
+    }),
+    puzzle('weave.intro.3', {
+      grid: `
+        . .
+      `,
+      rows: '1',
+      cols: '1|0',
+      difficulty: 1,
+      note: 'Um fio só, na coluna que pede um.',
+    }),
+    puzzle('weave.intro.4', {
+      grid: `
         . . .
       `,
       rows: '3',
       difficulty: 1,
       note: 'Um fio de três: três ladrilhos acesos seguidos.',
     }),
-    puzzle('weave.intro.2', {
+    puzzle('weave.intro.5', {
       grid: `
         . . .
       `,
@@ -22,7 +47,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Um fio de dois — e uma coluna vazia.',
     }),
-    puzzle('weave.intro.3', {
+    puzzle('weave.intro.6', {
       grid: `
         . . .
       `,
@@ -31,7 +56,15 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'As colunas também têm fios: o anel vazio é coluna sem luz.',
     }),
-    puzzle('weave.intro.4', {
+    puzzle('weave.intro.7', {
+      grid: `
+        . . .
+      `,
+      rows: '1 1',
+      difficulty: 1,
+      note: 'Dois fios de um: o meio separa.',
+    }),
+    puzzle('weave.intro.8', {
       grid: `
         . . . .
       `,
@@ -40,17 +73,15 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Dois fios de um: entre eles, escuro.',
     }),
-    puzzle('weave.intro.5', {
+    puzzle('weave.intro.9', {
       grid: `
-        . .
-        . .
+        . # .
       `,
-      rows: '2|1',
-      cols: '2|1',
+      rows: '1 1',
       difficulty: 1,
-      note: 'Linhas e colunas se cruzam.',
+      note: 'O buraco corta o fio.',
     }),
-    puzzle('weave.intro.6', {
+    puzzle('weave.intro.10', {
       grid: `
         . .
         . .
@@ -60,7 +91,37 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Zero: uma linha sem fio nenhum.',
     }),
-    puzzle('weave.intro.7', {
+    puzzle('weave.intro.11', {
+      grid: `
+        . .
+        . .
+      `,
+      rows: '1|1',
+      cols: '2|0',
+      difficulty: 1,
+      note: 'Uma coluna cheia, a outra vazia.',
+    }),
+    puzzle('weave.intro.12', {
+      grid: `
+        . .
+        . .
+      `,
+      rows: '2|1',
+      cols: '2|1',
+      difficulty: 1,
+      note: 'Linhas e colunas se cruzam.',
+    }),
+    puzzle('weave.intro.13', {
+      grid: `
+        . . .
+        . . .
+      `,
+      rows: '3|1',
+      cols: '1|2|1',
+      difficulty: 1,
+      note: 'Uma barra e um pé no meio.',
+    }),
+    puzzle('weave.intro.14', {
       grid: `
         . . .
         . . .
@@ -71,7 +132,17 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Uma cruz tecida.',
     }),
-    puzzle('weave.intro.8', {
+    puzzle('weave.intro.15', {
+      grid: `
+        . . .
+        . . .
+      `,
+      rows: '-|3',
+      cols: '1|2|1',
+      difficulty: 1,
+      note: 'Uma linha sem número: ela se lê pelas colunas.',
+    }),
+    puzzle('weave.intro.16', {
       grid: `
         . . .
         . . .
@@ -82,7 +153,18 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Em cada coluna, dois fios separados pelo meio escuro.',
     }),
-    puzzle('weave.intro.9', {
+    puzzle('weave.intro.17', {
+      grid: `
+        . # .
+        . . .
+        . # .
+      `,
+      rows: '1 1|3|1 1',
+      cols: '3|1|3',
+      difficulty: 1,
+      note: 'Buracos no tear: um H.',
+    }),
+    puzzle('weave.intro.18', {
       grid: `
         . . . .
         . . . .
@@ -94,7 +176,7 @@ const P: AreaPuzzles = {
       difficulty: 2,
       note: 'Dois fios separados: entre eles sempre há pelo menos um ladrilho escuro.',
     }),
-    puzzle('weave.intro.10', {
+    puzzle('weave.intro.19', {
       grid: `
         . . . . .
         . . . . .
@@ -107,7 +189,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'O desenho é o moinho do vale: as pás em X sobre a torre.',
     }),
-    puzzle('weave.intro.11', {
+    puzzle('weave.intro.20', {
       grid: `
         . . . . .
         . . . . .

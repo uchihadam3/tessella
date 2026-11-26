@@ -23,20 +23,19 @@ const P: AreaPuzzles = {
     }),
     puzzle('mold.intro.3', {
       grid: `
+        fA .  .  fA
+      `,
+      shapes: { A: 'xx' },
+      difficulty: 1,
+      note: 'Dois moldes iguais: dois dominós, um na luz, outro na sombra.',
+    }),
+    puzzle('mold.intro.4', {
+      grid: `
         fI . . .
       `,
       shapes: { I: 'xxx' },
       difficulty: 1,
       note: 'Uma barra de três: o quarto ladrilho não faz parte dela.',
-    }),
-    puzzle('mold.intro.4', {
-      grid: `
-        fB .
-        .  .
-      `,
-      shapes: { B: 'x./xx' },
-      difficulty: 3,
-      note: 'Um L de três.',
     }),
     puzzle('mold.intro.5', {
       grid: `
@@ -49,6 +48,33 @@ const P: AreaPuzzles = {
     }),
     puzzle('mold.intro.6', {
       grid: `
+        .  fV .
+        .  .  .
+      `,
+      shapes: { V: 'x/x' },
+      difficulty: 1,
+      note: 'O dominó em pé no meio; os lados do outro lado.',
+    }),
+    puzzle('mold.intro.7', {
+      grid: `
+        fB .
+        .  .
+      `,
+      shapes: { B: 'x./xx' },
+      difficulty: 3,
+      note: 'Um L de três.',
+    }),
+    puzzle('mold.intro.8', {
+      grid: `
+        fB .
+        .  .
+      `,
+      shapes: { B: 'xx/x.' },
+      difficulty: 1,
+      note: 'O mesmo L, virado de outro jeito: a forma desenhada manda.',
+    }),
+    puzzle('mold.intro.9', {
+      grid: `
         . fT .
         . .  .
       `,
@@ -56,7 +82,25 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'A orientação importa: o T de cabeça para baixo não serve.',
     }),
-    puzzle('mold.intro.7', {
+    puzzle('mold.intro.10', {
+      grid: `
+        fA .
+        .  fA
+      `,
+      shapes: { A: 'x' },
+      difficulty: 1,
+      note: 'Dois quadradinhos sozinhos, em cantos opostos.',
+    }),
+    puzzle('mold.intro.11', {
+      grid: `
+        fA .  .
+        .  .  .
+      `,
+      shapes: { A: 'xx/xx' },
+      difficulty: 1,
+      note: 'Um quadrado de quatro; a coluna que sobra fica do outro lado.',
+    }),
+    puzzle('mold.intro.12', {
       grid: `
         L fA . L
       `,
@@ -64,7 +108,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Entre rebites acesos, o molde de um fica na sombra — e o vizinho acende para deixá-lo sozinho.',
     }),
-    puzzle('mold.intro.8', {
+    puzzle('mold.intro.13', {
       grid: `
         L . L
         . fO .
@@ -74,7 +118,34 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Os rebites acesos não deixam o quadrado ser luz: o molde se esculpe na sombra.',
     }),
-    puzzle('mold.intro.9', {
+    puzzle('mold.intro.14', {
+      grid: `
+        fA #  fA
+        L  .  L
+      `,
+      shapes: { A: 'x/x' },
+      difficulty: 1,
+      note: 'O buraco separa: cada dominó em pé do seu lado.',
+    }),
+    puzzle('mold.intro.15', {
+      grid: `
+        fA .  #
+        .  .  .
+      `,
+      shapes: { A: 'xx/.x' },
+      difficulty: 1,
+      note: 'O gancho dobra junto ao buraco.',
+    }),
+    puzzle('mold.intro.16', {
+      grid: `
+        fA .  fB
+        .  .  .
+      `,
+      shapes: { A: 'x/x', B: 'xx/x.' },
+      difficulty: 1,
+      note: 'Duas formas diferentes dividem o painel.',
+    }),
+    puzzle('mold.intro.17', {
       grid: `
         fL . .
         .  . .
@@ -84,7 +155,16 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Duas peças que se encaixam: uma na luz, outra na sombra.',
     }),
-    puzzle('mold.intro.10', {
+    puzzle('mold.intro.18', {
+      grid: `
+        fA* .
+        D   L
+      `,
+      shapes: { A: 'xx' },
+      difficulty: 1,
+      note: 'O anel em volta deixa girar: o dominó deitado cabe em pé.',
+    }),
+    puzzle('mold.intro.19', {
       grid: `
         #  . .
         fS* . .
@@ -94,7 +174,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'O anel em volta do molde deixa girar: a forma desenhada não cabe, a girada sim.',
     }),
-    puzzle('mold.intro.11', {
+    puzzle('mold.intro.20', {
       grid: `
         fI .  .  .
         .  .  .  .

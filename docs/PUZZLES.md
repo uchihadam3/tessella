@@ -61,23 +61,32 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Bosque Outonal — Afinidade (49)
+## O Bosque Outonal — Afinidade (58)
 
 ### intro
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 | kinship.intro.1 | 2×1 | Afinidade | 1~ | 1 | Cores diferentes não podem dividir a mesma região: separar. |
-| kinship.intro.2 | 3×1 | Afinidade | 1 | 3 | Cores iguais precisam estar juntas: unir pela luz. |
-| kinship.intro.3 | 3×1 | Afinidade | 1 | 1 | O rebite acende a âmbar: a família inteira vem para a luz, pelo meio. |
-| kinship.intro.4 | 3×1 | Afinidade | 1~ | 1 | Duas âmbar juntas e uma azul: a azul fica do outro lado (luz e sombra). |
-| kinship.intro.5 | 2×2 | Afinidade | 1~ | 1 | Cada fileira é uma família: uma na luz, outra na sombra. |
-| kinship.intro.6 | 3×2 | Afinidade | 1~ | 4 | Uma família na luz, a outra na sombra. |
-| kinship.intro.7 | 5×1 | Afinidade | 1 | 1 | A âmbar se une pela luz; entre ela e a azul abre-se um fosso de sombra. |
-| kinship.intro.8 | 3×3 | Afinidade | 3+~ | 2 | Uma família pode abraçar outra pelos cantos. |
-| kinship.intro.9 | 3×3 | Afinidade | 1 | 4 | Duas famílias acesas não podem se tocar: entre elas abre-se um fosso de sombra — e é ali que mora a terceira. |
-| kinship.intro.10 | 3×3 | Afinidade | 1 | 4 | Uma corrente: o rebite acende a âmbar; a carmim encosta nela e vira sombra; a azul encosta na carmim e só pode ser luz — e o meio vira fosso. |
-| kinship.intro.11 | 4×4 | Afinidade | 3+ | 3 | Portão: o rebite apaga a azul, e suas gemas só se unem pela base; a âmbar, encostada nela, vira luz — e a carmim, encostada na âmbar, sombra. |
+| kinship.intro.2 | 3×1 | Afinidade | 1~ | 1 | Duas âmbar juntas e uma azul: a azul fica do outro lado (luz e sombra). |
+| kinship.intro.3 | 3×1 | Afinidade | 1~ | 1 | A azul tem companhia; a âmbar fica do outro lado. |
+| kinship.intro.4 | 4×1 | Afinidade | 1~ | 1 | O meio une as âmbar; a azul fica de fora. |
+| kinship.intro.5 | 4×1 | Afinidade | 1~ | 1 | Do outro lado: o meio une as âmbar. |
+| kinship.intro.6 | 3×1 | Afinidade | 1 | 3 | Cores iguais precisam estar juntas: unir pela luz. |
+| kinship.intro.7 | 3×1 | Afinidade | 1 | 1 | O rebite acende a âmbar: a família inteira vem para a luz, pelo meio. |
+| kinship.intro.8 | 4×1 | Afinidade | 1 | 1 | O rebite escuro une as âmbar na sombra; a azul vai para a luz. |
+| kinship.intro.9 | 4×1 | Afinidade | 1 | 1 | A azul presa na sombra: as âmbar vão juntas para a luz. |
+| kinship.intro.10 | 2×2 | Afinidade | 1~ | 1 | Cada fileira é uma família: uma na luz, outra na sombra. |
+| kinship.intro.11 | 2×2 | Afinidade | 1~ | 1 | Cada coluna é uma família. |
+| kinship.intro.12 | 2×2 | Afinidade | 1~ | 1 | As âmbar se unem dando a volta pelo canto livre. |
+| kinship.intro.13 | 3×2 | Afinidade | 1 | 1 | A azul está no caminho: as âmbar se unem pela fileira acesa de baixo. |
+| kinship.intro.14 | 3×2 | Afinidade | 1~ | 4 | Uma família na luz, a outra na sombra. |
+| kinship.intro.15 | 3×2 | Afinidade | 1 | 1 | O buraco não deixa passar: as âmbar se unem por baixo. |
+| kinship.intro.16 | 3×1 | Afinidade | 1~ | 1 | Três cores: as pontas acesas são regiões diferentes, porque não se tocam. |
+| kinship.intro.17 | 5×1 | Afinidade | 1 | 1 | A âmbar se une pela luz; entre ela e a azul abre-se um fosso de sombra. |
+| kinship.intro.18 | 3×3 | Afinidade | 1 | 4 | Duas famílias acesas não podem se tocar: entre elas abre-se um fosso de sombra — e é ali que mora a terceira. |
+| kinship.intro.19 | 3×3 | Afinidade | 1 | 4 | Uma corrente: o rebite acende a âmbar; a carmim encosta nela e vira sombra; a azul encosta na carmim e só pode ser luz — e o meio vira fosso. |
+| kinship.intro.20 | 4×4 | Afinidade | 3+ | 3 | Portão: o rebite apaga a azul, e suas gemas só se unem pela base; a âmbar, encostada nela, vira luz — e a carmim, encostada na âmbar, sombra. |
 
 ### practice
 
@@ -142,23 +151,32 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## Os Terraços — Medida (49)
+## Os Terraços — Medida (58)
 
 ### intro
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 | measure.intro.1 | 2×1 | Medida | 1~ | 1 | O número conta os ladrilhos da sua região: 1 é estar sozinho. |
-| measure.intro.2 | 3×1 | Medida | 1~ | 1 | Dois sozinhos: o meio fica do outro lado para separá-los. |
-| measure.intro.3 | 3×1 | Medida | 1~ | 3 | Uma região de dois — e o terceiro do outro lado. |
-| measure.intro.4 | 4×1 | Medida | 1 | 1 | Três acesos juntos; o quarto, apagado, fecha a conta. |
-| measure.intro.5 | 4×1 | Medida | 1~ | 1 | Duas regiões de dois, lado a lado: uma na luz, outra na sombra. |
-| measure.intro.6 | 3×2 | Medida | 3+~ | 2 | Duas regiões de três dividem o painel. |
-| measure.intro.7 | 4×1 | Medida | 1 | 1 | O 1 se isola com a sombra; o 2 forma um par aceso do outro lado. |
-| measure.intro.8 | 3×3 | Medida | 1~ | 4 | O centro sozinho... e o anel ao redor também é uma região: a escuridão conta. |
-| measure.intro.9 | 3×2 | Medida | 2 | 2 | O número pode morar num ladrilho apagado: ele mede a sombra. |
-| measure.intro.10 | 3×3 | Medida | 1~ | 3 | Números iguais podem dividir a região; o 7 ao lado mede todo o resto, do outro lado da luz. |
-| measure.intro.11 | 4×4 | Medida | 1~ | 4 | Portão: o fundo mede doze; a pedra de um e a ilha de três se recortam nele — e o que sobra é exatamente o pedido. |
+| measure.intro.2 | 3×1 | Medida | 1~ | 3 | Uma região de dois — e o terceiro do outro lado. |
+| measure.intro.3 | 3×1 | Medida | 1~ | 1 | Um sozinho, e um par ao lado. |
+| measure.intro.4 | 4×1 | Medida | 1~ | 1 | Três juntos; o quarto do outro lado. |
+| measure.intro.5 | 3×1 | Medida | 1~ | 1 | Dois sozinhos: o meio fica do outro lado para separá-los. |
+| measure.intro.6 | 4×1 | Medida | 1~ | 1 | Duas regiões de dois, lado a lado: uma na luz, outra na sombra. |
+| measure.intro.7 | 4×1 | Medida | 1 | 1 | Três acesos juntos; o quarto, apagado, fecha a conta. |
+| measure.intro.8 | 3×1 | Medida | 1 | 1 | O rebite escuro mede a sombra: dois apagados, o terceiro aceso. |
+| measure.intro.9 | 4×1 | Medida | 1 | 1 | O 1 se isola com a sombra; o 2 forma um par aceso do outro lado. |
+| measure.intro.10 | 2×2 | Medida | 1~ | 1 | No quadrado: três em L, e o canto sozinho. |
+| measure.intro.11 | 2×2 | Medida | 1~ | 1 | Na diagonal os ladrilhos não se tocam. |
+| measure.intro.12 | 3×2 | Medida | 1 | 1 | Dois pares em pé, separados pelo meio apagado. |
+| measure.intro.13 | 3×2 | Medida | 1~ | 1 | Cinco juntos; o canto sozinho. |
+| measure.intro.14 | 3×2 | Medida | 1 | 1 | O buraco separa como a sombra: dois pares em pé. |
+| measure.intro.15 | 3×2 | Medida | 1~ | 1 | Três dobram o canto; o um fica do outro lado do buraco. |
+| measure.intro.16 | 3×2 | Medida | 3+~ | 2 | Duas regiões de três dividem o painel. |
+| measure.intro.17 | 3×3 | Medida | 1~ | 4 | O centro sozinho... e o anel ao redor também é uma região: a escuridão conta. |
+| measure.intro.18 | 3×2 | Medida | 2 | 2 | O número pode morar num ladrilho apagado: ele mede a sombra. |
+| measure.intro.19 | 3×3 | Medida | 1~ | 3 | Números iguais podem dividir a região; o 7 ao lado mede todo o resto, do outro lado da luz. |
+| measure.intro.20 | 4×4 | Medida | 1~ | 4 | Portão: o fundo mede doze; a pedra de um e a ilha de três se recortam nele — e o que sobra é exatamente o pedido. |
 
 ### practice
 
@@ -223,7 +241,7 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## A Pedreira — Forma (49)
+## A Pedreira — Forma (58)
 
 ### intro
 
@@ -231,15 +249,24 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 |---|---|---|---|---|---|
 | mold.intro.1 | 2×1 | Forma | 1~ | 1 | A forma é um quadradinho só: o vizinho fica do outro lado. |
 | mold.intro.2 | 3×1 | Forma | 1~ | 3 | A região do molde tem a forma desenhada: um dominó. |
-| mold.intro.3 | 4×1 | Forma | 1~ | 1 | Uma barra de três: o quarto ladrilho não faz parte dela. |
-| mold.intro.4 | 2×2 | Forma | 1~ | 3 | Um L de três. |
+| mold.intro.3 | 4×1 | Forma | 1~ | 1 | Dois moldes iguais: dois dominós, um na luz, outro na sombra. |
+| mold.intro.4 | 4×1 | Forma | 1~ | 1 | Uma barra de três: o quarto ladrilho não faz parte dela. |
 | mold.intro.5 | 2×2 | Forma | 1~ | 1 | Em pé: o dominó desenhado na vertical. |
-| mold.intro.6 | 3×2 | Forma | 1~ | 3 | A orientação importa: o T de cabeça para baixo não serve. |
-| mold.intro.7 | 4×1 | Forma | 1 | 1 | Entre rebites acesos, o molde de um fica na sombra — e o vizinho acende para deixá-lo sozinho. |
-| mold.intro.8 | 3×3 | Forma | 1 | 4 | Os rebites acesos não deixam o quadrado ser luz: o molde se esculpe na sombra. |
-| mold.intro.9 | 3×3 | Forma | 1~ | 3 | Duas peças que se encaixam: uma na luz, outra na sombra. |
-| mold.intro.10 | 3×3 | Forma | 2~ | 3 | O anel em volta do molde deixa girar: a forma desenhada não cabe, a girada sim. |
-| mold.intro.11 | 4×4 | Forma | 1~ | 4 | Portão: a barra só deita no topo; o T, preso na beira, só cabe de um jeito — e a pedra sozinha fica cercada por ele. |
+| mold.intro.6 | 3×2 | Forma | 1~ | 1 | O dominó em pé no meio; os lados do outro lado. |
+| mold.intro.7 | 2×2 | Forma | 1~ | 3 | Um L de três. |
+| mold.intro.8 | 2×2 | Forma | 1~ | 1 | O mesmo L, virado de outro jeito: a forma desenhada manda. |
+| mold.intro.9 | 3×2 | Forma | 1~ | 3 | A orientação importa: o T de cabeça para baixo não serve. |
+| mold.intro.10 | 2×2 | Forma | 1~ | 1 | Dois quadradinhos sozinhos, em cantos opostos. |
+| mold.intro.11 | 3×2 | Forma | 1~ | 1 | Um quadrado de quatro; a coluna que sobra fica do outro lado. |
+| mold.intro.12 | 4×1 | Forma | 1 | 1 | Entre rebites acesos, o molde de um fica na sombra — e o vizinho acende para deixá-lo sozinho. |
+| mold.intro.13 | 3×3 | Forma | 1 | 4 | Os rebites acesos não deixam o quadrado ser luz: o molde se esculpe na sombra. |
+| mold.intro.14 | 3×2 | Forma | 1 | 1 | O buraco separa: cada dominó em pé do seu lado. |
+| mold.intro.15 | 3×2 | Forma | 1~ | 1 | O gancho dobra junto ao buraco. |
+| mold.intro.16 | 3×2 | Forma | 1~ | 1 | Duas formas diferentes dividem o painel. |
+| mold.intro.17 | 3×3 | Forma | 1~ | 3 | Duas peças que se encaixam: uma na luz, outra na sombra. |
+| mold.intro.18 | 2×2 | Forma | 1 | 1 | O anel em volta deixa girar: o dominó deitado cabe em pé. |
+| mold.intro.19 | 3×3 | Forma | 2~ | 3 | O anel em volta do molde deixa girar: a forma desenhada não cabe, a girada sim. |
+| mold.intro.20 | 4×4 | Forma | 1~ | 4 | Portão: a barra só deita no topo; o T, preso na beira, só cabe de um jeito — e a pedra sozinha fica cercada por ele. |
 
 ### practice
 
@@ -304,7 +331,7 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Jardim de Sebes — Contorno (49)
+## O Jardim de Sebes — Contorno (58)
 
 ### intro
 
@@ -312,15 +339,24 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 |---|---|---|---|---|---|
 | contour.intro.1 | 1×1 | Contorno | 1 | 1 | Quatro lados brilhando: acender o ladrilho sozinho. |
 | contour.intro.2 | 2×1 | Contorno | 1 | 1 | Para manter os quatro lados, o vizinho precisa ficar escuro. |
-| contour.intro.3 | 3×1 | Contorno | 1 | 1 | Duas ilhas acesas, separadas por um escuro. |
-| contour.intro.4 | 2×1 | Contorno | 1 | 1 | Um lado só: o ladrilho apagado, com um vizinho aceso. |
-| contour.intro.5 | 2×1 | Contorno | 1 | 1 | Três lados: acesos os dois — o lado entre eles não é borda. |
-| contour.intro.6 | 3×1 | Contorno | 2 | 2 | Conta-se a borda de luz, não a luz: o próprio ladrilho pode estar apagado. |
-| contour.intro.7 | 3×1 | Contorno | 1 | 1 | Aceso, com o rebite aceso de um lado e o escuro do outro. |
-| contour.intro.8 | 3×3 | Contorno | 1 | 1 | Zero bordas: igual a todos os vizinhos — a luz do rebite se espalha em cruz. |
-| contour.intro.9 | 3×3 | Contorno | 1 | 1 | Fora do painel é escuro: um canto com 3 só pode estar aceso. |
-| contour.intro.10 | 4×4 | Contorno | 1 | 1 | Uma corrente: os zeros copiam os vizinhos e cada dedução acende a próxima. |
-| contour.intro.11 | 4×4 | Contorno | 1 | 1 | Portão: o 4 é uma ilha, o zero no canto é sombra, os 3 se apoiam na borda. |
+| contour.intro.3 | 2×1 | Contorno | 1 | 1 | Três lados: acesos os dois — o lado entre eles não é borda. |
+| contour.intro.4 | 2×1 | Contorno | 1 | 1 | Três lados: os dois acesos, do outro lado também. |
+| contour.intro.5 | 2×1 | Contorno | 1 | 1 | Um lado só: o ladrilho apagado, com um vizinho aceso. |
+| contour.intro.6 | 3×1 | Contorno | 1 | 1 | Duas ilhas acesas, separadas por um escuro. |
+| contour.intro.7 | 3×1 | Contorno | 1 | 1 | As pontas com três lados: tudo aceso. |
+| contour.intro.8 | 3×1 | Contorno | 1 | 1 | No meio de três acesos, só sobram dois lados de borda. |
+| contour.intro.9 | 3×1 | Contorno | 2 | 2 | Conta-se a borda de luz, não a luz: o próprio ladrilho pode estar apagado. |
+| contour.intro.10 | 3×1 | Contorno | 1 | 1 | Aceso, com o rebite aceso de um lado e o escuro do outro. |
+| contour.intro.11 | 3×1 | Contorno | 1 | 1 | Entre o rebite escuro e o vizinho apagado: uma ilha de luz. |
+| contour.intro.12 | 3×1 | Contorno | 1 | 1 | O buraco conta como escuro: duas ilhas. |
+| contour.intro.13 | 2×2 | Contorno | 1 | 1 | Duas ilhas em cantos opostos. |
+| contour.intro.14 | 2×2 | Contorno | 1 | 1 | Os de cima acesos; os de baixo apagados. |
+| contour.intro.15 | 2×2 | Contorno | 1 | 1 | A coluna da esquerda pede luz no painel todo. |
+| contour.intro.16 | 2×2 | Contorno | 1 | 1 | Cada canto com dois lados para fora: todos acesos. |
+| contour.intro.17 | 3×3 | Contorno | 1 | 1 | Zero bordas: igual a todos os vizinhos — a luz do rebite se espalha em cruz. |
+| contour.intro.18 | 3×3 | Contorno | 1 | 1 | Fora do painel é escuro: um canto com 3 só pode estar aceso. |
+| contour.intro.19 | 4×4 | Contorno | 1 | 1 | Uma corrente: os zeros copiam os vizinhos e cada dedução acende a próxima. |
+| contour.intro.20 | 4×4 | Contorno | 1 | 1 | Portão: o 4 é uma ilha, o zero no canto é sombra, os 3 se apoiam na borda. |
 
 ### practice
 
@@ -385,23 +421,32 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Templo das Areias — Mosaico (49)
+## O Templo das Areias — Mosaico (58)
 
 ### intro
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.intro.1 | 1×1 | Mosaico | 1 | 1 | O número conta a si mesmo. |
-| mosaic.intro.2 | 2×1 | Mosaico | 1 | 1 | O rebite aceso também conta: falta só a própria luz. |
-| mosaic.intro.3 | 3×1 | Mosaico | 1 | 1 | A janela alcança os vizinhos. |
-| mosaic.intro.4 | 3×1 | Mosaico | 1 | 1 | O rebite escuro não acende: a luz vai para o outro vizinho. |
-| mosaic.intro.5 | 3×1 | Mosaico | 1 | 1 | Duas janelas lado a lado: o 2 acende os dois; o 1 já está contado, então a ponta fica apagada. |
-| mosaic.intro.6 | 3×3 | Mosaico | 1 | 1 | Nove: a janela inteira acende. |
-| mosaic.intro.7 | 3×3 | Mosaico | 1 | 1 | Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos. |
-| mosaic.intro.8 | 3×1 | Mosaico | 1 | 1 | Zero: a janela inteira apagada — a luz do 1 só pode ficar do outro lado. |
-| mosaic.intro.9 | 4×4 | Mosaico | 1 | 1 | Zero apaga a janela inteira; o que sobra para os vizinhos fica contado. |
-| mosaic.intro.10 | 5×3 | Mosaico | 1 | 1 | Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê. |
-| mosaic.intro.11 | 4×4 | Mosaico | 1 | 3 | Portão: janelas quase cheias e um 1 solitário no canto. |
+| mosaic.intro.1 | 1×1 | Mosaico | 1 | 1 | Só ele mesmo. |
+| mosaic.intro.2 | 2×1 | Mosaico | 1 | 1 | Ele e o vizinho. |
+| mosaic.intro.3 | 2×1 | Mosaico | 1 | 1 | O vizinho do outro lado. |
+| mosaic.intro.4 | 3×1 | Mosaico | 1 | 1 | Os dois lados. |
+| mosaic.intro.5 | 2×1 | Mosaico | 1 | 1 | O rebite aceso conta. |
+| mosaic.intro.6 | 3×1 | Mosaico | 1 | 1 | O rebite longe não conta. |
+| mosaic.intro.7 | 3×1 | Mosaico | 1 | 1 | O rebite escuro não acende. |
+| mosaic.intro.8 | 3×1 | Mosaico | 1 | 1 | Duas janelas lado a lado. |
+| mosaic.intro.9 | 4×1 | Mosaico | 1 | 1 | O vizinho é dos dois. |
+| mosaic.intro.10 | 4×1 | Mosaico | 1 | 1 | Uma janela inteira acesa ao lado de outra. |
+| mosaic.intro.11 | 3×1 | Mosaico | 1 | 1 | Zero: a janela inteira apagada. |
+| mosaic.intro.12 | 2×2 | Mosaico | 1 | 1 | Também em cima e embaixo: no canto, quatro. |
+| mosaic.intro.13 | 2×2 | Mosaico | 1 | 1 | No canto, com um rebite escuro. |
+| mosaic.intro.14 | 3×2 | Mosaico | 1 | 1 | Na borda, seis. |
+| mosaic.intro.15 | 3×2 | Mosaico | 1 | 1 | Duas janelas que se cruzam. |
+| mosaic.intro.16 | 3×3 | Mosaico | 1 | 1 | Nove: a janela inteira acende. |
+| mosaic.intro.17 | 3×3 | Mosaico | 1 | 1 | Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos. |
+| mosaic.intro.18 | 4×4 | Mosaico | 1 | 1 | Zero apaga a janela inteira; o que sobra para os vizinhos fica contado. |
+| mosaic.intro.19 | 5×3 | Mosaico | 1 | 1 | Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê. |
+| mosaic.intro.20 | 4×4 | Mosaico | 1 | 3 | Portão: janelas quase cheias e um 1 solitário no canto. |
 
 ### practice
 
@@ -466,23 +511,32 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## Os Penhascos dos Faróis — Farol (49)
+## Os Penhascos dos Faróis — Farol (58)
 
 ### intro
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 | beacon.intro.1 | 2×1 | Farol | 1 | 1 | Dois: o farol e mais uma luz ao lado. |
-| beacon.intro.2 | 3×1 | Farol | 1 | 1 | O farol enxerga em linha: três luzes, ele incluído. |
-| beacon.intro.3 | 3×1 | Farol | 1 | 1 | Dois: a luz do fim faria o farol ver três. |
+| beacon.intro.2 | 3×1 | Farol | 1 | 1 | Dois: a luz do fim faria o farol ver três. |
+| beacon.intro.3 | 3×1 | Farol | 1 | 1 | O farol enxerga em linha: três luzes, ele incluído. |
 | beacon.intro.4 | 3×1 | Farol | 1 | 1 | O farol enxerga para os dois lados. |
-| beacon.intro.5 | 3×1 | Farol | 1 | 1 | O escuro interrompe o feixe: a luz vai para o outro lado. |
-| beacon.intro.6 | 3×1 | Farol | 1 | 1 | Toda luz precisa ser vista por um farol: o rebite exige o caminho aceso. |
-| beacon.intro.7 | 1×3 | Farol | 1 | 1 | Também para cima e para baixo. |
-| beacon.intro.8 | 3×3 | Farol | 1 | 1 | O farol enxerga nas quatro direções retas: a cruz. Os cantos ficam no escuro. |
-| beacon.intro.9 | 3×3 | Farol | 1 | 1 | Uma rocha bloqueia o feixe. |
+| beacon.intro.5 | 4×1 | Farol | 1 | 1 | Quatro: a fileira inteira. |
+| beacon.intro.6 | 4×1 | Farol | 1 | 1 | Quatro, olhando para os dois lados. |
+| beacon.intro.7 | 3×1 | Farol | 1 | 1 | O escuro interrompe o feixe: a luz vai para o outro lado. |
+| beacon.intro.8 | 4×1 | Farol | 1 | 1 | O escuro corta o feixe: três sem ele. |
+| beacon.intro.9 | 4×1 | Farol | 1 | 1 | Dois faróis: o de um fica sozinho. |
 | beacon.intro.10 | 3×1 | Farol | 1 | 1 | Faróis também são luz: um enxerga o outro. |
-| beacon.intro.11 | 4×4 | Farol | 1 | 1 | Portão: dois faróis dividem a costa; os feixes se cruzam e contam para os dois. |
+| beacon.intro.11 | 3×1 | Farol | 1 | 1 | Toda luz precisa ser vista por um farol: o rebite exige o caminho aceso. |
+| beacon.intro.12 | 3×1 | Farol | 1 | 1 | O rebite precisa ser visto: o caminho até ele acende. |
+| beacon.intro.13 | 1×3 | Farol | 1 | 1 | Também para cima e para baixo. |
+| beacon.intro.14 | 2×2 | Farol | 1 | 1 | No quadrado: para o lado e para baixo. |
+| beacon.intro.15 | 2×2 | Farol | 1 | 1 | Do outro canto. |
+| beacon.intro.16 | 3×2 | Farol | 1 | 1 | Um farol que se vê sozinho no canto. |
+| beacon.intro.17 | 4×1 | Farol | 1 | 1 | A rocha corta o feixe: depois dela fica escuro. |
+| beacon.intro.18 | 3×3 | Farol | 1 | 1 | O farol enxerga nas quatro direções retas: a cruz. Os cantos ficam no escuro. |
+| beacon.intro.19 | 3×3 | Farol | 1 | 1 | Uma rocha bloqueia o feixe. |
+| beacon.intro.20 | 4×4 | Farol | 1 | 1 | Portão: dois faróis dividem a costa; os feixes se cruzam e contam para os dois. |
 
 ### practice
 
@@ -547,23 +601,32 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Vale dos Moinhos — Trama (49)
+## O Vale dos Moinhos — Trama (58)
 
 ### intro
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| weave.intro.1 | 3×1 | Trama | 1 | 1 | Um fio de três: três ladrilhos acesos seguidos. |
-| weave.intro.2 | 3×1 | Trama | 1 | 1 | Um fio de dois — e uma coluna vazia. |
-| weave.intro.3 | 3×1 | Trama | 1 | 1 | As colunas também têm fios: o anel vazio é coluna sem luz. |
-| weave.intro.4 | 4×1 | Trama | 1 | 1 | Dois fios de um: entre eles, escuro. |
-| weave.intro.5 | 2×2 | Trama | 1 | 1 | Linhas e colunas se cruzam. |
-| weave.intro.6 | 2×2 | Trama | 1 | 1 | Zero: uma linha sem fio nenhum. |
-| weave.intro.7 | 3×3 | Trama | 1 | 1 | Uma cruz tecida. |
-| weave.intro.8 | 3×3 | Trama | 1 | 1 | Em cada coluna, dois fios separados pelo meio escuro. |
-| weave.intro.9 | 4×4 | Trama | 1 | 2 | Dois fios separados: entre eles sempre há pelo menos um ladrilho escuro. |
-| weave.intro.10 | 5×5 | Trama | 1 | 1 | O desenho é o moinho do vale: as pás em X sobre a torre. |
-| weave.intro.11 | 5×5 | Trama | 1 | 1 | Portão: uma chave. |
+| weave.intro.1 | 1×1 | Trama | 1 | 1 | Um fio de um: acender. |
+| weave.intro.2 | 2×1 | Trama | 1 | 1 | Um fio de dois: os dois acesos. |
+| weave.intro.3 | 2×1 | Trama | 1 | 1 | Um fio só, na coluna que pede um. |
+| weave.intro.4 | 3×1 | Trama | 1 | 1 | Um fio de três: três ladrilhos acesos seguidos. |
+| weave.intro.5 | 3×1 | Trama | 1 | 1 | Um fio de dois — e uma coluna vazia. |
+| weave.intro.6 | 3×1 | Trama | 1 | 1 | As colunas também têm fios: o anel vazio é coluna sem luz. |
+| weave.intro.7 | 3×1 | Trama | 1 | 1 | Dois fios de um: o meio separa. |
+| weave.intro.8 | 4×1 | Trama | 1 | 1 | Dois fios de um: entre eles, escuro. |
+| weave.intro.9 | 3×1 | Trama | 1 | 1 | O buraco corta o fio. |
+| weave.intro.10 | 2×2 | Trama | 1 | 1 | Zero: uma linha sem fio nenhum. |
+| weave.intro.11 | 2×2 | Trama | 1 | 1 | Uma coluna cheia, a outra vazia. |
+| weave.intro.12 | 2×2 | Trama | 1 | 1 | Linhas e colunas se cruzam. |
+| weave.intro.13 | 3×2 | Trama | 1 | 1 | Uma barra e um pé no meio. |
+| weave.intro.14 | 3×3 | Trama | 1 | 1 | Uma cruz tecida. |
+| weave.intro.15 | 3×2 | Trama | 1 | 1 | Uma linha sem número: ela se lê pelas colunas. |
+| weave.intro.16 | 3×3 | Trama | 1 | 1 | Em cada coluna, dois fios separados pelo meio escuro. |
+| weave.intro.17 | 3×3 | Trama | 1 | 1 | Buracos no tear: um H. |
+| weave.intro.18 | 4×4 | Trama | 1 | 2 | Dois fios separados: entre eles sempre há pelo menos um ladrilho escuro. |
+| weave.intro.19 | 5×5 | Trama | 1 | 1 | O desenho é o moinho do vale: as pás em X sobre a torre. |
+| weave.intro.20 | 5×5 | Trama | 1 | 1 | Portão: uma chave. |
 
 ### practice
 
@@ -628,23 +691,32 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Lago Espelhado — Gêmeos (49)
+## O Lago Espelhado — Gêmeos (58)
 
 ### intro
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| twins.intro.1 | 4×1 | Gêmeos | 1 | 1 | Sozinha deste lado, sozinha do outro. |
-| twins.intro.2 | 4×1 | Gêmeos | 3+~ | 4 | Duas regiões separadas com a mesma forma. |
-| twins.intro.3 | 3×1 | Gêmeos | 1~ | 1 | Duas gêmeas de um, separadas pelo meio. |
-| twins.intro.4 | 6×1 | Gêmeos | 1 | 1 | Copiar o dominó do outro lado da água. |
-| twins.intro.5 | 5×2 | Gêmeos | 2 | 3 | Copiar o L do outro lado. |
-| twins.intro.6 | 3×3 | Gêmeos | 1 | 1 | O dominó em pé, copiado em pé. |
-| twins.intro.7 | 5×2 | Gêmeos | 1 | 3 | A sombra pode ser gêmea da luz. |
-| twins.intro.8 | 5×2 | Gêmeos | 2 | 3 | Símbolo espelhado: a forma refletida. |
-| twins.intro.9 | 5×3 | Gêmeos | 2 | 4 | Dois pares: as cópias precisam se encaixar do outro lado da água. |
-| twins.intro.10 | 3×2 | Gêmeos | 1 | 4 | A gêmea pode ser a sobra: a sombra de baixo copia a luz de cima. |
-| twins.intro.11 | 6×4 | Gêmeos | 2 | 4 | Portão: um par direto e um par espelhado atravessam o lago — o espelho vira o L do avesso. |
+| twins.intro.1 | 2×1 | Gêmeos | 1~ | 1 | Duas gêmeas sozinhas: uma acesa, outra apagada. |
+| twins.intro.2 | 3×1 | Gêmeos | 1~ | 1 | Duas gêmeas de um, separadas pelo meio. |
+| twins.intro.3 | 4×1 | Gêmeos | 3+~ | 4 | Duas regiões separadas com a mesma forma. |
+| twins.intro.4 | 4×1 | Gêmeos | 1 | 1 | Sozinha deste lado, sozinha do outro. |
+| twins.intro.5 | 6×1 | Gêmeos | 1 | 1 | Copiar o dominó do outro lado da água. |
+| twins.intro.6 | 8×1 | Gêmeos | 1 | 1 | Copiar a barra de três do outro lado da água. |
+| twins.intro.7 | 5×2 | Gêmeos | 1 | 1 | A gêmea pode estar na outra ponta da forma. |
+| twins.intro.8 | 3×3 | Gêmeos | 1 | 1 | O dominó em pé, copiado em pé. |
+| twins.intro.9 | 3×3 | Gêmeos | 1 | 1 | A barra em pé, copiada em pé. |
+| twins.intro.10 | 4×3 | Gêmeos | 1 | 1 | O canto copiado no quadrado. |
+| twins.intro.11 | 5×2 | Gêmeos | 2 | 3 | Copiar o L do outro lado. |
+| twins.intro.12 | 5×2 | Gêmeos | 1 | 3 | A sombra pode ser gêmea da luz. |
+| twins.intro.13 | 6×2 | Gêmeos | 2 | 1 | Um símbolo novo, a mesma regra: copiar o L. |
+| twins.intro.14 | 3×4 | Gêmeos | 2 | 1 | Dois pares diferentes, cada um com a sua forma. |
+| twins.intro.15 | 5×2 | Gêmeos | 2 | 3 | Símbolo espelhado: a forma refletida. |
+| twins.intro.16 | 5×2 | Gêmeos | 1 | 1 | Espelhada: o L do outro lado vira ao contrário. |
+| twins.intro.17 | 5×3 | Gêmeos | 2 | 4 | Dois pares: as cópias precisam se encaixar do outro lado da água. |
+| twins.intro.18 | 4×3 | Gêmeos | 1 | 1 | O canto copiado, com a gêmea no outro canto. |
+| twins.intro.19 | 3×2 | Gêmeos | 1 | 4 | A gêmea pode ser a sobra: a sombra de baixo copia a luz de cima. |
+| twins.intro.20 | 6×4 | Gêmeos | 2 | 4 | Portão: um par direto e um par espelhado atravessam o lago — o espelho vira o L do avesso. |
 
 ### practice
 

@@ -7,41 +7,55 @@ const P: AreaPuzzles = {
   intro: [
     puzzle('twins.intro.1', {
       grid: `
-        Lts # ts D
+        ts ts
       `,
       difficulty: 1,
-      note: 'Sozinha deste lado, sozinha do outro.',
+      note: 'Duas gêmeas sozinhas: uma acesa, outra apagada.',
     }),
     puzzle('twins.intro.2', {
-      grid: `
-        tm . . tm
-      `,
-      difficulty: 4,
-      note: 'Duas regiões separadas com a mesma forma.',
-    }),
-    puzzle('twins.intro.3', {
       grid: `
         tm . tm
       `,
       difficulty: 1,
       note: 'Duas gêmeas de um, separadas pelo meio.',
     }),
+    puzzle('twins.intro.3', {
+      grid: `
+        tm . . tm
+      `,
+      difficulty: 4,
+      note: 'Duas regiões separadas com a mesma forma.',
+    }),
     puzzle('twins.intro.4', {
+      grid: `
+        Lts # ts D
+      `,
+      difficulty: 1,
+      note: 'Sozinha deste lado, sozinha do outro.',
+    }),
+    puzzle('twins.intro.5', {
       grid: `
         Ltm L # tm . D
       `,
       difficulty: 1,
       note: 'Copiar o dominó do outro lado da água.',
     }),
-    puzzle('twins.intro.5', {
-      grid: `
-        Ltm L # tm .
-        L   D # .  .
-      `,
-      difficulty: 3,
-      note: 'Copiar o L do outro lado.',
-    }),
     puzzle('twins.intro.6', {
+      grid: `
+        Ltm L   L   #   tm  .   .   D
+      `,
+      difficulty: 1,
+      note: 'Copiar a barra de três do outro lado da água.',
+    }),
+    puzzle('twins.intro.7', {
+      grid: `
+        Ltm L   #   .   tm
+        D   D   #   D   .
+      `,
+      difficulty: 1,
+      note: 'A gêmea pode estar na outra ponta da forma.',
+    }),
+    puzzle('twins.intro.8', {
       grid: `
         Ltm # tm
         L   # .
@@ -50,7 +64,33 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'O dominó em pé, copiado em pé.',
     }),
-    puzzle('twins.intro.7', {
+    puzzle('twins.intro.9', {
+      grid: `
+        Ltm #   tm
+        L   #   .
+        L   #   L
+      `,
+      difficulty: 1,
+      note: 'A barra em pé, copiada em pé.',
+    }),
+    puzzle('twins.intro.10', {
+      grid: `
+        Ltm #   tm  .
+        L   #   .   .
+        D   #   D   D
+      `,
+      difficulty: 1,
+      note: 'O canto copiado no quadrado.',
+    }),
+    puzzle('twins.intro.11', {
+      grid: `
+        Ltm L # tm .
+        L   D # .  .
+      `,
+      difficulty: 3,
+      note: 'Copiar o L do outro lado.',
+    }),
+    puzzle('twins.intro.12', {
       grid: `
         Ltm L # Dtm .
         L   D # .   .
@@ -58,7 +98,25 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'A sombra pode ser gêmea da luz.',
     }),
-    puzzle('twins.intro.8', {
+    puzzle('twins.intro.13', {
+      grid: `
+        Ltl L   #   tl  .   .
+        D   L   #   .   .   .
+      `,
+      difficulty: 1,
+      note: 'Um símbolo novo, a mesma regra: copiar o L.',
+    }),
+    puzzle('twins.intro.14', {
+      grid: `
+        Lts #   ts
+        D   #   D
+        Ltm #   tm
+        L   #   .
+      `,
+      difficulty: 1,
+      note: 'Dois pares diferentes, cada um com a sua forma.',
+    }),
+    puzzle('twins.intro.15', {
       grid: `
         Ltm L # .  tm'
         L   D # .  .
@@ -66,7 +124,15 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Símbolo espelhado: a forma refletida.',
     }),
-    puzzle('twins.intro.9', {
+    puzzle('twins.intro.16', {
+      grid: `
+        Ltm L   #   tm' .
+        D   L   #   D   .
+      `,
+      difficulty: 1,
+      note: 'Espelhada: o L do outro lado vira ao contrário.',
+    }),
+    puzzle('twins.intro.17', {
       grid: `
         Lts L  # .  ts
         L   D  # .  .
@@ -75,7 +141,16 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Dois pares: as cópias precisam se encaixar do outro lado da água.',
     }),
-    puzzle('twins.intro.10', {
+    puzzle('twins.intro.18', {
+      grid: `
+        Ltm #   .   tm
+        L   #   .   .
+        D   #   D   D
+      `,
+      difficulty: 1,
+      note: 'O canto copiado, com a gêmea no outro canto.',
+    }),
+    puzzle('twins.intro.19', {
       grid: `
         Ltl L . 
         .   . tl
@@ -83,7 +158,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'A gêmea pode ser a sobra: a sombra de baixo copia a luz de cima.',
     }),
-    puzzle('twins.intro.11', {
+    puzzle('twins.intro.20', {
       grid: `
         Ltm L  # .  .  tm'
         D   L  # .  .  .

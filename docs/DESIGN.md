@@ -225,22 +225,29 @@ e buracos contam como apagado.**
 
 **Segredo do mundo:** cubos de sebe que crescem/encolhem num canteiro 4×4.
 
-### 4.5 Mosaico — janelas 3×3 (O Templo das Areias)
+### 4.5 Caminho — poços e luz (O Templo das Areias)
 
-**Regra:** a janela 3×3 centrada no glifo (incluindo ele mesmo) tem exatamente **N** ladrilhos acesos.
+**Por que mudou:** o antigo Mosaico (um número que conta os ladrilhos acesos na janela 3×3 em volta)
+não se entende só de olhar — quem joga vê "um 8, um 4, um 6" e não sabe o que fazer. Um idioma precisa
+se explicar sozinho, como os do The Witness: você tenta, erra, e o erro mostra a regra.
 
-**Sequência de ensino**
-1. `x1` num ladrilho só → acender. *(conta a si mesmo)*
-2. `x3` no meio de 1×3 → tudo aceso.
-3. `x9` no centro de 3×3 → tudo aceso (um momento bonito).
-4. `x4` no canto: a janela é cortada pela borda → 2×2. *(janelas de borda são menores)*
-5. Zeros apagam janelas inteiras.
-6. Subtração: duas janelas vizinhas diferem em uma coluna.
-7. Portão.
+**Regra:** os dois **poços** de uma cor (já acesos) se ligam por um **caminho de luz**: um ladrilho de
+largura, sem ramos, que não encosta em si mesmo nem em outro caminho; todo ladrilho aceso faz parte de
+um caminho. **Marcos** (losangos) ficam no caminho; **pedras** (buracos) e rebites escuros o bloqueiam;
+poços de outra cor pedem outro caminho, que não pode tocar o primeiro. Erro: os poços piscam.
 
-**Percepções:** sobreposição; a resposta forma desenhos (sol, olho, escaravelho) — ornamentos do templo.
+**O lugar:** o portão ensina (12 painéis, uma ideia por vez: ligar, mais longe, marco, pedra, rebite,
+o marco escolhe o lado, não encostar em si mesmo, duas cores, dois caminhos paralelos, o portão).
+As **pérgolas** desenham com a luz o caminho no chão (a areia cobre parte: deduzir, ou ler a treliça
+por baixo); da **torre** as lajes vitrificadas são o caminho (um toldo esconde um canto — descer e
+olhar por baixo; uma duna engole outro); no **teto do santuário** os painéis não mostram os marcos,
+que estão incrustados no chão debaixo de cada beirada; o **coração** são caminhos longos entre pedras,
+marcos e uma segunda cor.
 
-**Segredo do mundo:** o piso do pátio do templo, 5×5.
+**Técnica:** `src/puzzle/pathsolver.ts` enumera os caminhos (cor por cor, com corte de alcance), então
+cada painel tem resposta única comprovada; `tools/build-desert.ts` escreve os painéis do deserto
+(os de cenário recebem o desenho do lugar a partir da resposta de um painel-base, com '?' no que o
+lugar esconde), `tools/path-search.ts` procura painéis difíceis.
 
 ### 4.6 Farol — visão em linha (Os Penhascos dos Faróis)
 

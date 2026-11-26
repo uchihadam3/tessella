@@ -134,6 +134,14 @@ difícil), **Maestria (8)** que combina as percepções e **Coração (6)**, as 
 
 Cada linguagem tem um glifo com silhueta e cor próprias, para que painéis mistos sejam legíveis de relance.
 
+**Introduções com 11 painéis.** Além dos 7 passos de cada sequência abaixo, cada introdução tem 4 painéis
+ainda menores entre eles (1×2, 1×3, 2×2), cada um com **uma ideia só e uma única resposta** (ou uma só a
+menos de trocar luz e sombra), nenhum já resolvido no começo — por exemplo, no Mosaico: "o rebite aceso
+também conta" (`x2 L`), "o rebite escuro não acende" (`D x2 .`), "duas janelas lado a lado" (`x2 . x1`) e
+"zero apaga a janela" (`x0 . x1`); no Farol: "um feixe para cada lado", "o escuro interrompe o feixe",
+"também em pé"; na Trama: "zero é linha sem fio", "fios separados por escuro". Todos são verificados pelo
+resolvedor (`npm run verify:puzzles`).
+
 ### 4.1 Afinidade — gemas (Bosque Outonal)
 
 **Regra:** gemas da mesma cor ficam na **mesma região**; gemas de cores diferentes ficam em **regiões

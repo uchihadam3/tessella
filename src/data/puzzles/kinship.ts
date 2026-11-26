@@ -24,13 +24,42 @@ const P: AreaPuzzles = {
     }),
     puzzle('kinship.intro.3', {
       grid: `
+        L@a . @a
+      `,
+      difficulty: 1,
+      note: 'O rebite acende a âmbar: a família inteira vem para a luz, pelo meio.',
+    }),
+    puzzle('kinship.intro.4', {
+      grid: `
+        @a @a @b
+      `,
+      difficulty: 1,
+      note: 'Duas âmbar juntas e uma azul: a azul fica do outro lado (luz e sombra).',
+    }),
+    puzzle('kinship.intro.5', {
+      grid: `
+        @a @a
+        @b @b
+      `,
+      difficulty: 1,
+      note: 'Cada fileira é uma família: uma na luz, outra na sombra.',
+    }),
+    puzzle('kinship.intro.6', {
+      grid: `
         @a . @a
         @b . @b
       `,
       difficulty: 4,
       note: 'Uma família na luz, a outra na sombra.',
     }),
-    puzzle('kinship.intro.4', {
+    puzzle('kinship.intro.7', {
+      grid: `
+        L@a . @a . L@b
+      `,
+      difficulty: 1,
+      note: 'A âmbar se une pela luz; entre ela e a azul abre-se um fosso de sombra.',
+    }),
+    puzzle('kinship.intro.8', {
       grid: `
         .  @a .
         @a @b @a
@@ -39,7 +68,7 @@ const P: AreaPuzzles = {
       difficulty: 2,
       note: 'Uma família pode abraçar outra pelos cantos.',
     }),
-    puzzle('kinship.intro.5', {
+    puzzle('kinship.intro.9', {
       grid: `
         @a .  @b
         L  @c L
@@ -48,7 +77,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Duas famílias acesas não podem se tocar: entre elas abre-se um fosso de sombra — e é ali que mora a terceira.',
     }),
-    puzzle('kinship.intro.6', {
+    puzzle('kinship.intro.10', {
       grid: `
         L@a .  @a
         @c  .  .
@@ -57,7 +86,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Uma corrente: o rebite acende a âmbar; a carmim encosta nela e vira sombra; a azul encosta na carmim e só pode ser luz — e o meio vira fosso.',
     }),
-    puzzle('kinship.intro.7', {
+    puzzle('kinship.intro.11', {
       grid: `
         .   @c  @c  .
         .   .   @a  .

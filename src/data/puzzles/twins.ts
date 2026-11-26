@@ -7,12 +7,33 @@ const P: AreaPuzzles = {
   intro: [
     puzzle('twins.intro.1', {
       grid: `
+        Lts # ts D
+      `,
+      difficulty: 1,
+      note: 'Sozinha deste lado, sozinha do outro.',
+    }),
+    puzzle('twins.intro.2', {
+      grid: `
         tm . . tm
       `,
       difficulty: 4,
       note: 'Duas regiões separadas com a mesma forma.',
     }),
-    puzzle('twins.intro.2', {
+    puzzle('twins.intro.3', {
+      grid: `
+        tm . tm
+      `,
+      difficulty: 1,
+      note: 'Duas gêmeas de um, separadas pelo meio.',
+    }),
+    puzzle('twins.intro.4', {
+      grid: `
+        Ltm L # tm . D
+      `,
+      difficulty: 1,
+      note: 'Copiar o dominó do outro lado da água.',
+    }),
+    puzzle('twins.intro.5', {
       grid: `
         Ltm L # tm .
         L   D # .  .
@@ -20,7 +41,16 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Copiar o L do outro lado.',
     }),
-    puzzle('twins.intro.3', {
+    puzzle('twins.intro.6', {
+      grid: `
+        Ltm # tm
+        L   # .
+        D   # D
+      `,
+      difficulty: 1,
+      note: 'O dominó em pé, copiado em pé.',
+    }),
+    puzzle('twins.intro.7', {
       grid: `
         Ltm L # Dtm .
         L   D # .   .
@@ -28,7 +58,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'A sombra pode ser gêmea da luz.',
     }),
-    puzzle('twins.intro.4', {
+    puzzle('twins.intro.8', {
       grid: `
         Ltm L # .  tm'
         L   D # .  .
@@ -36,7 +66,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Símbolo espelhado: a forma refletida.',
     }),
-    puzzle('twins.intro.5', {
+    puzzle('twins.intro.9', {
       grid: `
         Lts L  # .  ts
         L   D  # .  .
@@ -45,7 +75,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Dois pares: as cópias precisam se encaixar do outro lado da água.',
     }),
-    puzzle('twins.intro.6', {
+    puzzle('twins.intro.10', {
       grid: `
         Ltl L . 
         .   . tl
@@ -53,7 +83,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'A gêmea pode ser a sobra: a sombra de baixo copia a luz de cima.',
     }),
-    puzzle('twins.intro.7', {
+    puzzle('twins.intro.11', {
       grid: `
         Ltm L  # .  .  tm'
         D   L  # .  .  .

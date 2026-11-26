@@ -21,12 +21,40 @@ const P: AreaPuzzles = {
     }),
     puzzle('contour.intro.3', {
       grid: `
+        c4 . c4
+      `,
+      difficulty: 1,
+      note: 'Duas ilhas acesas, separadas por um escuro.',
+    }),
+    puzzle('contour.intro.4', {
+      grid: `
+        c1 .
+      `,
+      difficulty: 1,
+      note: 'Um lado só: o ladrilho apagado, com um vizinho aceso.',
+    }),
+    puzzle('contour.intro.5', {
+      grid: `
+        c3 .
+      `,
+      difficulty: 1,
+      note: 'Três lados: acesos os dois — o lado entre eles não é borda.',
+    }),
+    puzzle('contour.intro.6', {
+      grid: `
         . c2 .
       `,
       difficulty: 2,
       note: 'Conta-se a borda de luz, não a luz: o próprio ladrilho pode estar apagado.',
     }),
-    puzzle('contour.intro.4', {
+    puzzle('contour.intro.7', {
+      grid: `
+        L c3 .
+      `,
+      difficulty: 1,
+      note: 'Aceso, com o rebite aceso de um lado e o escuro do outro.',
+    }),
+    puzzle('contour.intro.8', {
       grid: `
         D L  D
         . c0 .
@@ -35,7 +63,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Zero bordas: igual a todos os vizinhos — a luz do rebite se espalha em cruz.',
     }),
-    puzzle('contour.intro.5', {
+    puzzle('contour.intro.9', {
       grid: `
         c3 D  c3
         .  #  .
@@ -44,7 +72,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Fora do painel é escuro: um canto com 3 só pode estar aceso.',
     }),
-    puzzle('contour.intro.6', {
+    puzzle('contour.intro.10', {
       grid: `
         .  .  c2 .
         c1 .  c2 .
@@ -54,7 +82,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Uma corrente: os zeros copiam os vizinhos e cada dedução acende a próxima.',
     }),
-    puzzle('contour.intro.7', {
+    puzzle('contour.intro.11', {
       grid: `
         c0 c2 .  .
         .  c3 .  c4

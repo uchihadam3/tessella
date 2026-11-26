@@ -17,12 +17,30 @@ const P: AreaPuzzles = {
       grid: `
         . . .
       `,
+      rows: '2',
+      cols: '1|1|0',
+      difficulty: 1,
+      note: 'Um fio de dois — e uma coluna vazia.',
+    }),
+    puzzle('weave.intro.3', {
+      grid: `
+        . . .
+      `,
       rows: '1',
       cols: '1|0|0',
       difficulty: 1,
       note: 'As colunas também têm fios: o anel vazio é coluna sem luz.',
     }),
-    puzzle('weave.intro.3', {
+    puzzle('weave.intro.4', {
+      grid: `
+        . . . .
+      `,
+      rows: '1 1',
+      cols: '1|0|0|1',
+      difficulty: 1,
+      note: 'Dois fios de um: entre eles, escuro.',
+    }),
+    puzzle('weave.intro.5', {
       grid: `
         . .
         . .
@@ -32,7 +50,17 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Linhas e colunas se cruzam.',
     }),
-    puzzle('weave.intro.4', {
+    puzzle('weave.intro.6', {
+      grid: `
+        . .
+        . .
+      `,
+      rows: '2|0',
+      cols: '1|1',
+      difficulty: 1,
+      note: 'Zero: uma linha sem fio nenhum.',
+    }),
+    puzzle('weave.intro.7', {
       grid: `
         . . .
         . . .
@@ -43,7 +71,18 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Uma cruz tecida.',
     }),
-    puzzle('weave.intro.5', {
+    puzzle('weave.intro.8', {
+      grid: `
+        . . .
+        . . .
+        . . .
+      `,
+      rows: '3|0|3',
+      cols: '1 1|1 1|1 1',
+      difficulty: 1,
+      note: 'Em cada coluna, dois fios separados pelo meio escuro.',
+    }),
+    puzzle('weave.intro.9', {
       grid: `
         . . . .
         . . . .
@@ -55,7 +94,7 @@ const P: AreaPuzzles = {
       difficulty: 2,
       note: 'Dois fios separados: entre eles sempre há pelo menos um ladrilho escuro.',
     }),
-    puzzle('weave.intro.6', {
+    puzzle('weave.intro.10', {
       grid: `
         . . . . .
         . . . . .
@@ -68,7 +107,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'O desenho é o moinho do vale: as pás em X sobre a torre.',
     }),
-    puzzle('weave.intro.7', {
+    puzzle('weave.intro.11', {
       grid: `
         . . . . .
         . . . . .

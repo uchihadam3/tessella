@@ -7,13 +7,29 @@ const P: AreaPuzzles = {
   intro: [
     puzzle('mold.intro.1', {
       grid: `
+        fA .
+      `,
+      shapes: { A: 'x' },
+      difficulty: 1,
+      note: 'A forma é um quadradinho só: o vizinho fica do outro lado.',
+    }),
+    puzzle('mold.intro.2', {
+      grid: `
         fA . .
       `,
       shapes: { A: 'xx' },
       difficulty: 3,
       note: 'A região do molde tem a forma desenhada: um dominó.',
     }),
-    puzzle('mold.intro.2', {
+    puzzle('mold.intro.3', {
+      grid: `
+        fI . . .
+      `,
+      shapes: { I: 'xxx' },
+      difficulty: 1,
+      note: 'Uma barra de três: o quarto ladrilho não faz parte dela.',
+    }),
+    puzzle('mold.intro.4', {
       grid: `
         fB .
         .  .
@@ -22,7 +38,16 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Um L de três.',
     }),
-    puzzle('mold.intro.3', {
+    puzzle('mold.intro.5', {
+      grid: `
+        fV .
+        .  .
+      `,
+      shapes: { V: 'x/x' },
+      difficulty: 1,
+      note: 'Em pé: o dominó desenhado na vertical.',
+    }),
+    puzzle('mold.intro.6', {
       grid: `
         . fT .
         . .  .
@@ -31,7 +56,15 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'A orientação importa: o T de cabeça para baixo não serve.',
     }),
-    puzzle('mold.intro.4', {
+    puzzle('mold.intro.7', {
+      grid: `
+        L fA . L
+      `,
+      shapes: { A: 'x' },
+      difficulty: 1,
+      note: 'Entre rebites acesos, o molde de um fica na sombra — e o vizinho acende para deixá-lo sozinho.',
+    }),
+    puzzle('mold.intro.8', {
       grid: `
         L . L
         . fO .
@@ -41,7 +74,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'Os rebites acesos não deixam o quadrado ser luz: o molde se esculpe na sombra.',
     }),
-    puzzle('mold.intro.5', {
+    puzzle('mold.intro.9', {
       grid: `
         fL . .
         .  . .
@@ -51,7 +84,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Duas peças que se encaixam: uma na luz, outra na sombra.',
     }),
-    puzzle('mold.intro.6', {
+    puzzle('mold.intro.10', {
       grid: `
         #  . .
         fS* . .
@@ -61,7 +94,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'O anel em volta do molde deixa girar: a forma desenhada não cabe, a girada sim.',
     }),
-    puzzle('mold.intro.7', {
+    puzzle('mold.intro.11', {
       grid: `
         fI .  .  .
         .  .  .  .

@@ -14,12 +14,33 @@ const P: AreaPuzzles = {
     }),
     puzzle('mosaic.intro.2', {
       grid: `
+        x2 L
+      `,
+      difficulty: 1,
+      note: 'O rebite aceso também conta: falta só a própria luz.',
+    }),
+    puzzle('mosaic.intro.3', {
+      grid: `
         . x3 .
       `,
       difficulty: 1,
       note: 'A janela alcança os vizinhos.',
     }),
-    puzzle('mosaic.intro.3', {
+    puzzle('mosaic.intro.4', {
+      grid: `
+        D x2 .
+      `,
+      difficulty: 1,
+      note: 'O rebite escuro não acende: a luz vai para o outro vizinho.',
+    }),
+    puzzle('mosaic.intro.5', {
+      grid: `
+        x2 . x1
+      `,
+      difficulty: 1,
+      note: 'Duas janelas lado a lado: o 2 acende os dois; o 1 já está contado, então a ponta fica apagada.',
+    }),
+    puzzle('mosaic.intro.6', {
       grid: `
         . .  .
         . x9 .
@@ -28,7 +49,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Nove: a janela inteira acende.',
     }),
-    puzzle('mosaic.intro.4', {
+    puzzle('mosaic.intro.7', {
       grid: `
         x4 . x3
         .  . .
@@ -37,7 +58,14 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Nas bordas a janela é cortada: no canto ela tem só quatro ladrilhos.',
     }),
-    puzzle('mosaic.intro.5', {
+    puzzle('mosaic.intro.8', {
+      grid: `
+        x0 . x1
+      `,
+      difficulty: 1,
+      note: 'Zero: a janela inteira apagada — a luz do 1 só pode ficar do outro lado.',
+    }),
+    puzzle('mosaic.intro.9', {
       grid: `
         .  x0 .  .
         .  x2 x3 .
@@ -47,7 +75,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Zero apaga a janela inteira; o que sobra para os vizinhos fica contado.',
     }),
-    puzzle('mosaic.intro.6', {
+    puzzle('mosaic.intro.10', {
       grid: `
         .  .  .  x2 .
         .  x0 x3 .  .
@@ -56,7 +84,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Janelas vizinhas dividem colunas: o 3 só pode estar na coluna que o zero não vê.',
     }),
-    puzzle('mosaic.intro.7', {
+    puzzle('mosaic.intro.11', {
       grid: `
         .  x6 .  .
         .  .  x8 .

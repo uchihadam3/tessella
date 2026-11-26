@@ -7,26 +7,56 @@ const P: AreaPuzzles = {
   intro: [
     puzzle('beacon.intro.1', {
       grid: `
+        . b2
+      `,
+      difficulty: 1,
+      note: 'Dois: o farol e mais uma luz ao lado.',
+    }),
+    puzzle('beacon.intro.2', {
+      grid: `
         b3 . .
       `,
       difficulty: 1,
       note: 'O farol enxerga em linha: três luzes, ele incluído.',
     }),
-    puzzle('beacon.intro.2', {
+    puzzle('beacon.intro.3', {
       grid: `
         b2 . .
       `,
       difficulty: 1,
       note: 'Dois: a luz do fim faria o farol ver três.',
     }),
-    puzzle('beacon.intro.3', {
+    puzzle('beacon.intro.4', {
+      grid: `
+        . b3 .
+      `,
+      difficulty: 1,
+      note: 'O farol enxerga para os dois lados.',
+    }),
+    puzzle('beacon.intro.5', {
+      grid: `
+        D b2 .
+      `,
+      difficulty: 1,
+      note: 'O escuro interrompe o feixe: a luz vai para o outro lado.',
+    }),
+    puzzle('beacon.intro.6', {
       grid: `
         b3 . L
       `,
       difficulty: 1,
       note: 'Toda luz precisa ser vista por um farol: o rebite exige o caminho aceso.',
     }),
-    puzzle('beacon.intro.4', {
+    puzzle('beacon.intro.7', {
+      grid: `
+        b3
+        .
+        .
+      `,
+      difficulty: 1,
+      note: 'Também para cima e para baixo.',
+    }),
+    puzzle('beacon.intro.8', {
       grid: `
         . .  .
         . b5 .
@@ -35,7 +65,7 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'O farol enxerga nas quatro direções retas: a cruz. Os cantos ficam no escuro.',
     }),
-    puzzle('beacon.intro.5', {
+    puzzle('beacon.intro.9', {
       grid: `
         . .  .
         . b4 .
@@ -44,14 +74,14 @@ const P: AreaPuzzles = {
       difficulty: 1,
       note: 'Uma rocha bloqueia o feixe.',
     }),
-    puzzle('beacon.intro.6', {
+    puzzle('beacon.intro.10', {
       grid: `
         b3 . b3
       `,
       difficulty: 1,
       note: 'Faróis também são luz: um enxerga o outro.',
     }),
-    puzzle('beacon.intro.7', {
+    puzzle('beacon.intro.11', {
       grid: `
         .  .  .  .
         .  .  b7 .

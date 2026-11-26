@@ -14,12 +14,33 @@ const P: AreaPuzzles = {
     }),
     puzzle('measure.intro.2', {
       grid: `
+        m1 . m1
+      `,
+      difficulty: 1,
+      note: 'Dois sozinhos: o meio fica do outro lado para separá-los.',
+    }),
+    puzzle('measure.intro.3', {
+      grid: `
         m2 . .
       `,
       difficulty: 3,
       note: 'Uma região de dois — e o terceiro do outro lado.',
     }),
-    puzzle('measure.intro.3', {
+    puzzle('measure.intro.4', {
+      grid: `
+        Lm3 . . .
+      `,
+      difficulty: 1,
+      note: 'Três acesos juntos; o quarto, apagado, fecha a conta.',
+    }),
+    puzzle('measure.intro.5', {
+      grid: `
+        m2 . m2 .
+      `,
+      difficulty: 1,
+      note: 'Duas regiões de dois, lado a lado: uma na luz, outra na sombra.',
+    }),
+    puzzle('measure.intro.6', {
       grid: `
         m3 . .
         .  . m3
@@ -27,7 +48,14 @@ const P: AreaPuzzles = {
       difficulty: 2,
       note: 'Duas regiões de três dividem o painel.',
     }),
-    puzzle('measure.intro.4', {
+    puzzle('measure.intro.7', {
+      grid: `
+        Lm1 . . m2
+      `,
+      difficulty: 1,
+      note: 'O 1 se isola com a sombra; o 2 forma um par aceso do outro lado.',
+    }),
+    puzzle('measure.intro.8', {
       grid: `
         . .  .
         . m1 .
@@ -36,7 +64,7 @@ const P: AreaPuzzles = {
       difficulty: 4,
       note: 'O centro sozinho... e o anel ao redor também é uma região: a escuridão conta.',
     }),
-    puzzle('measure.intro.5', {
+    puzzle('measure.intro.9', {
       grid: `
         Lm2 . .
         .   . m4
@@ -44,7 +72,7 @@ const P: AreaPuzzles = {
       difficulty: 2,
       note: 'O número pode morar num ladrilho apagado: ele mede a sombra.',
     }),
-    puzzle('measure.intro.6', {
+    puzzle('measure.intro.10', {
       grid: `
         m2 .  .
         m2 m7 .
@@ -53,7 +81,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Números iguais podem dividir a região; o 7 ao lado mede todo o resto, do outro lado da luz.',
     }),
-    puzzle('measure.intro.7', {
+    puzzle('measure.intro.11', {
       grid: `
         .   .   m12 .
         .   m1  .   .

@@ -48,7 +48,7 @@ export interface AreaSpec {
 /** Teaching areas: 7 teaching panels, then 38 ever-harder panels of the same language, organised
  *  in sequences of 4 (each sequence explores one insight from simple to genuinely hard). */
 const OPEN_GROUPS = (intro: string, practice: string, trial: string, heart: string): GroupSpec[] => [
-  { key: 'intro', count: 7, role: intro },
+  { key: 'intro', count: 11, role: intro },
   { key: 'practice', count: 12, role: practice + ' (3 insight sequences of 4)' },
   { key: 'trial', count: 12, role: trial + ' (3 harder insight sequences of 4)' },
   { key: 'mastery', count: 8, role: 'two sequences combining the insights' },

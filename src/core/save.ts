@@ -4,7 +4,7 @@
  */
 import type { AreaId } from '../data/areas';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const SLOT_COUNT = 3;
 const KEY = (slot: number) => `tessella.save.${slot}`;
 const LAST = 'tessella.lastSlot';
@@ -24,6 +24,43 @@ export interface SaveData {
   visited: AreaId[];
   achievements: Record<string, number>;
   stats: { solves: number; fails: number; distance: number };
+}
+
+
+/**
+ * Version 2 gave every teaching place four more, simpler introduction panels: what each new
+ * position held before (its old number, 0 for a new panel). A new panel inside a stretch already
+ * solved counts as solved, so nobody loses their way.
+ */
+const INTRO_V2: Record<string, number[]> = {
+  mosaic: [1, 0, 2, 0, 0, 3, 4, 0, 5, 6, 7],
+  kinship: [1, 2, 0, 0, 0, 3, 0, 4, 5, 6, 7],
+  measure: [1, 0, 2, 0, 0, 3, 0, 4, 5, 6, 7],
+  mold: [0, 1, 0, 2, 0, 3, 0, 4, 5, 6, 7],
+  contour: [1, 2, 0, 0, 0, 3, 0, 4, 5, 6, 7],
+  beacon: [0, 1, 2, 0, 0, 3, 0, 4, 5, 6, 7],
+  weave: [1, 0, 2, 0, 3, 0, 4, 0, 5, 6, 7],
+  twins: [0, 1, 0, 0, 2, 0, 3, 4, 5, 6, 7],
+};
+
+function migrate(d: SaveData): SaveData {
+  if (d.version >= 2) return d;
+  const panels = { ...d.panels };
+  for (const [area, from] of Object.entries(INTRO_V2)) {
+    const old = (n: number) => d.panels[`${area}.intro.${n}`];
+    for (let i = 0; i < from.length; i++) delete panels[`${area}.intro.${i + 1}`];
+    from.forEach((n, i) => {
+      const id = `${area}.intro.${i + 1}`;
+      if (n > 0) {
+        if (old(n)) panels[id] = old(n);
+      } else {
+        // a new panel: solved if the next old one after it was solved
+        const next = from.slice(i + 1).find((m) => m > 0);
+        if (next && old(next)?.done) panels[id] = { done: 1 };
+      }
+    });
+  }
+  return { ...d, version: 2, panels };
 }
 
 export function newSave(slot: number): SaveData {
@@ -74,7 +111,7 @@ export function validate(raw: unknown): SaveData | null {
   const d = raw as Partial<SaveData>;
   if (typeof d.version !== 'number' || typeof d.panels !== 'object' || !d.player) return null;
   const base = newSave(typeof d.slot === 'number' ? d.slot : 0);
-  return {
+  return migrate({
     ...base,
     ...d,
     player: { ...base.player, ...d.player },
@@ -85,7 +122,7 @@ export function validate(raw: unknown): SaveData | null {
     visited: Array.isArray(d.visited) ? d.visited : [],
     achievements: d.achievements ?? {},
     stats: { ...base.stats, ...(d.stats ?? {}) },
-  } as SaveData;
+  } as SaveData);
 }
 
 export function loadSlot(slot: number): SaveData | null {

@@ -16,6 +16,19 @@
     <style>html,body{margin:0;height:100%;background:#000;overflow:hidden}</style>
   </head>
   <body>
+    <div id="boot" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#050507;color:#e9c77d;font:600 15px/1.4 Georgia,serif;letter-spacing:.25em;text-align:center;padding:24px;z-index:1">TESSELLA<span id="boot-msg" style="font-weight:400;letter-spacing:.12em;opacity:.7;font-size:13px">carregando…</span></div>
+    <script>
+      // if the game cannot start, say why instead of a blank screen (the game removes this box)
+      (function () {
+        var shown = false;
+        function say(t) {
+          var el = document.getElementById('boot-msg');
+          if (el && !shown) { shown = true; el.style.whiteSpace = 'pre-wrap'; el.style.letterSpacing = '0'; el.textContent = t; }
+        }
+        window.addEventListener('error', function (e) { say('O jogo não conseguiu iniciar:\n' + (e.message || e)); });
+        setTimeout(function () { if (!window.__ready) say('Ainda carregando… se ficar parado, feche e abra de novo.'); }, 40000);
+      })();
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

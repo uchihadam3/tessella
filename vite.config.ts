@@ -30,6 +30,19 @@ function serviceWorker(): Plugin {
     closeBundle() {
       const src = readFileSync(resolve('tools/sw-template.js'), 'utf8').replace('__VERSION__', VERSION);
       writeFileSync(resolve(outDir, 'sw.js'), src);
+      // the game's (large) script goes to the end of the page, so the page shows "loading" at once
+      // instead of nothing until all of it is read (an installed app stays on its splash till then)
+      const page = resolve(outDir, 'index.html');
+      let html = readFileSync(page, 'utf8');
+      const m = html.match(/\s*<script type="module"[^>]*>[\s\S]*?<\/script>/);
+      if (m && html.indexOf(m[0]) < html.indexOf('<body')) {
+        // (plain slicing: the script itself is full of "$" that String.replace would read as patterns)
+        const at = html.indexOf(m[0]);
+        html = html.slice(0, at) + html.slice(at + m[0].length);
+        const end = html.lastIndexOf('</body>');
+        html = html.slice(0, end) + m[0].trim() + '\n' + html.slice(end);
+        writeFileSync(page, html);
+      }
     },
   };
 }

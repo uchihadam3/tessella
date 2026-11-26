@@ -20,6 +20,7 @@ declare global {
 }
 
 async function boot() {
+  document.getElementById('boot')?.remove();
   const app = document.getElementById('app')!;
   const ui = new UI();
   const game = new Game(app);

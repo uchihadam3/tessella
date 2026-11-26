@@ -454,6 +454,10 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
     const P = { x: V.x + v.x * 1.5 - u.x * (half + 1.3), z: V.z + v.z * 1.5 - u.z * (half + 1.3) };
     const panel = a.panel(def, { x: P.x, z: P.z, yaw: yawToward(P.x, P.z, V.x, V.z) }, 'light');
     lightPergola(a, def, pc, v, 0.9, sand, sandS);
+    // a gold line inlaid in the floor from the panel's foot to the edge of the light
+    const e = { x: pc.x - v.x * half - u.x * half, z: pc.z - v.z * half - u.z * half };
+    const len = Math.hypot(e.x - P.x, e.z - P.z);
+    b.batch.add(G.box(0.07, 0.03, len), M.gold(), mtx((P.x + e.x) / 2, panel.view.root.position.y + 0.005, (P.z + e.z) / 2, Math.atan2(e.x - P.x, e.z - P.z)));
     panel.view.root.userData.clue = { x: V.x, z: V.z, tx: pc.x, tz: pc.z };
     return panel;
   });
@@ -462,52 +466,63 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
   const T = L(4, -36);
   const ty = a.y(T.x, T.z) - 0.3;
   const TH = 7.4, topY = ty + TH;
-  solidBox(b, sand, T.x, ty, T.z, 5.2, TH, 5.2, rot);
+  solidBox(b, sand, T.x, ty, T.z, 7, TH, 7, rot);
   for (const [cx, cz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
-    const q = { x: T.x + ax.f.x * cx * 2.45 + ax.r.x * cz * 2.45, z: T.z + ax.f.z * cx * 2.45 + ax.r.z * cz * 2.45 };
+    const q = { x: T.x + ax.f.x * cx * 3.2 + ax.r.x * cz * 3.2, z: T.z + ax.f.z * cx * 3.2 + ax.r.z * cz * 3.2 };
     solidBox(b, sandS, q.x, topY, q.z, 0.6, 0.9, 0.6, rot, { walk: false });
   }
   // stairs along the tower's court-facing side, rising towards the hub
   const tSteps = 17, tRun = 0.55;
-  const tBase = { x: T.x + ax.r.x * 3.85 + ax.f.x * (tSteps * tRun - 2.0), z: T.z + ax.r.z * 3.85 + ax.f.z * (tSteps * tRun - 2.0) };
+  const tBase = { x: T.x + ax.r.x * 4.75 + ax.f.x * (tSteps * tRun - 2.9), z: T.z + ax.r.z * 4.75 + ax.f.z * (tSteps * tRun - 2.9) };
   stairs(b, sandS, tBase.x, ty, tBase.z, Math.atan2(ax.f.x, ax.f.z), 2.5, TH / tSteps, tRun, tSteps);
-  const tLand = { x: T.x + ax.r.x * 3.85 - ax.f.x * 2.7, z: T.z + ax.r.z * 3.85 - ax.f.z * 2.7 };
+  const tLand = { x: T.x + ax.r.x * 4.75 - ax.f.x * 3.6, z: T.z + ax.r.z * 4.75 - ax.f.z * 3.6 };
   solidBox(b, sandS, tLand.x, ty, tLand.z, 1.6, TH, 2.5, rot);
-  a.exclude(T.x, T.z, 9);
+  a.exclude(T.x, T.z, 10);
   const towerDirs = [{ x: -ax.r.x, z: -ax.r.z }, { x: -ax.f.x, z: -ax.f.z }, { x: ax.f.x, z: ax.f.z }];
   const tower = a.group('tower').map((def, i) => {
     const v = towerDirs[i];
     const u = { x: -v.z, z: v.x };
     // the panel at the left end of its edge, turned towards the middle of the top
-    const P = { x: T.x + v.x * 1.7 - u.x * 1.55, z: T.z + v.z * 1.7 - u.z * 1.55 };
-    const panel = a.panel(def, { x: P.x, z: P.z, y: topY, yaw: yawToward(P.x, P.z, T.x + v.x * 0.3, T.z + v.z * 0.3) }, 'tower');
+    const P = { x: T.x + v.x * 2.3 - u.x * 2.15, z: T.z + v.z * 2.3 - u.z * 2.15 };
+    const panel = a.panel(def, { x: P.x, z: P.z, y: topY, yaw: yawToward(P.x, P.z, T.x + v.x * 1.2, T.z + v.z * 1.2) }, 'tower');
     const cell = 1.8;
-    const F = { x: T.x + v.x * (8.6 + (def.h * cell) / 2), z: T.z + v.z * (8.6 + (def.h * cell) / 2) };
+    const F = { x: T.x + v.x * (9.6 + (def.h * cell) / 2), z: T.z + v.z * (9.6 + (def.h * cell) / 2) };
     flagField(a, def, F, v, cell, sand, i === 1);
-    panel.view.root.userData.clue = { x: T.x + v.x * 2.2, z: T.z + v.z * 2.2, tx: F.x, tz: F.z };
+    panel.view.root.userData.clue = { x: T.x + v.x * 3.0, z: T.z + v.z * 3.0, tx: F.x, tz: F.z };
     return panel;
   });
 
   // ── 3. the roof: blank panels; their numbers are inlaid in the court floor below ──
   const roofDefs = a.group('roof');
-  // you stand at the roof's edge looking down at a board; its panel stands just to your left,
-  // turned towards you
-  const viewSides = [-7.2, -2.4, 2.4, 7.2];
-  const boardSides = [-11.6, -4.4, 3.4, 12.2];
+  // one board below each edge of the roof — the left one (where the stairs arrive), the court in
+  // front, the right, the back — and one panel at that edge: you stand at the brink looking down
+  // at the board, the panel just to your left, turned towards you. From each edge only its own
+  // board can be seen.
+  const edges = [{ x: -ax.r.x, z: -ax.r.z }, { x: -ax.f.x, z: -ax.f.z }, { x: ax.r.x, z: ax.r.z }, { x: ax.f.x, z: ax.f.z }];
   const roof = roofDefs.map((def, i) => {
-    const V = L(19.6, viewSides[i]);
-    const B = L(5.2 + (def.h * 1.1) / 2, boardSides[i]);
-    const d = Math.hypot(B.x - V.x, B.z - V.z);
-    const v = { x: (B.x - V.x) / d, z: (B.z - V.z) / d };
+    const v = edges[i % 4];
     const u = { x: -v.z, z: v.x };
-    const P = { x: V.x - u.x * 1.25 + ax.f.x * 1.1, z: V.z - u.z * 1.25 + ax.f.z * 1.1 };
-    const panel = a.panel(def, { x: P.x, z: P.z, y: roofY, yaw: yawToward(P.x, P.z, V.x + ax.f.x * 0.6, V.z + ax.f.z * 0.6) }, 'roof');
-    floorBoard(a, def, B, { x: -ax.f.x, z: -ax.f.z }, 1.1, cy + 0.075);
+    const V = { x: S.x + v.x * 8.3, z: S.z + v.z * 8.3 };
+    const depth = def.h * 1.1;
+    const B = { x: S.x + v.x * (9 + 4.6 + depth / 2), z: S.z + v.z * (9 + 4.6 + depth / 2) };
+    const P = { x: V.x - u.x * 1.7 - v.x * 0.7, z: V.z - u.z * 1.7 - v.z * 0.7 };
+    const panel = a.panel(def, { x: P.x, z: P.z, y: roofY, yaw: yawToward(P.x, P.z, V.x - v.x * 0.6, V.z - v.z * 0.6) }, 'roof');
+    let by = cy;
+    if (i !== 1) {
+      // outside the court: a paved pad on the sand for the board
+      const half = (Math.max(def.w, def.h) * 1.1) / 2 + 1.0;
+      let top = -Infinity;
+      for (const dx of [-1, 0, 1]) for (const dz of [-1, 0, 1]) top = Math.max(top, a.y(B.x + dx * half, B.z + dz * half));
+      by = top + 0.15;
+      floorSlab(b, sand, B.x, by, B.z, half * 2, half * 2, Math.atan2(-v.x, -v.z), 1.4);
+      a.exclude(B.x, B.z, half + 1.5);
+    }
+    floorBoard(a, def, B, v, 1.1, by + 0.075);
     panel.view.root.userData.clue = { x: V.x, z: V.z, tx: B.x, tz: B.z };
     return panel;
   });
-  // the heart: three big ornaments around the stepped crown of the roof, on its far side
-  const heart = arc(a, a.group('heart'), 'heart', S.x, S.z, 6.0, ax.ang - Math.PI * 0.42, ax.ang + Math.PI * 0.42, true, undefined, () => roofY, 6.6);
+  // the heart: three big ornaments in a half ring on the old mosaic floor of the court
+  const heart = arc(a, a.group('heart'), 'heart', C.x, C.z, 8.0, ax.ang + Math.PI * 0.62, ax.ang + Math.PI * 1.38, true, undefined, () => cy);
   a.addTotem(S.x, S.z, roofY + 4.8);
   a.exclude(C.x, C.z, 26);
   a.exclude(S.x, S.z, 12);

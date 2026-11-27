@@ -528,8 +528,8 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
     b.batch.add(G.cone(0.32, 1.0, 4), M.gold(), mtx(p.x, y + 9.5, p.z, Math.PI / 4));
     a.world.collision.addBlocker({ x: p.x, z: p.z, r: 1, y0: y, y1: y + 10 });
   }
-  // ── the court's teaching rows: rivets on the left, waymarks on the right, never-touch at the
-  // back right, two colours at the front right — each a row of panels on the court floor ──
+  // ── the court's teaching rows: waymarks on the left, rivets and stones on the right, two
+  // colours at the back — each a row of panels on the court floor ──
   const courtRow = (key: string, fw0: number, side0: number, alongF: boolean, face: { x: number; z: number }) => {
     const defs = a.group(key);
     return defs.map((def, i) => {
@@ -538,11 +538,10 @@ export function buildMosaic(world: World, pm: PanelManager): AreaCtx {
       return a.panel(def, { x: q.x, z: q.z, y: cy, yaw: yawToward(q.x, q.z, q.x + face.x, q.z + face.z) }, key);
     });
   };
-  const rivets = courtRow('rivets', -6.5, -14, true, { x: ax.r.x, z: ax.r.z });
-  const marks = courtRow('marks', -6.5, 14, true, { x: -ax.r.x, z: -ax.r.z });
-  const apart = courtRow('apart', 13, 10, false, { x: -ax.f.x, z: -ax.f.z });
-  const pairs = courtRow('pairs', -14.5, 8.2, false, { x: ax.f.x, z: ax.f.z });
-  finishChain(a, [gateG, rivets, marks, apart, pairs, light, tower, roof, heart], gate);
+  const marks = courtRow('marks', -6.5, -14, true, { x: ax.r.x, z: ax.r.z });
+  const rivets = courtRow('rivets', -6.5, 14, true, { x: -ax.r.x, z: -ax.r.z });
+  const pairs = courtRow('pairs', 13, 9.8, false, { x: -ax.f.x, z: -ax.f.z });
+  finishChain(a, [gateG, marks, rivets, pairs, light, tower, roof, heart], gate);
   addParticles(a, ax.A.x, ax.A.z, 60, 16, ['#f4dca8'], 'dust');
   desertRuins(a, sand);
   return a;

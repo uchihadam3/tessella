@@ -421,62 +421,54 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Templo das Areias — Caminho (44)
+## O Templo das Areias — Caminho (41)
 
 ### gate
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 | mosaic.gate.1 | 3×1 | well | 1 | 1 | Ligar os dois poços com luz. |
-| mosaic.gate.2 | 5×1 | well | 1 | 1 | Um caminho mais longo. |
-| mosaic.gate.3 | 2×2 | well | 1 | 1 | O caminho pode virar. |
-| mosaic.gate.4 | 2×3 | well | 1 | 1 | Virar duas vezes. |
-| mosaic.gate.5 | 3×3 | well | 1 | 1 | Um corredor em L. |
-| mosaic.gate.6 | 3×3 | well | 1 | 1 | Ir e voltar pelo corredor. |
-| mosaic.gate.7 | 4×4 | well | 1 | 2 | Um labirinto pequeno. |
-| mosaic.gate.8 | 4×5 | well | 1 | 2 | Um labirinto mais comprido. |
+| mosaic.gate.2 | 2×2 | well | 2 | 1 | Por cima ou por baixo: os dois servem. |
+| mosaic.gate.3 | 3×2 | well | 3+ | 1 | Vários caminhos servem. |
+| mosaic.gate.4 | 3×2 | well | 2 | 1 | Acender demais estraga: o caminho tem um ladrilho de largura. |
+| mosaic.gate.5 | 3×3 | well | 3+ | 1 | Um quadrado aberto: qualquer caminho fino serve. |
+| mosaic.gate.6 | 3×3 | well | 3+ | 1 | Os poços do mesmo lado. |
+| mosaic.gate.7 | 4×3 | well | 3+ | 2 | Mais espaço, mais caminhos. |
+| mosaic.gate.8 | 4×4 | well | 3+ | 2 | Se o caminho encostar nele mesmo, a parte errada pisca. |
+
+### marks
+
+| id | tamanho | linguagens | soluções | dif. | percepção |
+|---|---|---|---|---|---|
+| mosaic.marks.1 | 3×2 | well + dot | 1 | 1 | O marco fica no caminho. |
+| mosaic.marks.2 | 3×3 | well + dot | 3+ | 1 | Passar pelo meio. |
+| mosaic.marks.3 | 3×3 | well + dot | 1 | 2 | O marco no canto puxa o caminho para a borda. |
+| mosaic.marks.4 | 3×3 | well + dot | 1 | 2 | Ir até o marco e voltar. |
+| mosaic.marks.5 | 4×4 | well + dot | 3+ | 2 | Ida e volta sem encostar. |
+| mosaic.marks.6 | 4×4 | well + dot | 3+ | 2 | Dois marcos na diagonal. |
+| mosaic.marks.7 | 4×4 | well + dot | 1 | 3 | Em zigue-zague. |
 
 ### rivets
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 | mosaic.rivets.1 | 3×2 | well | 1 | 1 | O rebite escuro não acende: dar a volta. |
-| mosaic.rivets.2 | 3×3 | well | 1 | 1 | Uma parede de rebites escuros. |
-| mosaic.rivets.3 | 5×1 | well | 1 | 1 | O rebite aceso já faz parte do caminho. |
-| mosaic.rivets.4 | 3×3 | well | 1 | 2 | O aceso puxa o caminho; o escuro o desvia. |
-| mosaic.rivets.5 | 3×3 | well | 1 | 2 | Passar pelo aceso, contornando o escuro. |
-| mosaic.rivets.6 | 4×4 | well | 1 | 3 | Quatro por quatro com rebites dos dois tipos. |
-
-### marks
-
-| id | tamanho | linguagens | soluções | dif. | percepção |
-|---|---|---|---|---|---|
-| mosaic.marks.1 | 5×1 | well + dot | 1 | 1 | O marco fica no caminho. |
-| mosaic.marks.2 | 3×3 | well + dot | 1 | 2 | O marco no canto puxa o caminho para a borda. |
-| mosaic.marks.3 | 3×3 | well + dot | 1 | 2 | Dois marcos: o caminho desce pelo meio. |
-| mosaic.marks.4 | 4×4 | well + dot | 1 | 2 | Um marco atrás das pedras. |
-| mosaic.marks.5 | 4×4 | dot + well | 1 | 3 | O marco longe dos poços. |
-| mosaic.marks.6 | 4×4 | well + dot | 1 | 3 | Dar a volta para buscar o marco. |
-
-### apart
-
-| id | tamanho | linguagens | soluções | dif. | percepção |
-|---|---|---|---|---|---|
-| mosaic.apart.1 | 3×3 | well + dot | 1 | 2 | O caminho não encosta nele mesmo: ida e volta com uma fresta. |
-| mosaic.apart.2 | 4×3 | well + dot | 1 | 2 | A fresta no meio fica apagada. |
-| mosaic.apart.3 | 4×4 | well + dot | 1 | 3 | Em zigue-zague, sem encostar. |
-| mosaic.apart.4 | 5×5 | well + dot | 1 | 4 | Três marcos, uma pedra e um rebite. |
+| mosaic.rivets.2 | 3×3 | well | 2 | 1 | Por qualquer lado do rebite. |
+| mosaic.rivets.3 | 3×3 | well | 2 | 1 | Uma pedra: também se contorna. |
+| mosaic.rivets.4 | 4×3 | well | 3+ | 2 | O rebite aceso já faz parte do caminho. |
+| mosaic.rivets.5 | 3×3 | well | 2 | 2 | O aceso puxa, o escuro desvia. |
+| mosaic.rivets.6 | 4×4 | well | 3+ | 2 | Um de cada. |
+| mosaic.rivets.7 | 4×4 | well + dot | 3+ | 3 | Rebites e um marco. |
 
 ### pairs
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 | mosaic.pairs.1 | 3×3 | well | 1 | 2 | Duas cores, dois caminhos. |
-| mosaic.pairs.2 | 3×3 | well | 1 | 2 | Os caminhos em pé. |
-| mosaic.pairs.3 | 4×3 | well | 1 | 2 | Dois caminhos paralelos, com uma fresta entre eles. |
-| mosaic.pairs.4 | 5×3 | well | 1 | 2 | Mais compridos. |
-| mosaic.pairs.5 | 4×4 | well | 1 | 3 | Um caminho dá a volta no outro. |
-| mosaic.pairs.6 | 4×4 | well + dot | 1 | 4 | Quem passa pelo marco? |
+| mosaic.pairs.2 | 4×3 | well | 1 | 2 | Os dois caminhos não se encostam. |
+| mosaic.pairs.3 | 3×4 | well | 1 | 2 | Em pé, lado a lado. |
+| mosaic.pairs.4 | 4×4 | well | 1 | 3 | Um caminho dá a volta no outro. |
+| mosaic.pairs.5 | 4×4 | well + dot | 1 | 4 | Quem passa pelo marco? |
 
 ### light
 

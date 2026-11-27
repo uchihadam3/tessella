@@ -4,7 +4,7 @@
  */
 import type { AreaId } from '../data/areas';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const SLOT_COUNT = 3;
 const KEY = (slot: number) => `tessella.save.${slot}`;
 const LAST = 'tessella.lastSlot';
@@ -129,12 +129,26 @@ function desertV6(d: SaveData): SaveData {
   return { ...d, panels };
 }
 
+/**
+ * version 7: the desert's teaching became open panels (gate 8, marks 7, rivets 7, pairs 5); a
+ * teaching sequence finished before stays finished; its scenery and heart did not change.
+ */
+function desertV7(d: SaveData): SaveData {
+  const panels: SaveData['panels'] = {};
+  for (const [id, v] of Object.entries(d.panels)) if (!/^mosaic\.(gate|rivets|marks|apart|pairs)\./.test(id)) panels[id] = v;
+  const done = (k: string) => !!d.panels[`mosaic.${k}`]?.done;
+  const now: [string, number, string][] = [['gate', 8, 'gate.8'], ['marks', 7, 'marks.6'], ['rivets', 7, 'rivets.6'], ['pairs', 5, 'pairs.6']];
+  for (const [g, n, last] of now) if (done(last) || done('light.1')) for (let i = 1; i <= n; i++) panels[`mosaic.${g}.${i}`] = { done: 1 };
+  return { ...d, panels };
+}
+
 function migrate(d: SaveData): SaveData {
   if (d.version < 2) d = { ...migrateV2(d), version: 2 };
   if (d.version < 3) d = { ...remap(d, INTRO_V3), version: 3 };
   if (d.version < 4) d = { ...sceneryV4(d), version: 4 };
   if (d.version < 5) d = { ...desertV5(d), version: 5 };
   if (d.version < 6) d = { ...desertV6(d), version: 6 };
+  if (d.version < 7) d = { ...desertV7(d), version: 7 };
   return d;
 }
 

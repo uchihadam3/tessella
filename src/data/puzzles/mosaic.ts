@@ -19,66 +19,131 @@ const P: AreaPuzzles = {
     }),
     puzzle('mosaic.gate.2', {
       grid: `
-        wa .  .  .  wa
+        wa .
+        .  wa
       `,
       difficulty: 1,
-      note: 'Um caminho mais longo.',
+      note: 'Por cima ou por baixo: os dois servem.',
     }),
     puzzle('mosaic.gate.3', {
       grid: `
-        wa .
-        #  wa
+        wa .  .
+        .  .  wa
       `,
       difficulty: 1,
-      note: 'O caminho pode virar.',
+      note: 'Vários caminhos servem.',
     }),
     puzzle('mosaic.gate.4', {
       grid: `
-        wa #
-        .  .
-        #  wa
+        wa .  wa
+        .  .  .
       `,
       difficulty: 1,
-      note: 'Virar duas vezes.',
+      note: 'Acender demais estraga: o caminho tem um ladrilho de largura.',
     }),
     puzzle('mosaic.gate.5', {
       grid: `
         wa .  .
-        #  #  .
-        #  #  wa
+        .  .  .
+        .  .  wa
       `,
       difficulty: 1,
-      note: 'Um corredor em L.',
+      note: 'Um quadrado aberto: qualquer caminho fino serve.',
     }),
     puzzle('mosaic.gate.6', {
       grid: `
         wa .  .
-        #  #  .
+        .  .  .
         wa .  .
       `,
       difficulty: 1,
-      note: 'Ir e voltar pelo corredor.',
+      note: 'Os poços do mesmo lado.',
     }),
     puzzle('mosaic.gate.7', {
       grid: `
-        wa #  .  .
-        .  #  .  #
-        .  .  .  #
-        #  #  .  wa
-      `,
-      difficulty: 2,
-      note: 'Um labirinto pequeno.',
-    }),
-    puzzle('mosaic.gate.8', {
-      grid: `
-        wa .  .  #
-        #  #  .  #
-        .  .  .  #
-        .  #  #  #
+        wa .  .  .
+        .  .  .  .
         .  .  .  wa
       `,
       difficulty: 2,
-      note: 'Um labirinto mais comprido.',
+      note: 'Mais espaço, mais caminhos.',
+    }),
+    puzzle('mosaic.gate.8', {
+      grid: `
+        wa .  .  .
+        .  .  .  .
+        .  .  .  .
+        wa .  .  .
+      `,
+      difficulty: 2,
+      note: 'Se o caminho encostar nele mesmo, a parte errada pisca.',
+    }),
+  ],
+  marks: [
+    puzzle('mosaic.marks.1', {
+      grid: `
+        wa o  wa
+        .  .  .
+      `,
+      difficulty: 1,
+      note: 'O marco fica no caminho.',
+    }),
+    puzzle('mosaic.marks.2', {
+      grid: `
+        wa .  .
+        .  o  .
+        .  .  wa
+      `,
+      difficulty: 1,
+      note: 'Passar pelo meio.',
+    }),
+    puzzle('mosaic.marks.3', {
+      grid: `
+        wa .  o
+        .  .  .
+        .  .  wa
+      `,
+      difficulty: 2,
+      note: 'O marco no canto puxa o caminho para a borda.',
+    }),
+    puzzle('mosaic.marks.4', {
+      grid: `
+        wa .  .
+        .  .  .
+        wa .  o
+      `,
+      difficulty: 2,
+      note: 'Ir até o marco e voltar.',
+    }),
+    puzzle('mosaic.marks.5', {
+      grid: `
+        wa .  .  .
+        .  .  .  o
+        .  .  .  .
+        wa .  .  .
+      `,
+      difficulty: 2,
+      note: 'Ida e volta sem encostar.',
+    }),
+    puzzle('mosaic.marks.6', {
+      grid: `
+        wa .  .  .
+        .  o  .  .
+        .  .  o  .
+        .  .  .  wa
+      `,
+      difficulty: 2,
+      note: 'Dois marcos na diagonal.',
+    }),
+    puzzle('mosaic.marks.7', {
+      grid: `
+        wa .  .  o
+        .  .  .  .
+        o  .  .  .
+        wa .  .  .
+      `,
+      difficulty: 3,
+      note: 'Em zigue-zague.',
     }),
   ],
   rivets: [
@@ -93,144 +158,58 @@ const P: AreaPuzzles = {
     puzzle('mosaic.rivets.2', {
       grid: `
         wa .  .
-        D  D  .
-        wa .  .
-      `,
-      difficulty: 1,
-      note: 'Uma parede de rebites escuros.',
-    }),
-    puzzle('mosaic.rivets.3', {
-      grid: `
-        wa .  L  .  wa
-      `,
-      difficulty: 1,
-      note: 'O rebite aceso já faz parte do caminho.',
-    }),
-    puzzle('mosaic.rivets.4', {
-      grid: `
-        wa L  .
         .  D  .
         .  .  wa
       `,
+      difficulty: 1,
+      note: 'Por qualquer lado do rebite.',
+    }),
+    puzzle('mosaic.rivets.3', {
+      grid: `
+        wa .  .
+        .  #  .
+        .  .  wa
+      `,
+      difficulty: 1,
+      note: 'Uma pedra: também se contorna.',
+    }),
+    puzzle('mosaic.rivets.4', {
+      grid: `
+        wa .  .  .
+        .  L  .  .
+        .  .  .  wa
+      `,
       difficulty: 2,
-      note: 'O aceso puxa o caminho; o escuro o desvia.',
+      note: 'O rebite aceso já faz parte do caminho.',
     }),
     puzzle('mosaic.rivets.5', {
       grid: `
         wa .  .
-        .  D  L
+        D  L  .
         .  .  wa
       `,
       difficulty: 2,
-      note: 'Passar pelo aceso, contornando o escuro.',
+      note: 'O aceso puxa, o escuro desvia.',
     }),
     puzzle('mosaic.rivets.6', {
       grid: `
         wa .  .  .
-        .  D  D  .
-        L  .  .  .
-        .  .  D  wa
-      `,
-      difficulty: 3,
-      note: 'Quatro por quatro com rebites dos dois tipos.',
-    }),
-  ],
-  marks: [
-    puzzle('mosaic.marks.1', {
-      grid: `
-        wa .  o  .  wa
-      `,
-      difficulty: 1,
-      note: 'O marco fica no caminho.',
-    }),
-    puzzle('mosaic.marks.2', {
-      grid: `
-        wa .  o
-        .  .  .
-        .  .  wa
-      `,
-      difficulty: 2,
-      note: 'O marco no canto puxa o caminho para a borda.',
-    }),
-    puzzle('mosaic.marks.3', {
-      grid: `
-        wa o  .
-        .  .  .
-        .  o  wa
-      `,
-      difficulty: 2,
-      note: 'Dois marcos: o caminho desce pelo meio.',
-    }),
-    puzzle('mosaic.marks.4', {
-      grid: `
-        wa .  .  .
-        .  #  #  o
-        .  .  .  .
+        .  D  .  .
+        .  .  L  .
         .  .  .  wa
       `,
       difficulty: 2,
-      note: 'Um marco atrás das pedras.',
+      note: 'Um de cada.',
     }),
-    puzzle('mosaic.marks.5', {
+    puzzle('mosaic.rivets.7', {
       grid: `
-        .  o  .  .
-        .  .  wa .
-        .  .  .  .
-        #  wa .  .
+        wa .  .  .
+        .  .  D  .
+        .  L  .  o
+        .  .  .  wa
       `,
       difficulty: 3,
-      note: 'O marco longe dos poços.',
-    }),
-    puzzle('mosaic.marks.6', {
-      grid: `
-        .  .  .  .
-        wa .  .  .
-        .  wa .  o
-        .  #  .  .
-      `,
-      difficulty: 3,
-      note: 'Dar a volta para buscar o marco.',
-    }),
-  ],
-  apart: [
-    puzzle('mosaic.apart.1', {
-      grid: `
-        wa .  o
-        .  .  .
-        wa .  .
-      `,
-      difficulty: 2,
-      note: 'O caminho não encosta nele mesmo: ida e volta com uma fresta.',
-    }),
-    puzzle('mosaic.apart.2', {
-      grid: `
-        wa .  .  o
-        .  .  .  .
-        wa .  .  .
-      `,
-      difficulty: 2,
-      note: 'A fresta no meio fica apagada.',
-    }),
-    puzzle('mosaic.apart.3', {
-      grid: `
-        wa .  .  o
-        .  .  .  .
-        o  .  .  .
-        wa .  .  .
-      `,
-      difficulty: 3,
-      note: 'Em zigue-zague, sem encostar.',
-    }),
-    puzzle('mosaic.apart.4', {
-      grid: `
-        .  wa .  .  .
-        o  .  .  .  o
-        .  .  .  .  .
-        .  o  .  #  .
-        D  .  .  wa .
-      `,
-      difficulty: 4,
-      note: 'Três marcos, uma pedra e um rebite.',
+      note: 'Rebites e um marco.',
     }),
   ],
   pairs: [
@@ -245,32 +224,24 @@ const P: AreaPuzzles = {
     }),
     puzzle('mosaic.pairs.2', {
       grid: `
-        wa .  wb
-        .  .  .
-        wa .  wb
-      `,
-      difficulty: 2,
-      note: 'Os caminhos em pé.',
-    }),
-    puzzle('mosaic.pairs.3', {
-      grid: `
         wa .  .  wa
         .  .  .  .
         wb .  .  wb
       `,
       difficulty: 2,
-      note: 'Dois caminhos paralelos, com uma fresta entre eles.',
+      note: 'Os dois caminhos não se encostam.',
     }),
-    puzzle('mosaic.pairs.4', {
+    puzzle('mosaic.pairs.3', {
       grid: `
-        wa .  .  .  wa
-        .  .  .  .  .
-        wb .  .  .  wb
+        wa .  wb
+        .  .  .
+        .  .  .
+        wa .  wb
       `,
       difficulty: 2,
-      note: 'Mais compridos.',
+      note: 'Em pé, lado a lado.',
     }),
-    puzzle('mosaic.pairs.5', {
+    puzzle('mosaic.pairs.4', {
       grid: `
         .  .  wb .
         .  wa .  .
@@ -280,7 +251,7 @@ const P: AreaPuzzles = {
       difficulty: 3,
       note: 'Um caminho dá a volta no outro.',
     }),
-    puzzle('mosaic.pairs.6', {
+    puzzle('mosaic.pairs.5', {
       grid: `
         .  wb .  .
         wb o  .  .

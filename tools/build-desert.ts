@@ -19,41 +19,36 @@ function solOf(grid: string): Uint8Array {
 const G: Record<string, Spec[]> = {
   gate: [
     { grid: 'wa . wa', difficulty: 1, note: 'Ligar os dois poços com luz.' },
-    { grid: 'wa . . . wa', difficulty: 1, note: 'Um caminho mais longo.' },
-    { grid: 'wa ./# wa', difficulty: 1, note: 'O caminho pode virar.' },
-    { grid: 'wa #/. ./# wa', difficulty: 1, note: 'Virar duas vezes.' },
-    { grid: 'wa . ./# # ./# # wa', difficulty: 1, note: 'Um corredor em L.' },
-    { grid: 'wa . ./# # ./wa . .', difficulty: 1, note: 'Ir e voltar pelo corredor.' },
-    { grid: 'wa # . ./. # . #/. . . #/# # . wa', difficulty: 2, note: 'Um labirinto pequeno.' },
-    { grid: 'wa . . #/# # . #/. . . #/. # # #/. . . wa', difficulty: 2, note: 'Um labirinto mais comprido.' },
+    { grid: 'wa ./. wa', difficulty: 1, note: 'Por cima ou por baixo: os dois servem.' },
+    { grid: 'wa . ./. . wa', difficulty: 1, note: 'Vários caminhos servem.' },
+    { grid: 'wa . wa/. . .', difficulty: 1, note: 'Acender demais estraga: o caminho tem um ladrilho de largura.' },
+    { grid: 'wa . ./. . ./. . wa', difficulty: 1, note: 'Um quadrado aberto: qualquer caminho fino serve.' },
+    { grid: 'wa . ./. . ./wa . .', difficulty: 1, note: 'Os poços do mesmo lado.' },
+    { grid: 'wa . . ./. . . ./. . . wa', difficulty: 2, note: 'Mais espaço, mais caminhos.' },
+    { grid: 'wa . . ./. . . ./. . . ./wa . . .', difficulty: 2, note: 'Se o caminho encostar nele mesmo, a parte errada pisca.' },
+  ],
+  marks: [
+    { grid: 'wa o wa/. . .', difficulty: 1, note: 'O marco fica no caminho.' },
+    { grid: 'wa . ./. o ./. . wa', difficulty: 1, note: 'Passar pelo meio.' },
+    { grid: 'wa . o/. . ./. . wa', difficulty: 2, note: 'O marco no canto puxa o caminho para a borda.' },
+    { grid: 'wa . ./. . ./wa . o', difficulty: 2, note: 'Ir até o marco e voltar.' },
+    { grid: 'wa . . ./. . . o/. . . ./wa . . .', difficulty: 2, note: 'Ida e volta sem encostar.' },
+    { grid: 'wa . . ./. o . ./. . o ./. . . wa', difficulty: 2, note: 'Dois marcos na diagonal.' },
+    { grid: 'wa . . o/. . . ./o . . ./wa . . .', difficulty: 3, note: 'Em zigue-zague.' },
   ],
   rivets: [
     { grid: 'wa D wa/. . .', difficulty: 1, note: 'O rebite escuro não acende: dar a volta.' },
-    { grid: 'wa . ./D D ./wa . .', difficulty: 1, note: 'Uma parede de rebites escuros.' },
-    { grid: 'wa . L . wa', difficulty: 1, note: 'O rebite aceso já faz parte do caminho.' },
-    { grid: 'wa L ./. D ./. . wa', difficulty: 2, note: 'O aceso puxa o caminho; o escuro o desvia.' },
-    { grid: 'wa . ./. D L/. . wa', difficulty: 2, note: 'Passar pelo aceso, contornando o escuro.' },
-    { grid: 'wa . . ./. D D ./L . . ./. . D wa', difficulty: 3, note: 'Quatro por quatro com rebites dos dois tipos.' },
-  ],
-  marks: [
-    { grid: 'wa . o . wa', difficulty: 1, note: 'O marco fica no caminho.' },
-    { grid: 'wa . o/. . ./. . wa', difficulty: 2, note: 'O marco no canto puxa o caminho para a borda.' },
-    { grid: 'wa o ./. . ./. o wa', difficulty: 2, note: 'Dois marcos: o caminho desce pelo meio.' },
-    { grid: 'wa . . ./. # # o/. . . ./. . . wa', difficulty: 2, note: 'Um marco atrás das pedras.' },
-    { grid: '. o . ./. . wa ./. . . ./# wa . .', difficulty: 3, note: 'O marco longe dos poços.' },
-    { grid: '. . . ./wa . . ./. wa . o/. # . .', difficulty: 3, note: 'Dar a volta para buscar o marco.' },
-  ],
-  apart: [
-    { grid: 'wa . o/. . ./wa . .', difficulty: 2, note: 'O caminho não encosta nele mesmo: ida e volta com uma fresta.' },
-    { grid: 'wa . . o/. . . ./wa . . .', difficulty: 2, note: 'A fresta no meio fica apagada.' },
-    { grid: 'wa . . o/. . . ./o . . ./wa . . .', difficulty: 3, note: 'Em zigue-zague, sem encostar.' },
-    { grid: '. wa . . ./o . . . o/. . . . ./. o . # ./D . . wa .', difficulty: 4, note: 'Três marcos, uma pedra e um rebite.' },
+    { grid: 'wa . ./. D ./. . wa', difficulty: 1, note: 'Por qualquer lado do rebite.' },
+    { grid: 'wa . ./. # ./. . wa', difficulty: 1, note: 'Uma pedra: também se contorna.' },
+    { grid: 'wa . . ./. L . ./. . . wa', difficulty: 2, note: 'O rebite aceso já faz parte do caminho.' },
+    { grid: 'wa . ./D L ./. . wa', difficulty: 2, note: 'O aceso puxa, o escuro desvia.' },
+    { grid: 'wa . . ./. D . ./. . L ./. . . wa', difficulty: 2, note: 'Um de cada.' },
+    { grid: 'wa . . ./. . D ./. L . o/. . . wa', difficulty: 3, note: 'Rebites e um marco.' },
   ],
   pairs: [
     { grid: 'wa . wa/. . ./wb . wb', difficulty: 2, note: 'Duas cores, dois caminhos.' },
-    { grid: 'wa . wb/. . ./wa . wb', difficulty: 2, note: 'Os caminhos em pé.' },
-    { grid: 'wa . . wa/. . . ./wb . . wb', difficulty: 2, note: 'Dois caminhos paralelos, com uma fresta entre eles.' },
-    { grid: 'wa . . . wa/. . . . ./wb . . . wb', difficulty: 2, note: 'Mais compridos.' },
+    { grid: 'wa . . wa/. . . ./wb . . wb', difficulty: 2, note: 'Os dois caminhos não se encostam.' },
+    { grid: 'wa . wb/. . ./. . ./wa . wb', difficulty: 2, note: 'Em pé, lado a lado.' },
     { grid: '. . wb ./. wa . ./. wa . ./. . . wb', difficulty: 3, note: 'Um caminho dá a volta no outro.' },
     { grid: '. wb . ./wb o . ./. . . ./. wa . wa', difficulty: 4, note: 'Quem passa pelo marco?' },
   ],
@@ -111,8 +106,10 @@ for (const [group, list] of Object.entries(G)) {
       }).join('')).join('/');
     }
     const def = puzzle(id, { grid: r.join('\n'), ...(target ? { target, targetDisplay: 'world' as const } : {}), ...(sp.hide ? { hideGlyphs: true } : {}), difficulty: sp.difficulty });
+    // teaching panels are open (several answers: you can try, and be wrong); the rest have one
+    const teaching = ['gate', 'marks', 'rivets', 'pairs'].includes(group);
     const res = solve(def, { maxSolutions: 2 });
-    if (res.solutions.length !== 1) throw new Error(`${id}: ${res.solutions.length} answers`);
+    if (res.solutions.length < 1 || (!teaching && res.solutions.length !== 1)) throw new Error(`${id}: ${res.solutions.length} answers`);
     out += `    puzzle('${id}', {\n      grid: \`\n${grid}\n      \`,\n`;
     if (target) out += `      target: '${target}',\n      targetDisplay: 'world',\n`;
     if (sp.hide) out += `      hideGlyphs: true,\n`;

@@ -232,33 +232,32 @@ export function check(p: PuzzleDef, state: ArrayLike<number>): CheckResult {
       const lit = (t: number) => t >= 0 && !p.cells[t].hole && !!state[t];
       for (const w of wells) if (!state[w]) bad.add(w);
       for (const d of dots) if (!state[d]) bad.add(d);
-      let broken = false;
+      // where the path is wrong blinks: a tile that branches or touches (wrong number of lit
+      // neighbours), a piece that joins no wells or the wrong ones — like a broken symbol, it
+      // shows what is wrong, not what is right
       for (let i = 0; i < n; i++) {
         if (!lit(i)) continue;
         let deg = 0;
         for (const j of g.dir4[i]) if (lit(j)) deg++;
-        if (deg !== (isWell.has(i) ? 1 : 2)) broken = true;
+        if (deg !== (isWell.has(i) ? 1 : 2)) bad.add(i);
       }
-      // every lit piece joins exactly the two wells of one colour
       const seen = new Uint8Array(n);
       for (let i = 0; i < n; i++) {
         if (!lit(i) || seen[i]) continue;
         const stack = [i];
         seen[i] = 1;
+        const piece: number[] = [];
         const ends: number[] = [];
         while (stack.length) {
           const t = stack.pop()!;
+          piece.push(t);
           if (isWell.has(t)) ends.push(t);
           for (const j of g.dir4[t]) if (lit(j) && !seen[j]) { seen[j] = 1; stack.push(j); }
         }
         const col = (t: number) => (p.cells[t].glyph as { color: string }).color;
-        if (ends.length !== 2 || col(ends[0]) !== col(ends[1])) {
-          broken = true;
-          ends.forEach((t) => bad.add(t));
-        }
+        if (ends.length === 0) piece.forEach((t) => bad.add(t));
+        else if (ends.length !== 2 || col(ends[0]) !== col(ends[1])) ends.forEach((t) => bad.add(t));
       }
-      // a broken path: the wells blink (the rule), not the tiles (that would show the answer)
-      if (broken) wells.forEach((t) => bad.add(t));
       if (bad.size) violations.push({ rule: 'path', tiles: [...bad] });
     }
   }

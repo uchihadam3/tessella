@@ -421,88 +421,42 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Templo das Areias — Caminho (41)
+## O Templo das Areias — O caminho do sol (15)
 
 ### gate
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.gate.1 | 3×1 | well | 1 | 1 | Ligar os dois poços com luz. |
-| mosaic.gate.2 | 2×2 | well | 2 | 1 | Por cima ou por baixo: os dois servem. |
-| mosaic.gate.3 | 3×2 | well | 3+ | 1 | Vários caminhos servem. |
-| mosaic.gate.4 | 3×2 | well | 2 | 1 | Acender demais estraga: o caminho tem um ladrilho de largura. |
-| mosaic.gate.5 | 3×3 | well | 3+ | 1 | Um quadrado aberto: qualquer caminho fino serve. |
-| mosaic.gate.6 | 3×3 | well | 3+ | 1 | Os poços do mesmo lado. |
-| mosaic.gate.7 | 4×3 | well | 3+ | 2 | Mais espaço, mais caminhos. |
-| mosaic.gate.8 | 4×4 | well | 3+ | 2 | Se o caminho encostar nele mesmo, a parte errada pisca. |
-
-### marks
-
-| id | tamanho | linguagens | soluções | dif. | percepção |
-|---|---|---|---|---|---|
-| mosaic.marks.1 | 3×2 | well + dot | 1 | 1 | O marco fica no caminho. |
-| mosaic.marks.2 | 3×3 | well + dot | 3+ | 1 | Passar pelo meio. |
-| mosaic.marks.3 | 3×3 | well + dot | 1 | 2 | O marco no canto puxa o caminho para a borda. |
-| mosaic.marks.4 | 3×3 | well + dot | 1 | 2 | Ir até o marco e voltar. |
-| mosaic.marks.5 | 4×4 | well + dot | 3+ | 2 | Ida e volta sem encostar. |
-| mosaic.marks.6 | 4×4 | well + dot | 3+ | 2 | Dois marcos na diagonal. |
-| mosaic.marks.7 | 4×4 | well + dot | 1 | 3 | Em zigue-zague. |
-
-### rivets
-
-| id | tamanho | linguagens | soluções | dif. | percepção |
-|---|---|---|---|---|---|
-| mosaic.rivets.1 | 3×2 | well | 1 | 1 | O rebite escuro não acende: dar a volta. |
-| mosaic.rivets.2 | 3×3 | well | 2 | 1 | Por qualquer lado do rebite. |
-| mosaic.rivets.3 | 3×3 | well | 2 | 1 | Uma pedra: também se contorna. |
-| mosaic.rivets.4 | 4×3 | well | 3+ | 2 | O rebite aceso já faz parte do caminho. |
-| mosaic.rivets.5 | 3×3 | well | 2 | 2 | O aceso puxa, o escuro desvia. |
-| mosaic.rivets.6 | 4×4 | well | 3+ | 2 | Um de cada. |
-| mosaic.rivets.7 | 4×4 | well + dot | 3+ | 3 | Rebites e um marco. |
-
-### pairs
-
-| id | tamanho | linguagens | soluções | dif. | percepção |
-|---|---|---|---|---|---|
-| mosaic.pairs.1 | 3×3 | well | 1 | 2 | Duas cores, dois caminhos. |
-| mosaic.pairs.2 | 4×3 | well | 1 | 2 | Os dois caminhos não se encostam. |
-| mosaic.pairs.3 | 3×4 | well | 1 | 2 | Em pé, lado a lado. |
-| mosaic.pairs.4 | 4×4 | well | 1 | 3 | Um caminho dá a volta no outro. |
-| mosaic.pairs.5 | 4×4 | well + dot | 1 | 4 | Quem passa pelo marco? |
+| mosaic.gate.1 | 3×3 | well + Placa | 1 | 1 | O sol passa pelos furos da cobertura e marca o caminho no próprio painel. |
+| mosaic.gate.2 | 4×4 | well + Placa | 1 | 2 | Uma folha de palmeira tapa parte da cobertura: os furos que faltam se veem olhando para cima. |
+| mosaic.gate.3 | 4×4 | well + Placa | 1 | 2 | Um pano cobre a cobertura inteira: só os furos, vistos por baixo, mostram o caminho. |
 
 ### light
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.light.1 | 4×4 | well + Placa | 1 | 2 | Pérgola: a luz que passa pela treliça desenha o caminho no chão. |
-| mosaic.light.2 | 4×4 | well + dot + Placa | 1 | 3 | A areia cobriu um canto: o resto do caminho se deduz. |
-| mosaic.light.3 | 5×5 | well + Placa | 1 | 4 | Metade do chão soterrada: a treliça, vista por baixo, mostra o resto. |
-| mosaic.light.4 | 5×5 | dot + well + Placa | 1 | 5 | Dois caminhos, a parte de baixo enterrada. |
+| mosaic.light.1 | 4×4 | well + Placa | 1 | 2 | A luz da pérgola cai no chão, ao lado do painel; os poços no piso dizem que aquele chão é o painel. |
+| mosaic.light.2 | 4×4 | well + Placa | 1 | 3 | Uma estela faz sombra num pedaço do caminho; atrás dela o caminho inteiro está gravado. |
+| mosaic.light.3 | 5×5 | well + Placa | 1 | 3 | A areia cobre um trecho: o caminho que falta é o único que liga as pontas sem encostar. |
+| mosaic.light.4 | 5×5 | well + Placa | 1 | 4 | O chão está todo soterrado: só a treliça, vista por baixo, mostra o caminho. |
+| mosaic.light.5 | 4×5 | well + Placa | 1 | 4 | A pérgola encosta num muro: as primeiras fileiras da luz sobem pela parede. |
 
-### tower
-
-| id | tamanho | linguagens | soluções | dif. | percepção |
-|---|---|---|---|---|---|
-| mosaic.tower.1 | 4×4 | well + Placa | 1 | 2 | Do alto da torre: as lajes vitrificadas são o caminho. |
-| mosaic.tower.2 | 6×6 | well + Placa | 1 | 4 | Um toldo esconde um canto visto do alto: descer e olhar por baixo. |
-| mosaic.tower.3 | 5×5 | dot + well + Placa | 1 | 5 | Uma duna engoliu um canto: o caminho que falta se deduz. |
-
-### roof
+### court
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.roof.1 | 4×4 | dot + well | 1 | 3 | O painel está quase em branco: os marcos estão no chão, lá embaixo. |
-| mosaic.roof.2 | 5×5 | well + dot | 1 | 4 | Cinco por cinco, lido do teto. |
-| mosaic.roof.3 | 5×5 | dot + well | 1 | 5 | Marcos nos cantos. |
-| mosaic.roof.4 | 6×6 | well + dot | 1 | 6 | Dois caminhos no maior tabuleiro do pátio. |
+| mosaic.court.1 | 4×4 | well + Placa | 1 | 3 | Uma placa de bronze reflete o sol: o caminho aparece longe, na parede do santuário. |
+| mosaic.court.2 | 5×5 | well + Placa | 1 | 5 | Duas treliças, uma sobre a outra: só passa luz onde as duas estão abertas. |
+| mosaic.court.3 | 5×5 | well + Placa | 1 | 4 | Ladrilhos polidos que só brilham vistos de um ponto: as pegadas no chão. |
+| mosaic.court.4 | 5×5 | well + Placa | 1 | 4 | Vigas de pedra no alto: desta vez o caminho é a sombra. |
 
 ### heart
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
-| mosaic.heart.1 | 5×5 | well + dot | 1 | 7 | Coração: três marcos que parecem estar no caminho errado. |
-| mosaic.heart.2 | 6×6 | dot + well | 1 | 8 | Coração: o caminho longo entre pedras. |
-| mosaic.heart.3 | 6×6 | dot + well | 1 | 8 | Coração: dois poços colados e um caminho que dá a volta no tabuleiro. |
+| mosaic.heart.1 | 5×5 | well + Placa | 1 | 7 | Coração: a estela faz sombra em metade do caminho e a areia cobriu o pé da gravação. |
+| mosaic.heart.2 | 5×5 | well + Placa | 1 | 8 | Coração: duas treliças sobre um chão todo soterrado. |
+| mosaic.heart.3 | 6×6 | well + Placa | 1 | 8 | Coração: a sombra das vigas, com a areia cobrindo o meio. |
 
 ### secret
 

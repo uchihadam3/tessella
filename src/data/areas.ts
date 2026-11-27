@@ -95,17 +95,13 @@ export const AREAS: AreaSpec[] = [
   },
   {
     id: 'mosaic', number: 5, name: { pt: 'O Templo das Areias', en: 'The Sand Temple' },
-    rule: { pt: 'Caminho', en: 'Path' }, glyph: 'mosaic',
+    rule: { pt: 'O caminho do sol', en: 'The sun\'s path' }, glyph: 'mosaic',
     lit: '#4fd8e0', accent: '#d9a441', anchor: [141, 169], totem: true,
     groups: [
-      { key: 'gate', count: 8, role: 'open grids, many answers: join the wells with a thin path (too much light, or touching, blinks)' },
-      { key: 'marks', count: 7, role: 'waymarks: the path passes over them (out and back, zigzag)' },
-      { key: 'rivets', count: 7, role: 'a dark rivet or a stone blocks the path, a lit rivet is part of it' },
-      { key: 'pairs', count: 5, role: 'two colours, two paths that never touch' },
-      { key: 'light', count: 4, role: 'pergolas: the light on the floor shows the path; sand hides part (deduce it, or read the lattice from below)' },
-      { key: 'tower', count: 3, role: 'glazed flagstones seen from a tower are the path; an awning hides a corner (walk under it); a dune buries part' },
-      { key: 'roof', count: 4, role: 'panels on the sanctuary roof that show no waymarks: they are inlaid in the floor below each edge' },
-      { key: 'heart', count: 3, role: 'the hard ones: long paths between rocks, waymarks and a second colour' },
+      { key: 'gate', count: 3, role: 'the sun on the panel through a pierced canopy: all of it, part (a palm frond), none (a cloth: read the holes from below)' },
+      { key: 'light', count: 5, role: 'pergolas, the sun on a floor: shown; a stele shades part (carved on its back); sand (deduce); all buried (look up); a wall (unfold)' },
+      { key: 'court', count: 4, role: 'a bronze plate throws it onto a far wall; two pierced roofs (only where both are open); polished tiles that gleam from one spot; beams (the path is the shadow)' },
+      { key: 'heart', count: 3, role: 'two ways at once: stele and sand, two roofs over a buried floor, beams with sand' },
     ],
   },
   {

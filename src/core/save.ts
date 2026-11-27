@@ -4,7 +4,7 @@
  */
 import type { AreaId } from '../data/areas';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 export const SLOT_COUNT = 3;
 const KEY = (slot: number) => `tessella.save.${slot}`;
 const LAST = 'tessella.lastSlot';
@@ -142,6 +142,15 @@ function desertV7(d: SaveData): SaveData {
   return { ...d, panels };
 }
 
+/** version 8: the desert became "the sun shows the way"; only a finished desert carries over. */
+function desertV8(d: SaveData): SaveData {
+  const finished = !!d.panels['mosaic.heart.3']?.done;
+  const panels: SaveData['panels'] = {};
+  for (const [id, v] of Object.entries(d.panels)) if (!id.startsWith('mosaic.')) panels[id] = v;
+  if (finished) for (const [g, n] of Object.entries({ gate: 3, light: 5, court: 4, heart: 3 })) for (let i = 1; i <= n; i++) panels[`mosaic.${g}.${i}`] = { done: 1 };
+  return { ...d, panels };
+}
+
 function migrate(d: SaveData): SaveData {
   if (d.version < 2) d = { ...migrateV2(d), version: 2 };
   if (d.version < 3) d = { ...remap(d, INTRO_V3), version: 3 };
@@ -149,6 +158,7 @@ function migrate(d: SaveData): SaveData {
   if (d.version < 5) d = { ...desertV5(d), version: 5 };
   if (d.version < 6) d = { ...desertV6(d), version: 6 };
   if (d.version < 7) d = { ...desertV7(d), version: 7 };
+  if (d.version < 8) d = { ...desertV8(d), version: 8 };
   return d;
 }
 

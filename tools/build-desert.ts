@@ -1,86 +1,47 @@
 /**
- * Writes src/data/puzzles/mosaic.ts — the desert's path panels. Panels whose drawing is seen in
- * the place get their target from the answer of a base puzzle (with what the place hides as '?'),
- * and every panel is checked to have exactly one answer.
+ * Writes src/data/puzzles/mosaic.ts — the desert: "the sun shows the way". Every panel is a path
+ * of light between its two wells; the answer is always the path the sun draws. Each panel hides
+ * that drawing a different way (see src/world/areas/desert.ts). Panels that must be worked out
+ * from part of the drawing list what can be seen (`seen`: '.' visible, '?' hidden) and are checked
+ * to have exactly one answer from that alone.
  *   npx tsx tools/build-desert.ts
  */
 import { writeFileSync } from 'node:fs';
 import { puzzle } from '../src/puzzle/board';
+import { check } from '../src/puzzle/rules';
 import { solve } from '../src/puzzle/solver';
 
-type Spec = { grid: string; note: string; base?: string; mask?: string; hide?: boolean; difficulty: number };
-const rows = (s: string) => s.split('/').map((r) => r.trim());
-function solOf(grid: string): Uint8Array {
-  const p = puzzle('b', { grid: rows(grid).join('\n'), difficulty: 1 });
-  const r = solve(p, { maxSolutions: 2 });
-  if (r.solutions.length !== 1) throw new Error(`base not unique: ${grid}`);
-  return r.solutions[0];
-}
+type Spec = { path: string; note: string; difficulty: number; seen?: string };
 const G: Record<string, Spec[]> = {
   gate: [
-    { grid: 'wa . wa', difficulty: 1, note: 'Ligar os dois poços com luz.' },
-    { grid: 'wa ./. wa', difficulty: 1, note: 'Por cima ou por baixo: os dois servem.' },
-    { grid: 'wa . ./. . wa', difficulty: 1, note: 'Vários caminhos servem.' },
-    { grid: 'wa . wa/. . .', difficulty: 1, note: 'Acender demais estraga: o caminho tem um ladrilho de largura.' },
-    { grid: 'wa . ./. . ./. . wa', difficulty: 1, note: 'Um quadrado aberto: qualquer caminho fino serve.' },
-    { grid: 'wa . ./. . ./wa . .', difficulty: 1, note: 'Os poços do mesmo lado.' },
-    { grid: 'wa . . ./. . . ./. . . wa', difficulty: 2, note: 'Mais espaço, mais caminhos.' },
-    { grid: 'wa . . ./. . . ./. . . ./wa . . .', difficulty: 2, note: 'Se o caminho encostar nele mesmo, a parte errada pisca.' },
-  ],
-  marks: [
-    { grid: 'wa o wa/. . .', difficulty: 1, note: 'O marco fica no caminho.' },
-    { grid: 'wa . ./. o ./. . wa', difficulty: 1, note: 'Passar pelo meio.' },
-    { grid: 'wa . o/. . ./. . wa', difficulty: 2, note: 'O marco no canto puxa o caminho para a borda.' },
-    { grid: 'wa . ./. . ./wa . o', difficulty: 2, note: 'Ir até o marco e voltar.' },
-    { grid: 'wa . . ./. . . o/. . . ./wa . . .', difficulty: 2, note: 'Ida e volta sem encostar.' },
-    { grid: 'wa . . ./. o . ./. . o ./. . . wa', difficulty: 2, note: 'Dois marcos na diagonal.' },
-    { grid: 'wa . . o/. . . ./o . . ./wa . . .', difficulty: 3, note: 'Em zigue-zague.' },
-  ],
-  rivets: [
-    { grid: 'wa D wa/. . .', difficulty: 1, note: 'O rebite escuro não acende: dar a volta.' },
-    { grid: 'wa . ./. D ./. . wa', difficulty: 1, note: 'Por qualquer lado do rebite.' },
-    { grid: 'wa . ./. # ./. . wa', difficulty: 1, note: 'Uma pedra: também se contorna.' },
-    { grid: 'wa . . ./. L . ./. . . wa', difficulty: 2, note: 'O rebite aceso já faz parte do caminho.' },
-    { grid: 'wa . ./D L ./. . wa', difficulty: 2, note: 'O aceso puxa, o escuro desvia.' },
-    { grid: 'wa . . ./. D . ./. . L ./. . . wa', difficulty: 2, note: 'Um de cada.' },
-    { grid: 'wa . . ./. . D ./. L . o/. . . wa', difficulty: 3, note: 'Rebites e um marco.' },
-  ],
-  pairs: [
-    { grid: 'wa . wa/. . ./wb . wb', difficulty: 2, note: 'Duas cores, dois caminhos.' },
-    { grid: 'wa . . wa/. . . ./wb . . wb', difficulty: 2, note: 'Os dois caminhos não se encostam.' },
-    { grid: 'wa . wb/. . ./. . ./wa . wb', difficulty: 2, note: 'Em pé, lado a lado.' },
-    { grid: '. . wb ./. wa . ./. wa . ./. . . wb', difficulty: 3, note: 'Um caminho dá a volta no outro.' },
-    { grid: '. wb . ./wb o . ./. . . ./. wa . wa', difficulty: 4, note: 'Quem passa pelo marco?' },
+    { path: 'W10/010/01W', difficulty: 1, note: 'O sol passa pelos furos da cobertura e marca o caminho no próprio painel.' },
+    { path: 'W000/1110/0010/001W', difficulty: 2, note: 'Uma folha de palmeira tapa parte da cobertura: os furos que faltam se veem olhando para cima.' },
+    { path: 'W111/0001/0001/W111', difficulty: 2, note: 'Um pano cobre a cobertura inteira: só os furos, vistos por baixo, mostram o caminho.' },
   ],
   light: [
-    { grid: '. wa . ./. . . ./. . . ./. D wa .', base: '. wa . ./. . . ./o . . ./. D wa .', mask: '', difficulty: 2, note: 'Pérgola: a luz que passa pela treliça desenha o caminho no chão.' },
-    { grid: '. . D ./. . wa ./. . . o/wa . . .', base: '. . D ./. . wa ./. . . o/wa . . .', mask: '..../..../??../??..', difficulty: 3, note: 'A areia cobriu um canto: o resto do caminho se deduz.' },
-    { grid: '. wa . . ./. . . . ./. D wa . ./. # . . ./. . . . .', base: '. wa . . ./. o . . ./. D wa . o/. # . . ./. . . . .', mask: '', difficulty: 4, note: 'Metade do chão soterrada: a treliça, vista por baixo, mostra o resto.' },
-    { grid: 'o . . . wb/wa . . . ./. . . . wb/. . D . ./. . . wa .', base: 'o . . . wb/wa . . . ./. . . . wb/. . D . ./. . . wa .', mask: '...../...../?????/?????/?????', difficulty: 5, note: 'Dois caminhos, a parte de baixo enterrada.' },
+    { path: '0W00/0111/0001/00W1', difficulty: 2, note: 'A luz da pérgola cai no chão, ao lado do painel; os poços no piso dizem que aquele chão é o painel.' },
+    { path: 'W100/0100/0111/000W', difficulty: 3, note: 'Uma estela faz sombra num pedaço do caminho; atrás dela o caminho inteiro está gravado.' },
+    { path: 'W1100/00100/00111/00001/0000W', difficulty: 3, seen: '...../...??/...??/...../.....', note: 'A areia cobre um trecho: o caminho que falta é o único que liga as pontas sem encostar.' },
+    { path: '0011W/00100/01100/01000/W1000', difficulty: 4, note: 'O chão está todo soterrado: só a treliça, vista por baixo, mostra o caminho.' },
+    { path: '001W/0010/0110/0100/W100', difficulty: 4, note: 'A pérgola encosta num muro: as primeiras fileiras da luz sobem pela parede.' },
   ],
-  tower: [
-    { grid: '. . . ./. . wa ./. wa . ./. . D .', base: '. . . ./o . wa ./. wa . ./. . D .', mask: '', difficulty: 2, note: 'Do alto da torre: as lajes vitrificadas são o caminho.' },
-    { grid: '. . . wa . ./. . . . D ./. . # . . ./. . . . . wa/wb . . . wb ./. . . . . .', base: '. . . wa . ./. . o . D ./. . # . . ./. . o . . wa/wb . . . wb ./. . . . . .', mask: '', difficulty: 4, note: 'Um toldo esconde um canto visto do alto: descer e olhar por baixo.' },
-    { grid: '. o . . wb/. . . . ./wa # . . ./. . . . ./. wa . wb .', base: '. o . . wb/. . . . ./wa # . . ./. . . . ./. wa . wb .', mask: '...../...../...../.????/.????', difficulty: 5, note: 'Uma duna engoliu um canto: o caminho que falta se deduz.' },
-  ],
-  roof: [
-    { grid: '. . . D/. o wa ./o . . wa/. . . .', hide: true, difficulty: 3, note: 'O painel está quase em branco: os marcos estão no chão, lá embaixo.' },
-    { grid: '. . wa o ./. . . . D/. . . o o/. # . . ./. wa . . .', hide: true, difficulty: 4, note: 'Cinco por cinco, lido do teto.' },
-    { grid: '. o wa D ./. . . . ./# . . . ./wa . . . o/o . . . .', hide: true, difficulty: 5, note: 'Marcos nos cantos.' },
-    { grid: '. . . wb . wa/# D . o . ./. . . . . ./. wb . . . ./. . . . . ./. . o . wa .', hide: true, difficulty: 6, note: 'Dois caminhos no maior tabuleiro do pátio.' },
+  court: [
+    { path: 'W00W/1001/1111/0000', difficulty: 3, note: 'Uma placa de bronze reflete o sol: o caminho aparece longe, na parede do santuário.' },
+    { path: 'W0000/11100/00100/00111/0000W', difficulty: 5, note: 'Duas treliças, uma sobre a outra: só passa luz onde as duas estão abertas.' },
+    { path: '00000/01110/W101W/00000/00000', difficulty: 4, note: 'Ladrilhos polidos que só brilham vistos de um ponto: as pegadas no chão.' },
+    { path: '0001W/00110/01100/11000/W0000', difficulty: 4, note: 'Vigas de pedra no alto: desta vez o caminho é a sombra.' },
   ],
   heart: [
-    { grid: '. . . . ./. . . . ./. wa o o ./# . . . o/# wa . . .', difficulty: 7, note: 'Coração: três marcos que parecem estar no caminho errado.' },
-    { grid: '. o . . . ./D . # . . ./. . . o . ./. . o # wa ./wa . . . . ./. . . . . .', difficulty: 8, note: 'Coração: o caminho longo entre pedras.' },
-    { grid: '. o . . . wb/. . . . . #/. . . . . o/. . . . . ./wb . . . . ./. wa wa . . D', difficulty: 8, note: 'Coração: dois poços colados e um caminho que dá a volta no tabuleiro.' },
+    { path: '00111/11101/W0001/00111/W1100', difficulty: 7, seen: '...../...../...../...??/...??', note: 'Coração: a estela faz sombra em metade do caminho e a areia cobriu o pé da gravação.' },
+    { path: '0W000/01110/00010/01110/W1000', difficulty: 8, note: 'Coração: duas treliças sobre um chão todo soterrado.' },
+    { path: 'W11000/001000/001110/000010/011110/0W0000', difficulty: 8, seen: '....../....../..????/..????/....../......', note: 'Coração: a sombra das vigas, com a areia cobrindo o meio.' },
   ],
 };
 let out = `/**
- * O Templo das Areias — Caminho: os dois poços de cada cor se ligam por um caminho de luz, um
- * ladrilho de largura, sem ramos, sem encostar em si mesmo nem em outro caminho; o caminho passa
- * pelos marcos; pedras e rebites escuros o bloqueiam. O portão ensina; as pérgolas, a torre e o
- * teto do santuário mostram parte dos caminhos no lugar; o coração pede tudo.
- * (gerado por tools/build-desert.ts)
+ * O Templo das Areias — o sol mostra o caminho. Cada painel é um caminho de luz entre os seus dois
+ * poços; a resposta é sempre o caminho que o sol desenha (pelos furos de uma cobertura, de uma
+ * pérgola, refletido numa placa, ou a sombra de vigas). Só o primeiro mostra tudo; os outros escondem
+ * uma parte de um jeito diferente. (gerado por tools/build-desert.ts)
  */
 import { puzzle } from '../../puzzle/board';
 import type { AreaPuzzles } from './types';
@@ -91,32 +52,31 @@ for (const [group, list] of Object.entries(G)) {
   out += `  ${group}: [\n`;
   list.forEach((sp, i) => {
     const id = `mosaic.${group}.${i + 1}`;
-    const r = rows(sp.grid);
-    const w = Math.max(...r.flatMap((x) => x.split(/\s+/).map((t) => t.length)));
-    const grid = r.map((x) => '        ' + x.split(/\s+/).map((t) => t.padEnd(w)).join(' ').trimEnd()).join('\n');
-    let target: string | undefined;
-    if (sp.base !== undefined) {
-      const sol = solOf(sp.base);
-      const p0 = puzzle('b', { grid: rows(sp.base).join('\n'), difficulty: 1 });
-      const m = (sp.mask ?? '').replace(/\//g, '');
-      target = Array.from({ length: p0.h }, (_, y) => Array.from({ length: p0.w }, (_, x) => {
-        const k = y * p0.w + x;
-        if (p0.cells[k].hole) return '#';
-        return m[k] === '?' ? '?' : String(sol[k]);
-      }).join('')).join('/');
+    // the drawing: W = well (lit), 1 = path, 0 = dark; a row may be written with W's in it
+    const rows = sp.path.split('/').map((r) => r.replace(/W/g, 'W'));
+    const cells = rows.map((r) => r.split(''));
+    const w = cells[0].length;
+    let k = 0;
+    const tok = cells.map((r) => r.map((ch) => (ch === 'W' ? (k++ < 2 ? 'wa' : 'wa') : '.')));
+    const grid = tok.map((r) => '        ' + r.map((t) => t.padEnd(2)).join(' ').trimEnd()).join('\n');
+    const target = cells.map((r) => r.map((ch) => (ch === '0' ? '0' : '1')).join('')).join('/');
+    const def = puzzle(id, { grid: tok.map((r) => r.join(' ')).join('\n'), target, targetDisplay: 'world', difficulty: sp.difficulty });
+    if (cells.some((r) => r.length !== w)) throw new Error(`${id}: ragged`);
+    const st = Uint8Array.from(target.replace(/\//g, ''), (c) => (c === '1' ? 1 : 0));
+    const res = check(def, st);
+    if (!res.ok) throw new Error(`${id}: the drawing is not a path between the wells (${res.violations.map((v) => v.rule).join(',')})`);
+    if (sp.seen) {
+      const m = sp.seen.replace(/\//g, '');
+      const partial = target.replace(/\//g, '').split('').map((c, j) => (m[j] === '?' ? '?' : c));
+      const pp = Array.from({ length: def.h }, (_, y) => partial.slice(y * w, y * w + w).join('')).join('/');
+      const p2 = puzzle(id + '.seen', { grid: tok.map((r) => r.join(' ')).join('\n'), target: pp, targetDisplay: 'world', difficulty: 1 });
+      const r2 = solve(p2, { maxSolutions: 2 });
+      if (r2.solutions.length !== 1) throw new Error(`${id}: what can be seen allows ${r2.solutions.length} answers`);
     }
-    const def = puzzle(id, { grid: r.join('\n'), ...(target ? { target, targetDisplay: 'world' as const } : {}), ...(sp.hide ? { hideGlyphs: true } : {}), difficulty: sp.difficulty });
-    // teaching panels are open (several answers: you can try, and be wrong); the rest have one
-    const teaching = ['gate', 'marks', 'rivets', 'pairs'].includes(group);
-    const res = solve(def, { maxSolutions: 2 });
-    if (res.solutions.length < 1 || (!teaching && res.solutions.length !== 1)) throw new Error(`${id}: ${res.solutions.length} answers`);
-    out += `    puzzle('${id}', {\n      grid: \`\n${grid}\n      \`,\n`;
-    if (target) out += `      target: '${target}',\n      targetDisplay: 'world',\n`;
-    if (sp.hide) out += `      hideGlyphs: true,\n`;
-    out += `      difficulty: ${sp.difficulty},\n      note: ${JSON.stringify(sp.note).replace(/^"|"$/g, "'")},\n    }),\n`;
+    out += `    puzzle('${id}', {\n      grid: \`\n${grid}\n      \`,\n      target: '${target}',\n      targetDisplay: 'world',\n      difficulty: ${sp.difficulty},\n      note: ${JSON.stringify(sp.note).replace(/^"|"$/g, "'")},\n    }),\n`;
   });
   out += '  ],\n';
 }
-out += '  secret: [],\n};\n\nexport default P;\n';
+out += '  secret: [],\n};\n\nexport default P;\n\n/** What each panel lets you see (for the world builder): \'.\' visible, \'?\' hidden. */\nexport const DESERT_SEEN: Record<string, string> = ' + JSON.stringify(Object.fromEntries(Object.entries(G).flatMap(([g, l]) => l.map((s, i) => [`mosaic.${g}.${i + 1}`, s.seen ?? ''])).filter(([, v]) => v)), null, 2) + ';\n';
 writeFileSync('src/data/puzzles/mosaic.ts', out);
 console.log('written');

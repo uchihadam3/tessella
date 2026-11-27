@@ -82,6 +82,8 @@ export class PanelView {
   state: Uint8Array;
   anim: Float32Array;
   powered = false;
+  /** tiles where sunlight falls on the face (drawn as warm patches; set by the place) */
+  sunTiles: Set<number> | null = null;
   solved = false;
   hover: number = -1; // tile index, -2 seal
   pressFlash = 0;
@@ -555,6 +557,16 @@ export class PanelView {
           ctx.globalAlpha = on ? 1 : 0.28;
           if (!this.def.hideGlyphs) drawGlyph(ctx, cell.glyph, x + S / 2, y + S / 2, S * 0.92, a > 0.5);
           ctx.globalAlpha = 1;
+        }
+        // sunlight falling on this tile through something above the panel
+        if (this.sunTiles?.has(i)) {
+          const cx = x + S / 2, cy = y + S / 2;
+          const sg = ctx.createRadialGradient(cx, cy, S * 0.05, cx, cy, S * 0.62);
+          sg.addColorStop(0, a > 0.5 ? 'rgba(255,236,170,0.55)' : 'rgba(255,214,120,0.85)');
+          sg.addColorStop(0.6, a > 0.5 ? 'rgba(255,220,140,0.25)' : 'rgba(255,190,90,0.45)');
+          sg.addColorStop(1, 'rgba(255,190,90,0)');
+          ctx.fillStyle = sg;
+          ctx.fillRect(x, y, S, S);
         }
         // error blink
         if (blinkOn && this.blinkTiles.has(i)) {

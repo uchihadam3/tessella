@@ -225,29 +225,36 @@ e buracos contam como apagado.**
 
 **Segredo do mundo:** cubos de sebe que crescem/encolhem num canteiro 4×4.
 
-### 4.5 Caminho — poços e luz (O Templo das Areias)
+### 4.5 O caminho do sol (O Templo das Areias)
 
-**Por que mudou:** o antigo Mosaico (um número que conta os ladrilhos acesos na janela 3×3 em volta)
-não se entende só de olhar — quem joga vê "um 8, um 4, um 6" e não sabe o que fazer. Um idioma precisa
-se explicar sozinho, como os do The Witness: você tenta, erra, e o erro mostra a regra.
+**Uma ideia só, do primeiro ao último painel:** acenda os quadrados onde bate o sol. A luz sempre
+desenha um caminho entre os dois poços do painel. Nada mais muda de regra no deserto — muda só *onde*
+a luz aparece e *quanto* dela dá para ver.
 
-**Regra:** os dois **poços** de uma cor (já acesos) se ligam por um **caminho de luz**: um ladrilho de
-largura, sem ramos, que não encosta em si mesmo nem em outro caminho; todo ladrilho aceso faz parte de
-um caminho. **Marcos** (losangos) ficam no caminho; **pedras** (buracos) e rebites escuros o bloqueiam;
-poços de outra cor pedem outro caminho, que não pode tocar o primeiro. Erro: os poços piscam.
+**Ensinar uma vez, depois nunca mais mostrar tudo** (como o The Witness): o primeiro painel mostra o
+caminho inteiro (o sol passa pelos furos de uma cobertura de pedra e marca o próprio painel). Daí em
+diante cada painel esconde a luz de um jeito novo e é preciso pensar onde está o resto:
 
-**O lugar:** o portão ensina (12 painéis, uma ideia por vez: ligar, mais longe, marco, pedra, rebite,
-o marco escolhe o lado, não encostar em si mesmo, duas cores, dois caminhos paralelos, o portão).
-As **pérgolas** desenham com a luz o caminho no chão (a areia cobre parte: deduzir, ou ler a treliça
-por baixo); da **torre** as lajes vitrificadas são o caminho (um toldo esconde um canto — descer e
-olhar por baixo; uma duna engole outro); no **teto do santuário** os painéis não mostram os marcos,
-que estão incrustados no chão debaixo de cada beirada; o **coração** são caminhos longos entre pedras,
-marcos e uma segunda cor.
+| # | Onde | O que esconde a luz | O que fazer |
+|---|---|---|---|
+| 1 | portão | nada | acender o que o sol marca |
+| 2 | portão | uma folha de palmeira sobre metade da cobertura | olhar os furos por baixo |
+| 3 | portão | um pano sobre a cobertura inteira | só os furos, vistos por baixo |
+| 4 | avenida | a luz cai no chão, não no painel | o piso tem a grade e os dois poços do painel |
+| 5 | avenida | uma estela faz sombra em duas colunas | dar a volta: o caminho está gravado atrás dela |
+| 6 | avenida | areia sobre um trecho (e nos furos acima) | deduzir: o único caminho fino que liga as pontas |
+| 7 | avenida | o chão todo soterrado | ler a treliça por baixo |
+| 8 | fora do pátio | um muro no caminho | as fileiras de trás sobem pela parede: desdobrar |
+| 9 | pátio | a luz vai longe | seguir o feixe da placa de bronze até a parede do santuário |
+| 10 | pátio | duas treliças, uma sobre a outra | só passa onde as duas estão abertas (o chão mostra o começo) |
+| 11 | pátio | ladrilhos polidos | só brilham vistos das pegadas no chão |
+| 12 | pátio | vigas no lugar de treliça | desta vez o caminho é a sombra |
+| 13–15 | coração | dois disfarces de uma vez | estela + areia na gravação; duas treliças sobre chão soterrado; vigas + areia |
 
-**Técnica:** `src/puzzle/pathsolver.ts` enumera os caminhos (cor por cor, com corte de alcance), então
-cada painel tem resposta única comprovada; `tools/build-desert.ts` escreve os painéis do deserto
-(os de cenário recebem o desenho do lugar a partir da resposta de um painel-base, com '?' no que o
-lugar esconde), `tools/path-search.ts` procura painéis difíceis.
+**Erro:** o painel inteiro pisca (como nos painéis de ambiente do Witness — mostrar quadrados entregaria a
+resposta). **Técnica:** `src/world/areas/desert.ts` (cobertura, pérgola e suas variações, placa de bronze);
+`tools/build-desert.ts` escreve os painéis e confere que cada desenho é um caminho e que, nos de
+dedução, o que se vê basta para uma resposta só (`src/puzzle/pathsolver.ts`).
 
 ### 4.6 Farol — visão em linha (Os Penhascos dos Faróis)
 

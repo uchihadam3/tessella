@@ -98,7 +98,11 @@ export const AREAS: AreaSpec[] = [
     rule: { pt: 'Caminho', en: 'Path' }, glyph: 'mosaic',
     lit: '#4fd8e0', accent: '#d9a441', anchor: [141, 169], totem: true,
     groups: [
-      { key: 'gate', count: 12, role: 'the language, one idea at a time: join the wells with light; waymarks on the way; rocks and dark rivets block; a path never touches itself; two colours never touch' },
+      { key: 'gate', count: 8, role: 'join the two wells with light; turn; corridors; small mazes' },
+      { key: 'rivets', count: 6, role: 'a dark rivet blocks the path, a lit one is part of it' },
+      { key: 'marks', count: 6, role: 'waymarks: the path passes over them' },
+      { key: 'apart', count: 4, role: 'the path never touches itself: out and back with a gap' },
+      { key: 'pairs', count: 6, role: 'two colours, two paths that never touch' },
       { key: 'light', count: 4, role: 'pergolas: the light on the floor shows the path; sand hides part (deduce it, or read the lattice from below)' },
       { key: 'tower', count: 3, role: 'glazed flagstones seen from a tower are the path; an awning hides a corner (walk under it); a dune buries part' },
       { key: 'roof', count: 4, role: 'panels on the sanctuary roof that show no waymarks: they are inlaid in the floor below each edge' },

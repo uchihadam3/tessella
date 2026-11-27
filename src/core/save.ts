@@ -4,7 +4,7 @@
  */
 import type { AreaId } from '../data/areas';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const SLOT_COUNT = 3;
 const KEY = (slot: number) => `tessella.save.${slot}`;
 const LAST = 'tessella.lastSlot';
@@ -110,11 +110,31 @@ function desertV5(d: SaveData): SaveData {
   return { ...d, panels };
 }
 
+/**
+ * version 6: the desert's gate grew into five slow teaching sequences (gate, rivets, marks,
+ * apart, pairs) and its scenery panels got puzzles of their own: what was solved there before
+ * counts for the teaching that leads to it; a finished desert stays finished.
+ */
+const DESERT_V6 = { gate: 8, rivets: 6, marks: 6, apart: 4, pairs: 6, light: 4, tower: 3, roof: 4, heart: 3 };
+function desertV6(d: SaveData): SaveData {
+  const was = (k: string) => !!d.panels[`mosaic.${k}`]?.done;
+  const panels: SaveData['panels'] = {};
+  for (const [id, v] of Object.entries(d.panels)) if (!id.startsWith('mosaic.')) panels[id] = v;
+  const finished = was('heart.3');
+  const pastGate = finished || was('gate.12') || was('light.1');
+  for (const [g, n] of Object.entries(DESERT_V6)) {
+    const keep = finished || (pastGate && ['gate', 'rivets', 'marks', 'apart', 'pairs'].includes(g));
+    if (keep) for (let i = 1; i <= n; i++) panels[`mosaic.${g}.${i}`] = { done: 1 };
+  }
+  return { ...d, panels };
+}
+
 function migrate(d: SaveData): SaveData {
   if (d.version < 2) d = { ...migrateV2(d), version: 2 };
   if (d.version < 3) d = { ...remap(d, INTRO_V3), version: 3 };
   if (d.version < 4) d = { ...sceneryV4(d), version: 4 };
   if (d.version < 5) d = { ...desertV5(d), version: 5 };
+  if (d.version < 6) d = { ...desertV6(d), version: 6 };
   return d;
 }
 

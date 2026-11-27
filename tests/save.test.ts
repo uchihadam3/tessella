@@ -57,6 +57,6 @@ test('a finished desert stays finished when its series become scenery puzzles', 
   const back = saveFromCode(JSON.stringify(old))!;
   assert(back.version >= 4, 'v4');
   assert(!back.panels['mosaic.practice.1'] && !back.panels['mosaic.heart.6'], 'old desert series gone');
-  assert(back.panels['mosaic.light.1']?.done && back.panels['mosaic.heart.3']?.done, 'new desert puzzles solved');
+  assert(back.panels['mosaic.pairs.6']?.done && back.panels['mosaic.heart.3']?.done, 'new desert puzzles solved');
   assert(back.panels['kinship.practice.2']?.done, 'other places untouched');
 });

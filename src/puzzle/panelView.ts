@@ -440,6 +440,21 @@ export class PanelView {
     gctx.fillStyle = '#000';
     gctx.fillRect(0, 0, this.glowCanvas.width, this.glowCanvas.height);
 
+    if (!on) {
+      // switched off: a dead screen, nothing on it — it wakes when the panel before it is solved
+      ctx.fillStyle = '#0c0c0f';
+      ctx.fillRect(0, 0, c.width, c.height);
+      const sheen = ctx.createLinearGradient(0, 0, c.width, c.height);
+      sheen.addColorStop(0, 'rgba(255,255,255,0.05)');
+      sheen.addColorStop(0.45, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, c.width, c.height);
+      this.tex.needsUpdate = true;
+      this.glowTex.needsUpdate = true;
+      if (this.sealMesh) (this.sealMesh.material as THREE.MeshBasicMaterial).color.set('#1a1a1e');
+      return;
+    }
+
     // grid well
     ctx.save();
     roundRect(ctx, (L.gx - 0.14) * S, (L.gy - 0.14) * S, (p.w + 0.28) * S, (p.h + 0.28) * S, 0.2 * S);

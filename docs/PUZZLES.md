@@ -421,7 +421,7 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 
-## O Templo das Areias — Caminho (26)
+## O Templo das Areias — Caminho (44)
 
 ### gate
 
@@ -429,23 +429,61 @@ Gerado por `npm run verify:puzzles`. Cada linha: id, tamanho, linguagens, soluç
 |---|---|---|---|---|---|
 | mosaic.gate.1 | 3×1 | well | 1 | 1 | Ligar os dois poços com luz. |
 | mosaic.gate.2 | 5×1 | well | 1 | 1 | Um caminho mais longo. |
-| mosaic.gate.3 | 5×1 | well + dot | 1 | 1 | O marco fica no caminho. |
-| mosaic.gate.4 | 3×2 | well | 1 | 1 | A pedra obriga a dar a volta. |
-| mosaic.gate.5 | 3×2 | well | 1 | 1 | O rebite escuro também bloqueia. |
-| mosaic.gate.6 | 3×3 | well + dot | 1 | 2 | O marco escolhe o lado da pedra. |
-| mosaic.gate.7 | 3×3 | well + dot | 1 | 2 | O marco no canto puxa o caminho para a borda. |
-| mosaic.gate.8 | 3×3 | well | 1 | 2 | Contornar a parede de rebites. |
-| mosaic.gate.9 | 4×3 | well | 1 | 2 | O caminho não encosta nele mesmo: dá a volta inteira. |
-| mosaic.gate.10 | 3×3 | well | 1 | 2 | Duas cores, dois caminhos, que não se tocam. |
-| mosaic.gate.11 | 4×3 | well | 1 | 3 | Dois caminhos paralelos. |
-| mosaic.gate.12 | 5×5 | well + dot | 1 | 4 | Portão: três marcos, uma pedra e um rebite. |
+| mosaic.gate.3 | 2×2 | well | 1 | 1 | O caminho pode virar. |
+| mosaic.gate.4 | 2×3 | well | 1 | 1 | Virar duas vezes. |
+| mosaic.gate.5 | 3×3 | well | 1 | 1 | Um corredor em L. |
+| mosaic.gate.6 | 3×3 | well | 1 | 1 | Ir e voltar pelo corredor. |
+| mosaic.gate.7 | 4×4 | well | 1 | 2 | Um labirinto pequeno. |
+| mosaic.gate.8 | 4×5 | well | 1 | 2 | Um labirinto mais comprido. |
+
+### rivets
+
+| id | tamanho | linguagens | soluções | dif. | percepção |
+|---|---|---|---|---|---|
+| mosaic.rivets.1 | 3×2 | well | 1 | 1 | O rebite escuro não acende: dar a volta. |
+| mosaic.rivets.2 | 3×3 | well | 1 | 1 | Uma parede de rebites escuros. |
+| mosaic.rivets.3 | 5×1 | well | 1 | 1 | O rebite aceso já faz parte do caminho. |
+| mosaic.rivets.4 | 3×3 | well | 1 | 2 | O aceso puxa o caminho; o escuro o desvia. |
+| mosaic.rivets.5 | 3×3 | well | 1 | 2 | Passar pelo aceso, contornando o escuro. |
+| mosaic.rivets.6 | 4×4 | well | 1 | 3 | Quatro por quatro com rebites dos dois tipos. |
+
+### marks
+
+| id | tamanho | linguagens | soluções | dif. | percepção |
+|---|---|---|---|---|---|
+| mosaic.marks.1 | 5×1 | well + dot | 1 | 1 | O marco fica no caminho. |
+| mosaic.marks.2 | 3×3 | well + dot | 1 | 2 | O marco no canto puxa o caminho para a borda. |
+| mosaic.marks.3 | 3×3 | well + dot | 1 | 2 | Dois marcos: o caminho desce pelo meio. |
+| mosaic.marks.4 | 4×4 | well + dot | 1 | 2 | Um marco atrás das pedras. |
+| mosaic.marks.5 | 4×4 | dot + well | 1 | 3 | O marco longe dos poços. |
+| mosaic.marks.6 | 4×4 | well + dot | 1 | 3 | Dar a volta para buscar o marco. |
+
+### apart
+
+| id | tamanho | linguagens | soluções | dif. | percepção |
+|---|---|---|---|---|---|
+| mosaic.apart.1 | 3×3 | well + dot | 1 | 2 | O caminho não encosta nele mesmo: ida e volta com uma fresta. |
+| mosaic.apart.2 | 4×3 | well + dot | 1 | 2 | A fresta no meio fica apagada. |
+| mosaic.apart.3 | 4×4 | well + dot | 1 | 3 | Em zigue-zague, sem encostar. |
+| mosaic.apart.4 | 5×5 | well + dot | 1 | 4 | Três marcos, uma pedra e um rebite. |
+
+### pairs
+
+| id | tamanho | linguagens | soluções | dif. | percepção |
+|---|---|---|---|---|---|
+| mosaic.pairs.1 | 3×3 | well | 1 | 2 | Duas cores, dois caminhos. |
+| mosaic.pairs.2 | 3×3 | well | 1 | 2 | Os caminhos em pé. |
+| mosaic.pairs.3 | 4×3 | well | 1 | 2 | Dois caminhos paralelos, com uma fresta entre eles. |
+| mosaic.pairs.4 | 5×3 | well | 1 | 2 | Mais compridos. |
+| mosaic.pairs.5 | 4×4 | well | 1 | 3 | Um caminho dá a volta no outro. |
+| mosaic.pairs.6 | 4×4 | well + dot | 1 | 4 | Quem passa pelo marco? |
 
 ### light
 
 | id | tamanho | linguagens | soluções | dif. | percepção |
 |---|---|---|---|---|---|
 | mosaic.light.1 | 4×4 | well + Placa | 1 | 2 | Pérgola: a luz que passa pela treliça desenha o caminho no chão. |
-| mosaic.light.2 | 4×4 | well + Placa | 1 | 3 | A areia cobriu um canto: o resto do caminho se deduz. |
+| mosaic.light.2 | 4×4 | well + dot + Placa | 1 | 3 | A areia cobriu um canto: o resto do caminho se deduz. |
 | mosaic.light.3 | 5×5 | well + Placa | 1 | 4 | Metade do chão soterrada: a treliça, vista por baixo, mostra o resto. |
 | mosaic.light.4 | 5×5 | dot + well + Placa | 1 | 5 | Dois caminhos, a parte de baixo enterrada. |
 
